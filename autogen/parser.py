@@ -112,9 +112,9 @@ def read_decl():
         {'ABC_to_bnr', ..., 'zx_to_zv'}
     """
     s = set()
-    with open(os.path.join(sage_src_pari(), "paridecl.pxd")) as f:
+    with open(os.path.join("cypari2", "paridecl.pxd")) as f:
         s.update(decl_re.findall(f.read()))
-    with open(os.path.join(sage_src_pari(), "declinl.pxi")) as f:
+    with open(os.path.join("cypari2", "declinl.pxi")) as f:
         s.update(decl_re.findall(f.read()))
     return s
 
