@@ -29,7 +29,7 @@ from libc.stdio cimport FILE
 cdef extern from '<stdarg.h>':
     ctypedef void* va_list
 
-cdef extern from "sage/libs/cypari2/cypari.h":
+cdef extern from "cypari.h":
     char* PARIVERSION
 
     # parierr.h
@@ -4493,7 +4493,7 @@ cdef extern from "sage/libs/cypari2/cypari.h":
     long   vali(GEN x)
     int    varncmp(long x, long y)
 
-cdef extern from "sage/libs/cypari2/cypari.h":
+cdef extern from "cypari.h":
     GEN set_gel(GEN x, long n, GEN z)              # gel(x, n) = z
     GEN set_gmael(GEN x, long i, long j, GEN z)    # gmael(x, i, j) = z
     GEN set_gcoeff(GEN x, long i, long j, GEN z)   # gcoeff(x, i, j) = z

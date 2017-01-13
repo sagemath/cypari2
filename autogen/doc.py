@@ -6,6 +6,7 @@ Handle PARI documentation for Sage
 from __future__ import unicode_literals
 import re
 import subprocess
+# Fix this
 from six import unichr
 
 

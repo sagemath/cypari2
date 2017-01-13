@@ -17,25 +17,12 @@ Run tests from the ``SAGE_SRC`` directory::
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
+from __future__ import absolute_import
+
 import os, re
 
-from sage_setup.autogen.pari.args import pari_arg_types
-from sage_setup.autogen.pari.ret import pari_ret_types
-
-
-def sage_src_pari():
-    """
-    Return the directory in the Sage source tree where the interface to
-    the PARI library is and where the auto-generated files should be
-    stored.
-
-    EXAMPLES::
-
-        sage: from sage_setup.autogen.pari.parser import sage_src_pari
-        sage: sage_src_pari()
-        'sage/libs/cypari2'
-    """
-    return os.path.join('sage', 'libs', 'cypari2')
+from .args import pari_arg_types
+from .ret import pari_ret_types
 
 
 def pari_share():
