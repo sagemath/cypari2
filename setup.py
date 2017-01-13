@@ -8,7 +8,6 @@ import autogen
 import os, sys
 from glob import glob
 
-print("path", sys.path)
 opj = os.path.join
 
 cythonize_dir = "build"
@@ -24,7 +23,7 @@ cythonize_dir = "build"
 import cysignals
 CYSIGNALS_DIR=cysignals.__path__
 
-kwds = dict(include_dirs=["cypari2"] + [CYSIGNALS_DIR],# cythonize_dir, opj(cythonize_dir, "cypari2")],
+kwds = dict(include_dirs=["cypari2"] + CYSIGNALS_DIR,# cythonize_dir, opj(cythonize_dir, "cypari2")],
             libraries=["pari"],
             depends=glob(opj("cypari2", "*.h")))
 
