@@ -1,36 +1,40 @@
 # CyPari 2
 
 A Python interface to the number theory library [libpari](http://pari.math.u-bordeaux.fr/).
+It is currently only supported in Python 2 ([#3 on github issue
+tracker](https://github.com/defeo/cypari2/issues/3))
 
 ## Installation
 
+1) Install libpari
+
+2) Copy the (private) PARI header file `anal.h` to some place accessible by the compiler.
+(see issue [#5 on github issue tracker](https://github.com/defeo/cypari2/issues/5))
+
+3) Clone the cypari2 project
+
+4) Install with pip
 ```
-pip install cypari2
+$ cd where_I_cloned_cypari2
+$ pip install .
 ```
 
 ## Usage
 
-TODO 
+Just launch Python and then you can perform some PARI/GP computation inside python
+```
+>>> import cypari2
+>>> pari = cypari2.Pari()
+>>> pari(2).zeta()
+1.64493406684823
+>>> K = pari("bnfinit(x^3 - 2)")
+>>> K.bnfunit()
+[x - 1]
+```
 
-1) You need to manually copy the (private) pari header anal.h inside some (public) include
-directory. The only reason for this is because of the error handler that access to the function
-`closure_func_err` (that returns the name of the GP function that triggers the
-error). Bill and Karim seems to be ok to make it public but we might need to make a proper
-request on pari-dev mailing list.
-This request is somehow weird as it only concerns GP functions
+## Issues
 
-    >>> import cypari2
-    >>> pari = cypari2.Pari()
-    >>> pari(1).zeta()   # closure_func_err returned NULL
-    Traceback (most recent call last):
-    ...
-    PariError: domain error in zeta: argument = 1
-    >>> pari('zeta(1)')  # closure_func_err returned 'zeta'
-    Traceback (most recent call last):
-    ...
-    PariError: zeta: domain error in zeta: argument = 1
-
-2) If you change your pari installation you need to recompile cysignals and cypari2 using
+1) If you change your pari installation you need to recompile cysignals and cypari2 using
 the `--no-cache-dir` option of pip
 
      pip install cysignals --no-cache-dir --force-reinstall [--user]
@@ -38,4 +42,4 @@ the `--no-cache-dir` option of pip
 
 ## Contributing
 
-Good question!
+Submit pull request or get in contact with [Luca De Feo](http://defeo.lu/).
