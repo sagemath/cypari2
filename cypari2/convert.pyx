@@ -42,6 +42,7 @@ from __future__ import absolute_import, division, print_function
 
 include "cysignals/signals.pxi"
 
+from cpython.object cimport PyObject, Py_SIZE
 from cpython.int cimport PyInt_AS_LONG
 from libc.limits cimport LONG_MIN, LONG_MAX
 from libc.math cimport INFINITY
@@ -54,11 +55,13 @@ cdef extern from "longintrepr.h":
     cdef _PyLong_New "(PyObject*)_PyLong_New"(Py_ssize_t s)
     ctypedef unsigned int digit
     ctypedef struct PyLongObject:
-        Py_ssize_t ob_size
         digit* ob_digit
 
     cdef long PyLong_SHIFT
     cdef digit PyLong_MASK
+
+cdef extern from "python_extra.h":
+    cdef void Py_SET_SIZE(PyObject *, size_t) 
 
 
 ####################################
@@ -218,20 +221,19 @@ cdef GEN gtoi(GEN g0) except NULL:
     return g
 
 
-cdef GEN PyLong_AsGEN(x):
-    cdef PyLongObject* L = <PyLongObject*>(x)
-    cdef const digit* D = L.ob_digit
+cdef GEN PyLong_AsGEN(L):
+    cdef const digit* D = (<PyLongObject*>L).ob_digit
 
     # Size of the input
     cdef size_t sizedigits
     cdef long sgn
-    if L.ob_size == 0:
+    if Py_SIZE(L) == 0:
         return gen_0
-    elif L.ob_size > 0:
-        sizedigits = L.ob_size
+    elif Py_SIZE(L) > 0:
+        sizedigits = Py_SIZE(L)
         sgn = evalsigne(1)
     else:
-        sizedigits = -L.ob_size
+        sizedigits = -Py_SIZE(L)
         sgn = evalsigne(-1)
 
     # Size of the output, in bits and in words
@@ -341,9 +343,9 @@ cdef PyLong_FromGEN(GEN g):
 
     # Set correct size
     if signe(g) > 0:
-        L.ob_size = sizedigits_final
+        Py_SET_SIZE(<PyObject *>L, sizedigits_final)
     else:
-        L.ob_size = -sizedigits_final
+        Py_SET_SIZE(<PyObject *>L, -sizedigits_final)
 
     return x
 
