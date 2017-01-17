@@ -1,19 +1,16 @@
 # CyPari 2
 
 A Python interface to the number theory library [libpari](http://pari.math.u-bordeaux.fr/).
-It is currently only supported in Python 2 ([#3 on github issue
-tracker](https://github.com/defeo/cypari2/issues/3))
+
+This library supports both Python 2 and Python 3
 
 ## Installation
 
 1) Install libpari
 
-2) Copy the (private) PARI header file `anal.h` to some place accessible by the compiler.
-(see issue [#5 on github issue tracker](https://github.com/defeo/cypari2/issues/5))
+2) Clone the cypari2 project
 
-3) Clone the cypari2 project
-
-4) Install with pip
+3) Install with pip
 ```
 $ cd where_I_cloned_cypari2
 $ pip install .
