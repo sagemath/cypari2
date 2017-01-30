@@ -57,7 +57,7 @@ setup(
     license='GNU General Public License, version 2 or later',
     # Install cycsignals before this
     ext_modules=cythonize(extensions, include_path=sys.path),
-    keywords='PARI/gp number theory',
+    keywords='PARI/GP number theory',
     packages=['cypari2'],
     package_dir={'cypari2': 'cypari2'},
     package_data={'cypari2': ['*.pxi', '*.pxd', '*.h']},

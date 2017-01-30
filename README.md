@@ -31,7 +31,7 @@ Just launch Python and then you can perform some PARI/GP computation inside pyth
 
 ## Issues
 
-1) If you change your pari installation you need to recompile cysignals and cypari2 using
+1) If you change your PARI installation you need to recompile cysignals and cypari2 using
 the `--no-cache-dir` option of pip
 
      pip install cysignals --no-cache-dir --force-reinstall [--user]
