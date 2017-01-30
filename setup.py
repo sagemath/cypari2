@@ -54,7 +54,7 @@ setup(
     url='https://github.com/defeo/cypari2',
     author='Many people',
     author_email="sage-devel@googlegroups.com",
-    license='GNU General Public License, version 3 or later',
+    license='GNU General Public License, version 2 or later',
     # Install cycsignals before this
     ext_modules=cythonize(extensions, include_path=sys.path),
     keywords='PARI/gp number theory',
