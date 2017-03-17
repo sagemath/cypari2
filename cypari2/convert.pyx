@@ -44,21 +44,16 @@ include "cysignals/signals.pxi"
 
 from cpython.object cimport PyObject, Py_SIZE
 from cpython.int cimport PyInt_AS_LONG
+from cpython.longintrepr cimport (_PyLong_New, PyLongObject,
+        digit, PyLong_SHIFT, PyLong_MASK)
 from libc.limits cimport LONG_MIN, LONG_MAX
 from libc.math cimport INFINITY
 
 from .paridecl cimport *
 from .stack cimport new_gen
 
-cdef extern from "longintrepr.h":
-    # Add explicit cast to avoid compiler warning
-    cdef _PyLong_New "(PyObject*)_PyLong_New"(Py_ssize_t s)
-    ctypedef unsigned int digit
-    ctypedef struct PyLongObject:
-        digit* ob_digit
-
-    cdef long PyLong_SHIFT
-    cdef digit PyLong_MASK
+cdef extern from *:
+    Py_ssize_t* Py_SIZE_PTR "&Py_SIZE"(object)
 
 cdef extern from "python_extra.h":
     cdef void Py_SET_SIZE(PyObject *, size_t) 
@@ -78,10 +73,10 @@ cpdef integer_to_gen(x):
         sage: from sage.libs.cypari2.convert import integer_to_gen
         sage: a = integer_to_gen(int(12345)); a; type(a)
         12345
-        <... 'sage.libs.cypari2.gen.gen'>
+        <... 'sage.libs.cypari2.gen.Gen'>
         sage: a = integer_to_gen(long(12345)); a; type(a)
         12345
-        <... 'sage.libs.cypari2.gen.gen'>
+        <... 'sage.libs.cypari2.gen.Gen'>
         sage: integer_to_gen(float(12345))
         Traceback (most recent call last):
         ...
@@ -102,7 +97,7 @@ cpdef integer_to_gen(x):
         return new_gen(PyLong_AsGEN(x))
     raise TypeError("integer_to_gen() needs an int or long argument, not {}".format(type(x).__name__))
 
-cpdef gen_to_integer(gen x):
+cpdef gen_to_integer(Gen x):
     """
     Convert a PARI ``gen`` to a Python ``int`` or ``long``.
 
@@ -160,7 +155,7 @@ cpdef gen_to_integer(gen x):
     Check some corner cases::
 
         sage: for s in [1, -1]:
-        ....:     for a in [1, 2^31, 2^32, 2^63, 2^64]:
+        ....:     for a in [1, 2**31, 2**32, 2**63, 2**64]:
         ....:         for b in [-1, 0, 1]:
         ....:             Nstr = str(s * (a + b))
         ....:             N1 = gen_to_integer(pari(Nstr))  # Convert via PARI
@@ -221,19 +216,19 @@ cdef GEN gtoi(GEN g0) except NULL:
     return g
 
 
-cdef GEN PyLong_AsGEN(L):
-    cdef const digit* D = (<PyLongObject*>L).ob_digit
+cdef GEN PyLong_AsGEN(x):
+    cdef const digit* D = (<PyLongObject*>x).ob_digit
 
     # Size of the input
     cdef size_t sizedigits
     cdef long sgn
-    if Py_SIZE(L) == 0:
+    if Py_SIZE(x) == 0:
         return gen_0
-    elif Py_SIZE(L) > 0:
-        sizedigits = Py_SIZE(L)
+    elif Py_SIZE(x) > 0:
+        sizedigits = Py_SIZE(x)
         sgn = evalsigne(1)
     else:
-        sizedigits = -Py_SIZE(L)
+        sizedigits = -Py_SIZE(x)
         sgn = evalsigne(-1)
 
     # Size of the output, in bits and in words
@@ -313,8 +308,7 @@ cdef PyLong_FromGEN(GEN g):
     cdef Py_ssize_t sizedigits_final = 0
 
     x = _PyLong_New(sizedigits)
-    cdef PyLongObject* L = <PyLongObject*>(x)
-    cdef digit* D = L.ob_digit
+    cdef digit* D = (<PyLongObject*>x).ob_digit
 
     cdef digit d
     cdef ulong w
@@ -341,11 +335,13 @@ cdef PyLong_FromGEN(GEN g):
         if d:
             sizedigits_final = i+1
 
-    # Set correct size
+    # Set correct size (use a pointer to hack around Cython's
+    # non-support for lvalues).
+    cdef Py_ssize_t* sizeptr = Py_SIZE_PTR(x)
     if signe(g) > 0:
-        Py_SET_SIZE(<PyObject *>L, sizedigits_final)
+        sizeptr[0] = sizedigits_final
     else:
-        Py_SET_SIZE(<PyObject *>L, -sizedigits_final)
+        sizeptr[0] = -sizedigits_final
 
     return x
 
@@ -354,7 +350,7 @@ cdef PyLong_FromGEN(GEN g):
 # Other basic types
 ####################################
 
-cdef gen new_t_POL_from_int_star(int* vals, unsigned long length, long varnum):
+cdef Gen new_t_POL_from_int_star(int* vals, unsigned long length, long varnum):
     """
     Note that degree + 1 = length, so that recognizing 0 is easier.
 
@@ -376,7 +372,7 @@ cdef gen new_t_POL_from_int_star(int* vals, unsigned long length, long varnum):
     return new_gen(z)
 
 
-cdef gen new_gen_from_double(double x):
+cdef Gen new_gen_from_double(double x):
     # Pari has an odd concept where it attempts to track the accuracy
     # of floating-point 0; a floating-point zero might be 0.0e-20
     # (meaning roughly that it might represent any number in the
@@ -400,7 +396,7 @@ cdef gen new_gen_from_double(double x):
     return new_gen(g)
 
 
-cdef gen new_t_COMPLEX_from_double(double re, double im):
+cdef Gen new_t_COMPLEX_from_double(double re, double im):
     sig_on()
     cdef GEN g = cgetg(3, t_COMPLEX)
     if re == 0:
@@ -415,10 +411,10 @@ cdef gen new_t_COMPLEX_from_double(double re, double im):
 
 
 ####################################
-# Conversion of gen to Python type #
+# Conversion of Gen to Python type #
 ####################################
 
-cpdef gen_to_python(gen z):
+cpdef gen_to_python(Gen z):
     r"""
     Convert the PARI element ``z`` to a Python object.
 
