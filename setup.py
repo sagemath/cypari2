@@ -35,7 +35,7 @@ class build_ext(_build_ext):
 
 setup(
     name='cypari2',
-    version='0.1.0a1',
+    version=open("VERSION").read().strip(),
     description='An interface to the number theory library libpari',
     url='https://github.com/defeo/cypari2',
     author='Many people',
