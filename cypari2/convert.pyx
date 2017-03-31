@@ -42,7 +42,7 @@ from __future__ import absolute_import, division, print_function
 
 include "cysignals/signals.pxi"
 
-from cpython.object cimport PyObject, Py_SIZE
+from cpython.object cimport Py_SIZE
 from cpython.int cimport PyInt_AS_LONG
 from cpython.longintrepr cimport (_PyLong_New, PyLongObject,
         digit, PyLong_SHIFT, PyLong_MASK)
@@ -54,9 +54,6 @@ from .stack cimport new_gen
 
 cdef extern from *:
     Py_ssize_t* Py_SIZE_PTR "&Py_SIZE"(object)
-
-cdef extern from "python_extra.h":
-    cdef void Py_SET_SIZE(PyObject *, size_t) 
 
 
 ####################################
