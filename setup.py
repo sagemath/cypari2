@@ -45,6 +45,6 @@ setup(
     keywords='PARI/GP number theory',
     packages=['cypari2'],
     package_dir={'cypari2': 'cypari2'},
-    package_data={'cypari2': ['*.pxi', '*.pxd', '*.h']},
+    package_data={'cypari2': ['declinl.pxi', '*.pxd', '*.h']},
     cmdclass=dict(build_ext=build_ext)
 )

@@ -10,11 +10,13 @@ This library supports both Python 2 and Python 3
 
 2) Clone the cypari2 project
 
-3) Install with pip
+3) Install with pip:
 ```
 $ cd where_I_cloned_cypari2
 $ pip install .
 ```
+Note that any other kind of installation program is not supported.
+In particular, ``python setup.py install`` does NOT work.
 
 ## Usage
 
