@@ -1,5 +1,7 @@
 # CyPari 2
 
+[![Build Status](https://travis-ci.org/defeo/cypari2.svg?branch=master)](https://travis-ci.org/defeo/cypari2)
+
 A Python interface to the number theory library [libpari](http://pari.math.u-bordeaux.fr/).
 
 This library supports both Python 2 and Python 3
