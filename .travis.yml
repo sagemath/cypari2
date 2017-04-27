@@ -13,13 +13,20 @@ python:
 # non python dependencies
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install libpari-dev pari-gp
+  - wget http://pari.math.u-bordeaux.fr/pub/pari/unix/pari-2.9.2.tar.gz
+  - tar xf pari-2.9.2.tar.gz
+  - cd pari-2.9.2/
+  - ./Configure --prefix=/usr/
+  - make gp
+  - sudo make install
+  - cd ..
 # command to install dependencies
 install: 
   - pip install Cython
-  - pip install cysignals
-  - pip install git+https://github.com/defeo/cypari2
+  - pip install cysignals --verbose
   - pip install .
 # command to run tests
 script:
-  - python -c "import doctest; import cypari2; doctest.testmod(cypari2, optionflags=doctest.ELLIPSIS|doctest.REPORT_NDIFF)"
+  - cd tests
+  - python rundoctest.py
+
