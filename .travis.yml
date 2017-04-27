@@ -1,0 +1,25 @@
+dist: trusty
+sudo: required
+language: python
+notifications:
+  slack:
+    on_success: never
+    on_failure : never
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+# non python dependencies
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install libpari-dev pari-gp
+# command to install dependencies
+install: 
+  - pip install Cython
+  - pip install cysignals
+  - pip install git+https://github.com/defeo/cypari2
+  - pip install .
+# command to run tests
+script:
+  - python -c "import doctest; import cypari2; doctest.testmod(cypari2, optionflags=doctest.ELLIPSIS|doctest.REPORT_NDIFF)"
