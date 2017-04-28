@@ -55,6 +55,7 @@ from .stack cimport new_gen
 cdef extern from *:
     Py_ssize_t* Py_SIZE_PTR "&Py_SIZE"(object)
 
+include "system.pxi"
 
 ####################################
 # Integers
@@ -73,27 +74,35 @@ cpdef integer_to_gen(x):
     >>> a = integer_to_gen(int(12345)); a; type(a)
     12345
     <... 'cypari2.gen.Gen'>
-    >>> a = integer_to_gen(long(12345)); a; type(a)
-    12345
-    <... 'cypari2.gen.Gen'>
     >>> integer_to_gen(float(12345))
     Traceback (most recent call last):
     ...
     TypeError: integer_to_gen() needs an int or long argument, not float
+    >>> integer_to_gen(2**100)
+    1267650600228229401496703205376
 
     Tests:
 
-    >>> for i in range(10000):
-    ...     x = 3**i
-    ...     if pari(long(x)) != pari(x):
-    ...         print(x)
+    >>> import sys
+    >>> if sys.version_info.major == 2:
+    ...     assert integer_to_gen(long(12345)) == 12345
+    ...     for i in range(10000):
+    ...         x = 3**i
+    ...         if pari(long(x)) != pari(x):
+    ...             print(x)
     """
-    if isinstance(x, int):
-        sig_on()
-        return new_gen(stoi(PyInt_AS_LONG(x)))
-    elif isinstance(x, long):
-        sig_on()
-        return new_gen(PyLong_AsGEN(x))
+    IF PY_MAJOR_VERSION == 2:
+        if isinstance(x, int):
+            sig_on()
+            return new_gen(stoi(PyInt_AS_LONG(x)))
+        elif isinstance(x, long):
+            sig_on()
+            return new_gen(PyLong_AsGEN(x))
+    ELSE:
+        if isinstance(x, int):
+            sig_on()
+            return new_gen(PyLong_AsGEN(x))
+
     raise TypeError("integer_to_gen() needs an int or long argument, not {}".format(type(x).__name__))
 
 cpdef gen_to_integer(Gen x):
@@ -114,9 +123,8 @@ cpdef gen_to_integer(Gen x):
     >>> a = gen_to_integer(pari("12345")); a; type(a)
     12345
     <... 'int'>
-    >>> a = gen_to_integer(pari("10^30")); a; type(a)
-    1000000000000000000000000000000L
-    <... 'long'>
+    >>> gen_to_integer(pari("10^30")) == 10**30
+    True
     >>> gen_to_integer(pari("19/5"))
     3
     >>> gen_to_integer(pari("1 + 0.0*I"))
@@ -147,14 +155,17 @@ cpdef gen_to_integer(Gen x):
 
     Tests:
 
-    >>> for i in range(10000):
-    ...     x = 3**i
-    ...     if long(pari(x)) != long(x):
-    ...         print(x)
-    >>> gen_to_integer(pari("1.0 - 2^64"))
-    -18446744073709551615L
-    >>> gen_to_integer(pari("1 - 2^64"))
-    -18446744073709551615L
+    >>> gen_to_integer(pari("1.0 - 2^64")) == -18446744073709551615
+    True
+    >>> gen_to_integer(pari("1 - 2^64")) == -18446744073709551615
+    True
+    >>> import sys
+    >>> if sys.version_info.major == 2:
+    ...     for i in range(10000):
+    ...         x = 3**i
+    ...         if long(pari(x)) != long(x):
+    ...             print(x)
+
 
     Check some corner cases:
 
@@ -214,9 +225,14 @@ cdef GEN gtoi(GEN g0) except NULL:
             sig_error()
         sig_off()
     except RuntimeError:
-        raise TypeError(stack_sprintf(
+        IF PY_MAJOR_VERSION == 2:
+            raise TypeError(stack_sprintf(
             "unable to convert PARI object %Ps of type %s to an integer",
             g0, type_name(typ(g0))))
+        ELSE:
+            s = bytes(stack_sprintf("unable to convert PARI object %Ps of type %s to an integer",
+                      g0, type_name(typ(g0))))
+            raise TypeError(s.decode('ascii'))
     return g
 
 
@@ -462,9 +478,10 @@ cpdef gen_to_python(Gen z):
     >>> type(a)
     <... 'int'>
 
-    >>> a = gen_to_python(pari('3^50'))
-    >>> type(a)
-    <... 'long'>
+    >>> gen_to_python(pari('3^50')) == 3**50
+    True
+    >>> type(gen_to_python(pari('3^50'))) == type(3**50)
+    True
 
     Converting rational numbers:
 
@@ -527,21 +544,21 @@ cpdef gen_to_python(Gen z):
     [1, 2, 3]
     >>> type(a1)
     <... 'list'>
-    >>> map(type, a1)
+    >>> list(map(type, a1))
     [<... 'int'>, <... 'int'>, <... 'int'>]
 
     >>> a2 = gen_to_python(z2); a2
     [1, 3.4, [-5, 2], inf]
     >>> type(a2)
     <... 'list'>
-    >>> map(type, a2)
+    >>> list(map(type, a2))
     [<... 'int'>, <... 'float'>, <... 'list'>, <... 'float'>]
 
     >>> a3 = gen_to_python(z3); a3
     [1, 5.2]
     >>> type(a3)
     <... 'list'>
-    >>> map(type, a3)
+    >>> list(map(type, a3))
     [<... 'int'>, <... 'float'>]
 
     Converting matrices:
@@ -598,7 +615,7 @@ cpdef gen_to_python(Gen z):
     elif t == t_VEC or t == t_COL:
         return [gen_to_python(x) for x in z.python_list()]
     elif t == t_VECSMALL:
-        return z.python_list_small()
+       return z.python_list_small()
     elif t == t_MAT:
         nc = lg(g)-1
         nr = 0 if nc == 0 else lg(gel(g,1))-1
@@ -609,6 +626,9 @@ cpdef gen_to_python(Gen z):
         else:
             return -INFINITY
     elif t == t_STR:
-        return str(z)
+        IF PY_MAJOR_VERSION == 2:
+            return GSTR(g)
+        ELSE:
+            return bytes(GSTR(g)).decode('ascii')
     else:
         raise NotImplementedError("conversion not implemented for {}".format(z.type()))

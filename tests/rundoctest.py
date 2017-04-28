@@ -11,7 +11,7 @@ for mod in [cypari2.closure, cypari2.convert, cypari2.gen,
 
     print("="*80)
     print("Testing {}".format(mod.__name__))
-    test = doctest.testmod(mod, optionflags=doctest.ELLIPSIS|doctest.REPORT_NDIFF)
+    test = doctest.testmod(mod, optionflags=doctest.ELLIPSIS|doctest.REPORT_NDIFF|doctest.IGNORE_EXCEPTION_DETAIL)
     failed += test.failed
     attempted += test.attempted
 

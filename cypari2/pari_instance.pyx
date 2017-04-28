@@ -50,9 +50,9 @@ Examples:
 Arithmetic operations cause all arguments to be converted to PARI:
 
 >>> type(pari(1) + 1)
-<type 'cypari2.gen.Gen'>
+<... 'cypari2.gen.Gen'>
 >>> type(1 + pari(1))
-<type 'cypari2.gen.Gen'>
+<... 'cypari2.gen.Gen'>
 
 Guide to real precision in the PARI interface
 =============================================
@@ -239,6 +239,8 @@ from .convert cimport new_gen_from_double
 from .handle_error cimport _pari_init_error_handling
 from .closure cimport _pari_init_closure
 
+include "system.pxi"
+
 # Default precision (in PARI words) for the PARI library interface,
 # when no explicit precision is given and the inputs are exact.
 cdef long prec = prec_bits_to_words(53)
@@ -384,22 +386,28 @@ def prec_words_to_dec(long prec_in_words):
 
 # Callbacks from PARI to print stuff using sys.stdout.write() instead
 # of C library functions like puts().
-cdef PariOUT sage_pariOut
+cdef PariOUT python_pariOut
 
-cdef void sage_putchar(char c):
+cdef void python_putchar(char c):
     cdef char s[2]
     s[0] = c
     s[1] = 0
-    sys.stdout.write(s)
+    IF PY_MAJOR_VERSION == 2:
+        sys.stdout.write(s)
+    ELSE:
+        sys.stdout.write(bytes(s).decode('ascii'))
     # Let PARI think the last character was a newline,
     # so it doesn't print one when an error occurs.
     pari_set_last_newline(1)
 
-cdef void sage_puts(const char* s):
-    sys.stdout.write(s)
+cdef void python_puts(const char* s):
+    IF PY_MAJOR_VERSION == 2:
+        sys.stdout.write(s)
+    ELSE:
+        sys.stdout.write(bytes(s).decode('ascii'))
     pari_set_last_newline(1)
 
-cdef void sage_flush():
+cdef void python_flush():
     sys.stdout.flush()
 
 include 'auto_instance.pxi'
@@ -415,6 +423,8 @@ cdef class Pari(Pari_auto):
         >>> from cypari2.pari_instance import Pari
         >>> Pari.__new__(Pari)
         Interface to the PARI C library
+        >>> pari = Pari()
+        >>> pari("print('hello')")
         """
         # PARI is already initialized, nothing to do...
         if avma:
@@ -434,10 +444,10 @@ cdef class Pari(Pari_auto):
         # Set printing functions
         global pariOut, pariErr
 
-        pariOut = &sage_pariOut
-        pariOut.putch = sage_putchar
-        pariOut.puts = sage_puts
-        pariOut.flush = sage_flush
+        pariOut = &python_pariOut
+        pariOut.putch = python_putchar
+        pariOut.puts = python_puts
+        pariOut.flush = python_flush
 
         # Use 53 bits as default precision
         self.set_real_precision_bits(53)
@@ -579,16 +589,6 @@ cdef class Pari(Pari_auto):
         Print the internal PARI variables ``top`` (top of stack), ``avma``
         (available memory address, think of this as the stack pointer),
         ``bot`` (bottom of stack).
-
-        Examples:
-
-        >>> import cypari2
-        >>> pari = cypari2.Pari()
-        >>> pari.debugstack()  # random
-        top =  0x60b2c60
-        avma = 0x5875c38
-        bot =  0x57295e0
-        size = 1000000
         """
         # We deliberately use low-level functions to minimize the
         # chances that something goes wrong here (for example, if we
@@ -1381,7 +1381,14 @@ cdef long get_var(v) except -2:
             return varno
     if v == -1:
         return -1
-    cdef bytes s = bytes(v)
+    cdef bytes s
+    IF PY_MAJOR_VERSION == 2:
+        s = bytes(v)
+    ELSE:
+        if isinstance(v, str):
+            s = (<str>v).encode('ascii')
+        else:
+            s = bytes(v)
     sig_on()
     varno = fetch_user_var(s)
     sig_off()

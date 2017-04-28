@@ -138,7 +138,8 @@ cpdef Gen objtoclosure(f):
     Examples:
 
     >>> from cypari2.closure import objtoclosure
-    >>> mul = objtoclosure(lambda i,j: i*j)
+    >>> def pymul(i,j): return i*j
+    >>> mul = objtoclosure(pymul)
     >>> mul
     (v1,v2,v3,v4,v5)->call_python(v1,v2,v3,v4,v5,...)
     >>> mul.type()
@@ -155,7 +156,7 @@ cpdef Gen objtoclosure(f):
     >>> mul(4)
     Traceback (most recent call last):
     ...
-    TypeError: <lambda>() takes exactly 2 arguments (1 given)
+    TypeError: pymul() missing 1 required positional argument: 'j'
     >>> mul(None, None)
     Traceback (most recent call last):
     ...
