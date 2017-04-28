@@ -129,11 +129,14 @@ cpdef gen_to_integer(Gen x):
     5
     >>> gen_to_integer(pari("Pol(42)"))
     42
-    >>> gen_to_integer(pari("x"))
+    >>> gen_to_integer(pari("u"))
     Traceback (most recent call last):
     ...
-    TypeError: unable to convert PARI object x of type t_POL to an integer
-    >>> gen_to_integer(pari("x + O(x^2)"))
+    TypeError: unable to convert PARI object u of type t_POL to an integer
+    >>> s = pari("x + O(x^2)")
+    >>> s
+    x + O(x^2)
+    >>> gen_to_integer(s)
     Traceback (most recent call last):
     ...
     TypeError: unable to convert PARI object x + O(x^2) of type t_SER to an integer
