@@ -14,7 +14,7 @@ install:
 
 dist:
 	chmod go+rX-w -R .
-	umask 0022 && $(PYTHON) setup.py sdist --formats=bztar
+	umask 0022 && $(PYTHON) setup.py sdist --formats=gztar
 
 
 .PHONY: build install dist
