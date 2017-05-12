@@ -31,26 +31,28 @@ AUTHORS:
 - Luca De Feo (2016-09-06): Separate Sage-specific components from
   generic C-interface in ``Pari`` (:trac:`20241`)
 
-EXAMPLES::
+Examples:
 
-    sage: pari('5! + 10/x')
-    (120*x + 10)/x
-    sage: pari('intnum(x=0,13,sin(x)+sin(x^2) + x)')
-    85.6215190762676
-    sage: f = pari('x^3-1')
-    sage: v = f.factor(); v
-    [x - 1, 1; x^2 + x + 1, 1]
-    sage: v[0]   # indexing is 0-based unlike in GP.
-    [x - 1, x^2 + x + 1]~
-    sage: v[1]
-    [1, 1]~
+>>> import cypari2
+>>> pari = cypari2.Pari()
+>>> pari('5! + 10/x')
+(120*x + 10)/x
+>>> pari('intnum(x=0,13,sin(x)+sin(x^2) + x)')
+85.6215190762676
+>>> f = pari('x^3-1')
+>>> v = f.factor(); v
+[x - 1, 1; x^2 + x + 1, 1]
+>>> v[0]   # indexing is 0-based unlike in GP.
+[x - 1, x^2 + x + 1]~
+>>> v[1]
+[1, 1]~
 
-Arithmetic operations cause all arguments to be converted to PARI::
+Arithmetic operations cause all arguments to be converted to PARI:
 
-    sage: type(pari(1) + 1)
-    <type 'sage.libs.cypari2.gen.Gen'>
-    sage: type(1 + pari(1))
-    <type 'sage.libs.cypari2.gen.Gen'>
+>>> type(pari(1) + 1)
+<type 'cypari2.gen.Gen'>
+>>> type(1 + pari(1))
+<type 'cypari2.gen.Gen'>
 
 Guide to real precision in the PARI interface
 =============================================
@@ -66,40 +68,41 @@ Real numbers in PARI have a precision associated to them, which is
 always a multiple of the CPU wordsize. So, it is a multiple of 32
 of 64 bits. When converting a ``float`` from Python to PARI, the
 ``float`` has 53 bits of precision which is rounded up to 64 bits
-in PARI::
+in PARI:
 
-    sage: x = 1.0
-    sage: pari(x)
-    1.00000000000000
-    sage: pari(x).bitprecision()
-    64
+>>> x = 1.0
+>>> pari(x)
+1.00000000000000
+>>> pari(x).bitprecision()
+64
 
 It is possible to change the precision of a PARI object with the
-:meth:`Gen.bitprecision` method::
+:meth:`Gen.bitprecision` method:
 
-    sage: p = pari(1.0)
-    sage: p.bitprecision()
-    64
-    sage: p = p.bitprecision(100)
-    sage: p.bitprecision()   # Rounded up to a multiple of the wordsize
-    128
+>>> p = pari(1.0)
+>>> p.bitprecision()
+64
+>>> p = p.bitprecision(100)
+>>> p.bitprecision()   # Rounded up to a multiple of the wordsize
+128
 
 Beware that these extra bits are just bogus. For example, this will not
 give a more precision approximation of ``math.pi``:
 
-    sage: p = pari(math.pi)
-    sage: pari("Pi") - p
-    1.225148... E-16
-    sage: p = p.bitprecision(1000)
-    sage: pari("Pi") - p
-    1.225148... E-16
+>>> import math
+>>> p = pari(math.pi)
+>>> pari("Pi") - p
+1.225148... E-16
+>>> p = p.bitprecision(1000)
+>>> pari("Pi") - p
+1.225148... E-16
 
 Another way to create numbers with many bits is to use a string with
-many digits::
+many digits:
 
-    sage: p = pari("3.1415926535897932384626433832795028842")
-    sage: p.bitprecision()
-    128
+>>> p = pari("3.1415926535897932384626433832795028842")
+>>> p.bitprecision()
+128
 
 .. _pari_output_precision:
 
@@ -115,27 +118,27 @@ Note that this will also change the input precision for strings,
 see :ref:`pari_input_precision`.
 
 We create a very precise approximation of pi and see how it is printed
-in PARI::
+in PARI:
 
-    sage: pi = pari.pi(precision=1024)
+>>> pi = pari.pi(precision=1024)
 
-The default precision is 15 digits::
+The default precision is 15 digits:
 
-    sage: pi
-    3.14159265358979
+>>> pi
+3.14159265358979
 
 With a different precision, we see more digits. Note that this does not
-affect the object ``pi`` at all, it only affects how it is printed::
+affect the object ``pi`` at all, it only affects how it is printed:
 
-    sage: _ = pari.set_real_precision(50)
-    sage: pi
-    3.1415926535897932384626433832795028841971693993751
+>>> _ = pari.set_real_precision(50)
+>>> pi
+3.1415926535897932384626433832795028841971693993751
 
-Back to the default::
+Back to the default:
 
-    sage: _ = pari.set_real_precision(15)
-    sage: pi
-    3.14159265358979
+>>> _ = pari.set_real_precision(15)
+>>> pi
+3.14159265358979
 
 .. _pari_input_precision:
 
@@ -155,14 +158,14 @@ three kinds of calls:
 
 In the first case, the relevant precision is the one set by the methods
 :meth:`Pari.set_real_precision_bits` or
-:meth:`Pari.set_real_precision`::
+:meth:`Pari.set_real_precision`:
 
-    sage: pari.set_real_precision_bits(150)
-    sage: pari("sin(1)")
-    0.841470984807896506652502321630298999622563061
-    sage: pari.set_real_precision_bits(53)
-    sage: pari("sin(1)")
-    0.841470984807897
+>>> pari.set_real_precision_bits(150)
+>>> pari("sin(1)")
+0.841470984807896506652502321630298999622563061
+>>> pari.set_real_precision_bits(53)
+>>> pari("sin(1)")
+0.841470984807897
 
 In the second case, the precision can be given as the argument
 ``precision`` in the function call, with a default of 53 bits.
@@ -172,80 +175,44 @@ The real precision set by
 (but it still affects printing).
 
 As explained before, the precision increases to a multiple of the
-wordsize. ::
+wordsize. :
 
-    sage: a = pari(1).sin(precision=180); a
-    0.841470984807897
-    sage: a.bitprecision()
-    192
-    sage: b = pari(1).sin(precision=40); b
-    0.841470984807897
-    sage: b.bitprecision()
-    64
-    sage: c = pari(1).sin(); c
-    0.841470984807897
-    sage: c.bitprecision()
-    64
-    sage: pari.set_real_precision_bits(90)
-    sage: print(a); print(b); print(c)
-    0.841470984807896506652502322
-    0.8414709848078965067
-    0.8414709848078965067
+>>> a = pari(1).sin(precision=180); a
+0.841470984807897
+>>> a.bitprecision()
+192
+>>> b = pari(1).sin(precision=40); b
+0.841470984807897
+>>> b.bitprecision()
+64
+>>> c = pari(1).sin(); c
+0.841470984807897
+>>> c.bitprecision()
+64
+>>> pari.set_real_precision_bits(90)
+>>> print(a); print(b); print(c)
+0.841470984807896506652502322
+0.8414709848078965067
+0.8414709848078965067
 
 In the third case, the precision is determined only by the inexact
-inputs and the ``precision`` argument is ignored::
+inputs and the ``precision`` argument is ignored:
 
-    sage: pari(1.0).sin(precision=180).bitprecision()
-    64
-    sage: pari(1.0).sin(precision=40).bitprecision()
-    64
-    sage: pari("1.0000000000000000000000000000000000000").sin().bitprecision()
-    128
+>>> pari(1.0).sin(precision=180).bitprecision()
+64
+>>> pari(1.0).sin(precision=40).bitprecision()
+64
+>>> pari("1.0000000000000000000000000000000000000").sin().bitprecision()
+128
 
-Elliptic curve functions
-------------------------
-
-An elliptic curve given with exact `a`-invariants is considered an
-exact object. Therefore, you should set the precision for each method
-call individually::
-
-    sage: e = pari([0,0,0,-82,0]).ellinit()
-    sage: eta1 = e.elleta(precision=100)[0]
-    sage: eta1.sage()
-    3.6054636014326520859158205642077267748
-    sage: eta1 = e.elleta(precision=180)[0]
-    sage: eta1.sage()
-    3.60546360143265208591582056420772677481026899659802474544
-
-TESTS:
+Tests:
 
 Check that output from PARI's print command is actually seen by
-Sage (:trac:`9636`)::
+Sage (:trac:`9636`):
 
-    sage: pari('print("test")')
-    test
+>>> pari('print("test")')
+test
 
-Check that ``default()`` works properly::
-
-    sage: pari.default("debug")
-    0
-    sage: pari.default("debug", 3)
-    sage: pari(2**67+1).factor()
-    IFAC: cracking composite
-            49191317529892137643
-    IFAC: factor 6713103182899
-            is prime
-    IFAC: factor 7327657
-            is prime
-    IFAC: prime 7327657
-            appears with exponent = 1
-    IFAC: prime 6713103182899
-            appears with exponent = 1
-    IFAC: found 2 large prime (power) factors.
-    [3, 1; 7327657, 1; 6713103182899, 1]
-    sage: pari.default("debug", 0)
-    sage: pari(2**67+1).factor()
-    [3, 1; 7327657, 1; 6713103182899, 1]
 """
 
 #*****************************************************************************
@@ -285,20 +252,13 @@ def prec_bits_to_dec(long prec_in_bits):
     Convert from precision expressed in bits to precision expressed in
     decimal.
 
-    EXAMPLES::
+    Examples:
 
-        sage: from sage.libs.cypari2.pari_instance import prec_bits_to_dec
-        sage: prec_bits_to_dec(53)
-        15
-        sage: [(32*n, prec_bits_to_dec(32*n)) for n in range(1, 9)]
-        [(32, 9),
-        (64, 19),
-        (96, 28),
-        (128, 38),
-        (160, 48),
-        (192, 57),
-        (224, 67),
-        (256, 77)]
+    >>> from cypari2.pari_instance import prec_bits_to_dec
+    >>> prec_bits_to_dec(53)
+    15
+    >>> [(32*n, prec_bits_to_dec(32*n)) for n in range(1, 9)]
+    [(32, 9), (64, 19), (96, 28), (128, 38), (160, 48), (192, 57), (224, 67), (256, 77)]
     """
     return nbits2ndec(prec_in_bits)
 
@@ -307,21 +267,13 @@ def prec_dec_to_bits(long prec_in_dec):
     Convert from precision expressed in decimal to precision expressed
     in bits.
 
-    EXAMPLES::
+    Examples:
 
-        sage: from sage.libs.cypari2.pari_instance import prec_dec_to_bits
-        sage: prec_dec_to_bits(15)
-        50
-        sage: [(n, prec_dec_to_bits(n)) for n in range(10, 100, 10)]
-        [(10, 34),
-        (20, 67),
-        (30, 100),
-        (40, 133),
-        (50, 167),
-        (60, 200),
-        (70, 233),
-        (80, 266),
-        (90, 299)]
+    >>> from cypari2.pari_instance import prec_dec_to_bits
+    >>> prec_dec_to_bits(15)
+    50
+    >>> [(n, prec_dec_to_bits(n)) for n in range(10, 100, 10)]
+    [(10, 34), (20, 67), (30, 100), (40, 133), (50, 167), (60, 200), (70, 233), (80, 266), (90, 299)]
     """
     cdef double log_10 = 3.32192809488736
     return int(prec_in_dec*log_10 + 1.0)  # Add one to round up
@@ -333,18 +285,18 @@ cpdef long prec_bits_to_words(unsigned long prec_in_bits):
     adjusts for the two codewords of a pari real, and is
     architecture-dependent.
 
-    EXAMPLES::
+    Examples:
 
-        sage: from sage.libs.cypari2.pari_instance import prec_bits_to_words
-        sage: prec_bits_to_words(70)
-        5   # 32-bit
-        4   # 64-bit
+    >>> from cypari2.pari_instance import prec_bits_to_words
+    >>> import sys
+    >>> bitness = '64' if sys.maxsize > (1 << 32) else '32'
+    >>> prec_bits_to_words(70) == (5 if bitness == '32' else 4)
+    True
 
-    ::
-
-        sage: [(32*n, prec_bits_to_words(32*n)) for n in range(1, 9)]
-        [(32, 3), (64, 4), (96, 5), (128, 6), (160, 7), (192, 8), (224, 9), (256, 10)] # 32-bit
-        [(32, 3), (64, 3), (96, 4), (128, 4), (160, 5), (192, 5), (224, 6), (256, 6)] # 64-bit
+    >>> ans32 = [(32, 3), (64, 4), (96, 5), (128, 6), (160, 7), (192, 8), (224, 9), (256, 10)]
+    >>> ans64 = [(32, 3), (64, 3), (96, 4), (128, 4), (160, 5), (192, 5), (224, 6), (256, 6)]
+    >>> [(32*n, prec_bits_to_words(32*n)) for n in range(1, 9)] == (ans32 if bitness == '32' else ans64)
+    True
     """
     if not prec_in_bits:
         return prec
@@ -359,15 +311,18 @@ cpdef long prec_words_to_bits(long prec_in_words):
     expressed in bits. Note: this adjusts for the two codewords of a
     pari real, and is architecture-dependent.
 
-    EXAMPLES::
+    Examples:
 
-        sage: from sage.libs.cypari2.pari_instance import prec_words_to_bits
-        sage: prec_words_to_bits(10)
-        256   # 32-bit
-        512   # 64-bit
-        sage: [(n, prec_words_to_bits(n)) for n in range(3, 10)]
-        [(3, 32), (4, 64), (5, 96), (6, 128), (7, 160), (8, 192), (9, 224)]  # 32-bit
-        [(3, 64), (4, 128), (5, 192), (6, 256), (7, 320), (8, 384), (9, 448)] # 64-bit
+    >>> from cypari2.pari_instance import prec_words_to_bits
+    >>> import sys
+    >>> bitness = '64' if sys.maxsize > (1 << 32) else '32'
+    >>> prec_words_to_bits(10) == (256 if bitness == '32' else 512)
+    True
+
+    >>> ans32 = [(3, 32), (4, 64), (5, 96), (6, 128), (7, 160), (8, 192), (9, 224)]
+    >>> ans64 = [(3, 64), (4, 128), (5, 192), (6, 256), (7, 320), (8, 384), (9, 448)] # 64-bit
+    >>> [(n, prec_words_to_bits(n)) for n in range(3, 10)] == (ans32 if bitness == '32' else ans64)
+    True
     """
     # see user's guide to the pari library, page 10
     return (prec_in_words - 2) * BITS_IN_LONG
@@ -376,11 +331,11 @@ cpdef long default_bitprec():
     r"""
     Return the default precision in bits.
 
-    EXAMPLES::
+    Examples:
 
-        sage: from sage.libs.cypari2.pari_instance import default_bitprec
-        sage: default_bitprec()
-        64
+    >>> from cypari2.pari_instance import default_bitprec
+    >>> default_bitprec()
+    64
     """
     return (prec - 2) * BITS_IN_LONG
 
@@ -390,15 +345,18 @@ def prec_dec_to_words(long prec_in_dec):
     in words. Note: this rounds up to the nearest word, adjusts for the
     two codewords of a pari real, and is architecture-dependent.
 
-    EXAMPLES::
+    Examples:
 
-        sage: from sage.libs.cypari2.pari_instance import prec_dec_to_words
-        sage: prec_dec_to_words(38)
-        6   # 32-bit
-        4   # 64-bit
-        sage: [(n, prec_dec_to_words(n)) for n in range(10, 90, 10)]
-        [(10, 4), (20, 5), (30, 6), (40, 7), (50, 8), (60, 9), (70, 10), (80, 11)] # 32-bit
-        [(10, 3), (20, 4), (30, 4), (40, 5), (50, 5), (60, 6), (70, 6), (80, 7)] # 64-bit
+    >>> from cypari2.pari_instance import prec_dec_to_words
+    >>> import sys
+    >>> bitness = '64' if sys.maxsize > (1 << 32) else '32'
+    >>> prec_dec_to_words(38) == (6 if bitness == '32' else 4)
+    True
+
+    >>> ans32 = [(10, 4), (20, 5), (30, 6), (40, 7), (50, 8), (60, 9), (70, 10), (80, 11)]
+    >>> ans64 = [(10, 3), (20, 4), (30, 4), (40, 5), (50, 5), (60, 6), (70, 6), (80, 7)] # 64-bit
+    >>> [(n, prec_dec_to_words(n)) for n in range(10, 90, 10)] == (ans32 if bitness == '32' else ans64)
+    True
     """
     return prec_bits_to_words(prec_dec_to_bits(prec_in_dec))
 
@@ -408,15 +366,18 @@ def prec_words_to_dec(long prec_in_words):
     decimal. Note: this adjusts for the two codewords of a pari real,
     and is architecture-dependent.
 
-    EXAMPLES::
+    Examples:
 
-        sage: from sage.libs.cypari2.pari_instance import prec_words_to_dec
-        sage: prec_words_to_dec(5)
-        28   # 32-bit
-        57   # 64-bit
-        sage: [(n, prec_words_to_dec(n)) for n in range(3, 10)]
-        [(3, 9), (4, 19), (5, 28), (6, 38), (7, 48), (8, 57), (9, 67)] # 32-bit
-        [(3, 19), (4, 38), (5, 57), (6, 77), (7, 96), (8, 115), (9, 134)] # 64-bit
+    >>> from cypari2.pari_instance import prec_words_to_dec
+    >>> import sys
+    >>> bitness = '64' if sys.maxsize > (1 << 32) else '32'
+    >>> prec_words_to_dec(5) == (28 if bitness == '32' else 57)
+    True
+
+    >>> ans32 = [(3, 9), (4, 19), (5, 28), (6, 38), (7, 48), (8, 57), (9, 67)]
+    >>> ans64 = [(3, 19), (4, 38), (5, 57), (6, 77), (7, 96), (8, 115), (9, 134)]
+    >>> [(n, prec_words_to_dec(n)) for n in range(3, 10)] == (ans32 if bitness == '32' else ans64)
+    True
     """
     return prec_bits_to_dec(prec_words_to_bits(prec_in_words))
 
@@ -449,11 +410,11 @@ cdef class Pari(Pari_auto):
         r"""
         (Re)-initialize the PARI library.
 
-        TESTS::
+        Tests:
 
-            sage: from sage.libs.cypari2.pari_instance import Pari
-            sage: Pari.__new__(Pari)
-            Interface to the PARI C library
+        >>> from cypari2.pari_instance import Pari
+        >>> Pari.__new__(Pari)
+        Interface to the PARI C library
         """
         # PARI is already initialized, nothing to do...
         if avma:
@@ -521,22 +482,23 @@ cdef class Pari(Pari_auto):
         of primes is only computed is ``maxprime`` is larger than the current
         bound.
 
-        EXAMPLES::
+        Examples:
 
-            sage: from sage.libs.cypari2.pari_instance import Pari
-            sage: pari2 = Pari(10**7)
-            sage: pari2
-            Interface to the PARI C library
-            sage: pari2 is pari
-            False
-            sage: pari2.PARI_ZERO == pari.PARI_ZERO
-            True
-            sage: pari2 = Pari(10**6)
-            sage: pari.stacksize(), pari2.stacksize()
-            (10000000, 10000000)
+        >>> from cypari2.pari_instance import Pari
+        >>> pari = Pari()
+        >>> pari2 = Pari(10**7)
+        >>> pari2
+        Interface to the PARI C library
+        >>> pari2 is pari
+        False
+        >>> pari2.PARI_ZERO == pari.PARI_ZERO
+        True
+        >>> pari2 = Pari(10**6)
+        >>> pari.stacksize(), pari2.stacksize()
+        (10000000, 10000000)
 
         For more information about how precision works in the PARI
-        interface, see :mod:`sage.libs.cypari2.pari_instance`.
+        interface, see :mod:`cypari2.pari_instance`.
 
         .. NOTE::
 
@@ -586,14 +548,15 @@ cdef class Pari(Pari_auto):
         If you want to reallocate the PARI library again, construct
         a new instance of :class:`Pari`.
 
-        EXAMPLES::
+        Examples:
 
-            sage: from sage.libs.cypari2.pari_instance import Pari
-            sage: pari2 = Pari(10**7)
-            sage: pari2._close()
-            sage: pari2 = Pari(10**6)
-            sage: pari.stacksize()
-            1000000
+        >>> from cypari2.pari_instance import Pari
+        >>> pari = Pari()
+        >>> pari2 = Pari(10**7)
+        >>> pari2._close()
+        >>> pari2 = Pari(10**6)
+        >>> pari.stacksize()
+        1000000
 
         .. WARNING::
 
@@ -617,13 +580,15 @@ cdef class Pari(Pari_auto):
         (available memory address, think of this as the stack pointer),
         ``bot`` (bottom of stack).
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.debugstack()  # random
-            top =  0x60b2c60
-            avma = 0x5875c38
-            bot =  0x57295e0
-            size = 1000000
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.debugstack()  # random
+        top =  0x60b2c60
+        avma = 0x5875c38
+        bot =  0x57295e0
+        size = 1000000
         """
         # We deliberately use low-level functions to minimize the
         # chances that something goes wrong here (for example, if we
@@ -668,12 +633,14 @@ cdef class Pari(Pari_auto):
         .. seealso:: :meth:`set_real_precision` to set the
            precision in decimal digits.
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.set_real_precision_bits(200)
-            sage: pari('1.2')
-            1.20000000000000000000000000000000000000000000000000000000000
-            sage: pari.set_real_precision_bits(53)
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.set_real_precision_bits(200)
+        >>> pari('1.2')
+        1.20000000000000000000000000000000000000000000000000000000000
+        >>> pari.set_real_precision_bits(53)
         """
         cdef bytes strn = str(n).encode("ascii")
         sig_on()
@@ -695,10 +662,12 @@ cdef class Pari(Pari_auto):
         .. seealso:: :meth:`get_real_precision` to get the
            precision in decimal digits.
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.get_real_precision_bits()
-            53
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.get_real_precision_bits()
+        53
         """
         cdef long r
         sig_on()
@@ -722,14 +691,16 @@ cdef class Pari(Pari_auto):
         .. seealso:: :meth:`set_real_precision_bits` to set the
            precision in bits.
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.set_real_precision(60)
-            15
-            sage: pari('1.2')
-            1.20000000000000000000000000000000000000000000000000000000000
-            sage: pari.set_real_precision(15)
-            60
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.set_real_precision(60)
+        15
+        >>> pari('1.2')
+        1.20000000000000000000000000000000000000000000000000000000000
+        >>> pari.set_real_precision(15)
+        60
         """
         old = self.get_real_precision()
         self.set_real_precision_bits(prec_dec_to_bits(n))
@@ -749,10 +720,12 @@ cdef class Pari(Pari_auto):
         .. seealso:: :meth:`get_real_precision_bits` to get the
            precision in bits.
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.get_real_precision()
-            15
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.get_real_precision()
+        15
         """
         cdef long r
         sig_on()
@@ -772,20 +745,24 @@ cdef class Pari(Pari_auto):
         Create a new Gen with the value of the double x, using Pari's
         dbltor.
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.double_to_gen(1)
-            doctest:warning
-            ...
-            DeprecationWarning: pari.double_to_gen(x) is deprecated, use pari(x) instead
-            1.00000000000000
-            sage: pari.double_to_gen(1e30)
-            1.00000000000000 E30
-            sage: pari.double_to_gen(0)
-            0.E-15
-            sage: import math
-            sage: pari.double_to_gen(-math.sqrt(2))
-            -1.41421356237310
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> import warnings
+        >>> import math
+        >>> with warnings.catch_warnings(record=True) as w:
+        ...     warnings.simplefilter('always')
+        ...     pari.double_to_gen(1)
+        ...     pari.double_to_gen(1e30)
+        ...     pari.double_to_gen(0)
+        ...     pari.double_to_gen(-math.sqrt(2))
+        ...     assert len(w) == 4
+        ...     assert all(issubclass(u.category, DeprecationWarning) for u in w)
+        1.00000000000000
+        1.00000000000000 E30
+        0.E-15
+        -1.41421356237310
         """
         # Deprecated in https://trac.sagemath.org/ticket/20241
         from warnings import warn
@@ -805,19 +782,19 @@ cdef class Pari(Pari_auto):
         """
         Create the PARI object obtained by evaluating s using PARI.
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari(0)
-            0
-            sage: pari([2,3,5])
-            [2, 3, 5]
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari(0)
+        0
+        >>> pari([2,3,5])
+        [2, 3, 5]
 
-        ::
-
-            sage: a = pari(1); a, a.type()
-            (1, 't_INT')
-            sage: a = pari(1/2); a, a.type()
-            (1/2, 't_FRAC')
+        >>> a = pari(1); a, a.type()
+        (1, 't_INT')
+        >>> a = pari('1/2'); a, a.type()
+        (1/2, 't_FRAC')
 
         See :func:`pari` for more examples.
         """
@@ -825,19 +802,23 @@ cdef class Pari(Pari_auto):
 
     cpdef Gen zero(self):
         """
-        EXAMPLES::
+        Examples:
 
-            sage: pari.zero()
-            0
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.zero()
+        0
         """
         return self.PARI_ZERO
 
     cpdef Gen one(self):
         """
-        EXAMPLES::
+        Examples:
 
-            sage: pari.one()
-            1
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.one()
+        1
         """
         return self.PARI_ONE
 
@@ -872,13 +853,15 @@ cdef class Pari(Pari_auto):
             - :meth:`allocatemem` to change the current or maximum
               stack size
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.stacksize()
-            1000000
-            sage: pari.allocatemem(2**18, silent=True)
-            sage: pari.stacksize()
-            262144
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.stacksize()
+        8000000
+        >>> pari.allocatemem(2**18, silent=True)
+        >>> pari.stacksize()
+        262144
         """
         return pari_mainstack.size
 
@@ -895,11 +878,13 @@ cdef class Pari(Pari_auto):
             - :meth:`allocatemem` to change the current or maximum
               stack size
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.allocatemem(2**18, 2**26, silent=True)
-            sage: pari.stacksizemax()
-            67108864
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.allocatemem(2**18, 2**26, silent=True)
+        >>> pari.stacksizemax()
+        67108864
         """
         return pari_mainstack.vsize
 
@@ -934,56 +919,58 @@ cdef class Pari(Pari_auto):
           ``sizemax`` is 0, the maximum of the current maximum and
           ``s`` is taken.
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.allocatemem(10**7)
-            PARI stack size set to 10000000 bytes, maximum size set to 67108864
-            sage: pari.allocatemem()  # Double the current size
-            PARI stack size set to 20000000 bytes, maximum size set to 67108864
-            sage: pari.stacksize()
-            20000000
-            sage: pari.allocatemem(10**6)
-            PARI stack size set to 1000000 bytes, maximum size set to 67108864
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.allocatemem(10**7)
+        PARI stack size set to 10000000 bytes, maximum size set to 10002432
+        >>> pari.allocatemem()  # Double the current size
+        PARI stack size set to 20000000 bytes, maximum size set to 20000768
+        >>> pari.stacksize()
+        20000000
+        >>> pari.allocatemem(10**6)
+        PARI stack size set to 1000000 bytes, maximum size set to 20000768
 
         The following computation will automatically increase the PARI
-        stack size::
+        stack size:
 
-            sage: a = pari('2^100000000')
+        >>> a = pari('2^100000000')
 
         ``a`` is now a Python variable on the Python heap and does not
         take up any space on the PARI stack.  The PARI stack is still
-        large because of the computation of ``a``::
+        large because of the computation of ``a``:
 
-            sage: pari.stacksize()  # random
-            12500264
+        >>> pari.stacksize() > 10**6
+        True
 
-        Setting a small maximum size makes this fail::
+        Setting a small maximum size makes this fail:
 
-            sage: pari.allocatemem(10**6, 2**22)
-            PARI stack size set to 1000000 bytes, maximum size set to 4194304
-            sage: a = pari('2^100000000')
-            Traceback (most recent call last):
-            ...
-            PariError: _^s: the PARI stack overflows (current size: 1000000; maximum size: 4194304)
-            You can use pari.allocatemem() to change the stack size and try again
+        >>> pari.allocatemem(10**6, 2**22)
+        PARI stack size set to 1000000 bytes, maximum size set to 4194304
+        >>> a = pari('2^100000000')
+        Traceback (most recent call last):
+        ...
+        PariError: _^s: the PARI stack overflows (current size: 1000000; maximum size: 4194304)
+        You can use pari.allocatemem() to change the stack size and try again
 
-        TESTS:
+        Tests:
 
         Do the same without using the string interface and starting
-        from a very small stack size::
+        from a very small stack size:
 
-            sage: pari.allocatemem(1, 2**26)
-            PARI stack size set to 1024 bytes, maximum size set to 67108864
-            sage: a = pari(2)**100000000
-            sage: pari.stacksize()  # random
-            12500024
+        >>> pari.allocatemem(1, 2**26)
+        PARI stack size set to 1024 bytes, maximum size set to 67108864
+        >>> a = pari(2)**100000000
+        >>> pari.stacksize() > 10**6
+        True
 
-        We do not allow ``sizemax`` less than ``s``::
+        We do not allow ``sizemax`` less than ``s``:
 
-            sage: pari.allocatemem(10**7, 10**6)
-            Traceback (most recent call last):
-            ...
-            ValueError: the maximum size (10000000) should be at least the stack size (1000000)
+        >>> pari.allocatemem(10**7, 10**6)
+        Traceback (most recent call last):
+        ...
+        ValueError: the maximum size (10000000) should be at least the stack size (1000000)
         """
         if s == 0:
             s = pari_mainstack.size * 2
@@ -1015,13 +1002,15 @@ cdef class Pari(Pari_auto):
         Recompute the primes table including at least all primes up to M
         (but possibly more).
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.init_primes(200000)
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.init_primes(200000)
 
         We make sure that ticket :trac:`11741` has been fixed::
 
-            sage: pari.init_primes(2**30)
+            >>> pari.init_primes(2**30)
             Traceback (most recent call last):
             ...
             ValueError: Cannot compute primes beyond 436273290
@@ -1061,37 +1050,39 @@ cdef class Pari(Pari_auto):
 
         OUTPUT: a PARI list of prime numbers
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.primes(3)
-            [2, 3, 5]
-            sage: pari.primes(10)
-            [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
-            sage: pari.primes(20)
-            [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71]
-            sage: len(pari.primes(1000))
-            1000
-            sage: pari.primes(11,29)
-            [11, 13, 17, 19, 23, 29]
-            sage: pari.primes((11,29))
-            [11, 13, 17, 19, 23, 29]
-            sage: pari.primes(end=29)
-            [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
-            sage: pari.primes(10**30, 10**30 + 100)
-            [1000000000000000000000000000057, 1000000000000000000000000000099]
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.primes(3)
+        [2, 3, 5]
+        >>> pari.primes(10)
+        [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+        >>> pari.primes(20)
+        [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71]
+        >>> len(pari.primes(1000))
+        1000
+        >>> pari.primes(11,29)
+        [11, 13, 17, 19, 23, 29]
+        >>> pari.primes((11,29))
+        [11, 13, 17, 19, 23, 29]
+        >>> pari.primes(end=29)
+        [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+        >>> pari.primes(10**30, 10**30 + 100)
+        [1000000000000000000000000000057, 1000000000000000000000000000099]
 
-        TESTS::
+        Tests:
 
-            sage: pari.primes(0)
-            []
-            sage: pari.primes(-1)
-            []
-            sage: pari.primes(end=1)
-            []
-            sage: pari.primes(end=-1)
-            []
-            sage: pari.primes(3,2)
-            []
+        >>> pari.primes(0)
+        []
+        >>> pari.primes(-1)
+        []
+        >>> pari.primes(end=1)
+        []
+        >>> pari.primes(end=-1)
+        []
+        >>> pari.primes(3,2)
+        []
         """
         cdef Gen t0, t1
         if end is None:
@@ -1114,14 +1105,16 @@ cdef class Pari(Pari_auto):
         Chebyshev polynomial of the first kind of degree `n`,
         in the variable `v`.
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.polchebyshev(7)
-            64*x^7 - 112*x^5 + 56*x^3 - 7*x
-            sage: pari.polchebyshev(7, 'z')
-            64*z^7 - 112*z^5 + 56*z^3 - 7*z
-            sage: pari.polchebyshev(0)
-            1
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.polchebyshev(7)
+        64*x^7 - 112*x^5 + 56*x^3 - 7*x
+        >>> pari.polchebyshev(7, 'z')
+        64*z^7 - 112*z^5 + 56*z^3 - 7*z
+        >>> pari.polchebyshev(0)
+        1
         """
         sig_on()
         return new_gen(polchebyshev1(n, get_var(v)))
@@ -1130,16 +1123,18 @@ cdef class Pari(Pari_auto):
         """
         Return the factorial of the integer n as a PARI gen.
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.factorial(0)
-            1
-            sage: pari.factorial(1)
-            1
-            sage: pari.factorial(5)
-            120
-            sage: pari.factorial(25)
-            15511210043330985984000000
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.factorial(0)
+        1
+        >>> pari.factorial(1)
+        1
+        >>> pari.factorial(5)
+        120
+        >>> pari.factorial(25)
+        15511210043330985984000000
         """
         sig_on()
         return new_gen(mpfact(n))
@@ -1151,15 +1146,18 @@ cdef class Pari(Pari_auto):
         cyclotomic field `\QQ(\zeta_n)`, where `d`
         divides `\phi(n)`.
 
-        EXAMPLES::
+        Examples::
 
-            sage: pari.polsubcyclo(8, 4)
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+
+            >>> pari.polsubcyclo(8, 4)
             [x^4 + 1]
-            sage: pari.polsubcyclo(8, 2, 'z')
+            >>> pari.polsubcyclo(8, 2, 'z')
             [z^2 + 2, z^2 - 2, z^2 + 1]
-            sage: pari.polsubcyclo(8, 1)
+            >>> pari.polsubcyclo(8, 1)
             [x - 1]
-            sage: pari.polsubcyclo(8, 3)
+            >>> pari.polsubcyclo(8, 3)
             []
         """
         cdef Gen plist
@@ -1183,22 +1181,24 @@ cdef class Pari(Pari_auto):
         random number seed handling in ``sage.misc.randstate``
         and call ``current_randstate().set_seed_pari()``.
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.setrand(50)
-            sage: a = pari.getrand()
-            sage: pari.setrand(a)
-            sage: a == pari.getrand()
-            True
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.setrand(50)
+        >>> a = pari.getrand()
+        >>> pari.setrand(a)
+        >>> a == pari.getrand()
+        True
 
-        TESTS:
+        Tests:
 
-        Check that invalid inputs are handled properly (:trac:`11825`)::
+        Check that invalid inputs are handled properly:
 
-            sage: pari.setrand("foobar")
-            Traceback (most recent call last):
-            ...
-            PariError: incorrect type in setrand (t_POL)
+        >>> pari.setrand("foobar")
+        Traceback (most recent call last):
+        ...
+        PariError: incorrect type in setrand (t_POL)
         """
         cdef Gen t0 = self(seed)
         sig_on()
@@ -1210,16 +1210,18 @@ cdef class Pari(Pari_auto):
         vector(long n, entries=None): Create and return the length n PARI
         vector with given list of entries.
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.vector(5, [1, 2, 5, 4, 3])
-            [1, 2, 5, 4, 3]
-            sage: pari.vector(2, [x, 1])
-            [x, 1]
-            sage: pari.vector(2, [x, 1, 5])
-            Traceback (most recent call last):
-            ...
-            IndexError: length of entries (=3) must equal n (=2)
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.vector(5, [1, 2, 5, 4, 3])
+        [1, 2, 5, 4, 3]
+        >>> pari.vector(2, ['x', 1])
+        [x, 1]
+        >>> pari.vector(2, ['x', 1, 5])
+        Traceback (most recent call last):
+        ...
+        IndexError: length of entries (=3) must equal n (=2)
         """
         cdef Gen v = self._empty_vector(n)
         if entries is not None:
@@ -1241,10 +1243,12 @@ cdef class Pari(Pari_auto):
         matrix(long m, long n, entries=None): Create and return the m x n
         PARI matrix with given list of entries.
 
-        EXAMPLES::
+        Examples:
 
-            sage: pari.matrix(3,3,range(9))
-            [0, 1, 2; 3, 4, 5; 6, 7, 8]
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.matrix(3,3,range(9))
+        [0, 1, 2; 3, 4, 5; 6, 7, 8]
         """
         cdef long i, j, k
         cdef Gen A
@@ -1274,11 +1278,13 @@ cdef class Pari(Pari_auto):
         the polynomials `P` and `Q` have integer coefficients, to
         represent the model `y^2 + Q(x)y = P(x)`.
 
-        EXAMPLES::
+        Examples:
 
-            sage: x = pari('x')
-            sage: pari.genus2red([-5*x**5, x**3 - 2*x**2 - 2*x + 1])
-            [1416875, [2, -1; 5, 4; 2267, 1], x^6 - 240*x^4 - 2550*x^3 - 11400*x^2 - 24100*x - 19855, [[2, [2, [Mod(1, 2)]], []], [5, [1, []], ["[V] page 156", [3]]], [2267, [2, [Mod(432, 2267)]], ["[I{1-0-0}] page 170", []]]]]
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> x = pari('x')
+        >>> pari.genus2red([-5*x**5, x**3 - 2*x**2 - 2*x + 1])
+        [1416875, [2, -1; 5, 4; 2267, 1], x^6 - 240*x^4 - 2550*x^3 - 11400*x^2 - 24100*x - 19855, [[2, [2, [Mod(1, 2)]], []], [5, [1, []], ["[V] page 156", [3]]], [2267, [2, [Mod(432, 2267)]], ["[I{1-0-0}] page 170", []]]]]
         """
         cdef Gen t0 = objtogen(P)
         sig_on()
@@ -1288,21 +1294,23 @@ cdef class Pari(Pari_auto):
         """
         Create an empty list or convert `x` to a list.
 
-        EXAMPLES::
+        Examples::
 
-            sage: pari.List(range(5))
-            List([0, 1, 2, 3, 4])
-            sage: L = pari.List()
-            sage: L
-            List([])
-            sage: L.listput(42, 1)
-            42
-            sage: L
-            List([42])
-            sage: L.listinsert(24, 1)
-            24
-            sage: L
-            List([24, 42])
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> pari.List(range(5))
+        List([0, 1, 2, 3, 4])
+        >>> L = pari.List()
+        >>> L
+        List([])
+        >>> L.listput(42, 1)
+        42
+        >>> L
+        List([42])
+        >>> L.listinsert(24, 1)
+        24
+        >>> L
+        List([24, 42])
         """
         if x is None:
             sig_on()
@@ -1331,32 +1339,34 @@ cdef long get_var(v) except -2:
         you want variable names which cannot be confused with
         ordinary user variables.
 
-    EXAMPLES:
+    Examples:
 
-    We test this function using ``Pol()`` which calls this function::
+    We test this function using ``Pol()`` which calls this function:
 
-        sage: pari("[1,0]").Pol()
-        x
-        sage: pari("[2,0]").Pol('x')
-        2*x
-        sage: pari("[Pi,0]").Pol('!@#$%^&')
-        3.14159265358979*!@#$%^&
+    >>> import cypari2
+    >>> pari = cypari2.Pari()
+    >>> pari("[1,0]").Pol()
+    x
+    >>> pari("[2,0]").Pol('x')
+    2*x
+    >>> pari("[Pi,0]").Pol('!@#$%^&')
+    3.14159265358979*!@#$%^&
 
     We can use ``varhigher()`` and ``varlower()`` to create
     temporary variables without a name. The ``"xx"`` below is just a
     string to display the variable, it doesn't create a variable
-    ``"xx"``::
+    ``"xx"``:
 
-        sage: xx = pari.varhigher("xx")
-        sage: pari("[x,0]").Pol(xx)
-        x*xx
+    >>> xx = pari.varhigher("xx")
+    >>> pari("[x,0]").Pol(xx)
+    x*xx
 
-    Indeed, this is not the same as::
+    Indeed, this is not the same as:
 
-        sage: pari("[x,0]").Pol("xx")
-        Traceback (most recent call last):
-        ...
-        PariError: incorrect priority in gtopoly: variable x <= xx
+    >>> pari("[x,0]").Pol("xx")
+    Traceback (most recent call last):
+    ...
+    PariError: incorrect priority in gtopoly: variable x <= xx
     """
     if v is None:
         return -1

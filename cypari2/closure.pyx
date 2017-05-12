@@ -5,17 +5,19 @@ AUTHORS:
 
 - Jeroen Demeyer (2015-04-10): initial version, :trac:`18052`.
 
-EXAMPLES::
+Examples:
 
-    sage: def the_answer():
-    ....:     return 42
-    sage: f = pari(the_answer)
-    sage: f()
-    42
+>>> def the_answer():
+...     return 42
+>>> import cypari2
+>>> pari = cypari2.Pari()
+>>> f = pari(the_answer)
+>>> f()
+42
 
-    sage: cube = pari(lambda i: i**3)
-    sage: cube.apply(range(10))
-    [0, 1, 8, 27, 64, 125, 216, 343, 512, 729]
+>>> cube = pari(lambda i: i**3)
+>>> cube.apply(range(10))
+[0, 1, 8, 27, 64, 125, 216, 343, 512, 729]
 """
 
 #*****************************************************************************
@@ -133,39 +135,39 @@ cpdef Gen objtoclosure(f):
         be interrupted. Therefore, it is advised to use this only for
         simple functions which do not take a long time.
 
-    EXAMPLES::
+    Examples:
 
-        sage: from sage.libs.cypari2.closure import objtoclosure
-        sage: mul = objtoclosure(lambda i,j: i*j)
-        sage: mul
-        (v1,v2,v3,v4,v5)->call_python(v1,v2,v3,v4,v5,...)
-        sage: mul.type()
-        't_CLOSURE'
-        sage: mul(6,9)
-        54
-        sage: def printme(x):
-        ....:     print(x)
-        sage: objtoclosure(printme)('matid(2)')
-        [1, 0; 0, 1]
+    >>> from cypari2.closure import objtoclosure
+    >>> mul = objtoclosure(lambda i,j: i*j)
+    >>> mul
+    (v1,v2,v3,v4,v5)->call_python(v1,v2,v3,v4,v5,...)
+    >>> mul.type()
+    't_CLOSURE'
+    >>> mul(6,9)
+    54
+    >>> def printme(x):
+    ...     print(x)
+    >>> objtoclosure(printme)('matid(2)')
+    [1, 0; 0, 1]
 
-    Test various kinds of errors::
+    Test various kinds of errors:
 
-        sage: mul(4)
-        Traceback (most recent call last):
-        ...
-        TypeError: <lambda>() takes exactly 2 arguments (1 given)
-        sage: mul(None, None)
-        Traceback (most recent call last):
-        ...
-        ValueError: Cannot convert None to pari
-        sage: mul(*range(100))
-        Traceback (most recent call last):
-        ...
-        PariError: call_python: too many parameters in user-defined function call
-        sage: mul([1], [2])
-        Traceback (most recent call last):
-        ...
-        PariError: call_python: forbidden multiplication t_VEC (1 elts) * t_VEC (1 elts)
+    >>> mul(4)
+    Traceback (most recent call last):
+    ...
+    TypeError: <lambda>() takes exactly 2 arguments (1 given)
+    >>> mul(None, None)
+    Traceback (most recent call last):
+    ...
+    ValueError: Cannot convert None to pari
+    >>> mul(*range(100))
+    Traceback (most recent call last):
+    ...
+    PariError: call_python: too many parameters in user-defined function call
+    >>> mul([1], [2])
+    Traceback (most recent call last):
+    ...
+    PariError: call_python: forbidden multiplication t_VEC (1 elts) * t_VEC (1 elts)
     """
     sig_on()
     # Convert f to a t_INT containing the address of f

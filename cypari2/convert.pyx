@@ -65,26 +65,28 @@ cpdef integer_to_gen(x):
     Convert a Python ``int`` or ``long`` to a PARI ``gen`` of type
     ``t_INT``.
 
-    EXAMPLES::
+    Examples:
 
-        sage: from sage.libs.cypari2.convert import integer_to_gen
-        sage: a = integer_to_gen(int(12345)); a; type(a)
-        12345
-        <... 'sage.libs.cypari2.gen.Gen'>
-        sage: a = integer_to_gen(long(12345)); a; type(a)
-        12345
-        <... 'sage.libs.cypari2.gen.Gen'>
-        sage: integer_to_gen(float(12345))
-        Traceback (most recent call last):
-        ...
-        TypeError: integer_to_gen() needs an int or long argument, not float
+    >>> from cypari2.convert import integer_to_gen
+    >>> from cypari2 import Pari
+    >>> pari = Pari()
+    >>> a = integer_to_gen(int(12345)); a; type(a)
+    12345
+    <... 'cypari2.gen.Gen'>
+    >>> a = integer_to_gen(long(12345)); a; type(a)
+    12345
+    <... 'cypari2.gen.Gen'>
+    >>> integer_to_gen(float(12345))
+    Traceback (most recent call last):
+    ...
+    TypeError: integer_to_gen() needs an int or long argument, not float
 
-    TESTS::
+    Tests:
 
-        sage: for i in range(10000):
-        ....:     x = 3**i
-        ....:     if pari(long(x)) != pari(x):
-        ....:         print(x)
+    >>> for i in range(10000):
+    ...     x = 3**i
+    ...     if pari(long(x)) != pari(x):
+    ...         print(x)
     """
     if isinstance(x, int):
         sig_on()
@@ -104,63 +106,65 @@ cpdef gen_to_integer(Gen x):
       real ``t_COMPLEX``, a ``t_INTMOD`` or ``t_PADIC`` (which are
       lifted).
 
-    EXAMPLES::
+    Examples:
 
-        sage: from sage.libs.cypari2.convert import gen_to_integer
-        sage: a = gen_to_integer(pari("12345")); a; type(a)
-        12345
-        <... 'int'>
-        sage: a = gen_to_integer(pari("10^30")); a; type(a)
-        1000000000000000000000000000000L
-        <... 'long'>
-        sage: gen_to_integer(pari("19/5"))
-        3
-        sage: gen_to_integer(pari("1 + 0.0*I"))
-        1
-        sage: gen_to_integer(pari("3/2 + 0.0*I"))
-        1
-        sage: gen_to_integer(pari("Mod(-1, 11)"))
-        10
-        sage: gen_to_integer(pari("5 + O(5^10)"))
-        5
-        sage: gen_to_integer(pari("Pol(42)"))
-        42
-        sage: gen_to_integer(pari("x"))
-        Traceback (most recent call last):
-        ...
-        TypeError: unable to convert PARI object x of type t_POL to an integer
-        sage: gen_to_integer(pari("x + O(x^2)"))
-        Traceback (most recent call last):
-        ...
-        TypeError: unable to convert PARI object x + O(x^2) of type t_SER to an integer
-        sage: gen_to_integer(pari("1 + I"))
-        Traceback (most recent call last):
-        ...
-        TypeError: unable to convert PARI object 1 + I of type t_COMPLEX to an integer
+    >>> from cypari2.convert import gen_to_integer
+    >>> from cypari2 import Pari
+    >>> pari = Pari()
+    >>> a = gen_to_integer(pari("12345")); a; type(a)
+    12345
+    <... 'int'>
+    >>> a = gen_to_integer(pari("10^30")); a; type(a)
+    1000000000000000000000000000000L
+    <... 'long'>
+    >>> gen_to_integer(pari("19/5"))
+    3
+    >>> gen_to_integer(pari("1 + 0.0*I"))
+    1
+    >>> gen_to_integer(pari("3/2 + 0.0*I"))
+    1
+    >>> gen_to_integer(pari("Mod(-1, 11)"))
+    10
+    >>> gen_to_integer(pari("5 + O(5^10)"))
+    5
+    >>> gen_to_integer(pari("Pol(42)"))
+    42
+    >>> gen_to_integer(pari("x"))
+    Traceback (most recent call last):
+    ...
+    TypeError: unable to convert PARI object x of type t_POL to an integer
+    >>> gen_to_integer(pari("x + O(x^2)"))
+    Traceback (most recent call last):
+    ...
+    TypeError: unable to convert PARI object x + O(x^2) of type t_SER to an integer
+    >>> gen_to_integer(pari("1 + I"))
+    Traceback (most recent call last):
+    ...
+    TypeError: unable to convert PARI object 1 + I of type t_COMPLEX to an integer
 
-    TESTS::
+    Tests:
 
-        sage: for i in range(10000):
-        ....:     x = 3**i
-        ....:     if long(pari(x)) != long(x):
-        ....:         print(x)
-        sage: gen_to_integer(pari("1.0 - 2^64"))
-        -18446744073709551615L
-        sage: gen_to_integer(pari("1 - 2^64"))
-        -18446744073709551615L
+    >>> for i in range(10000):
+    ...     x = 3**i
+    ...     if long(pari(x)) != long(x):
+    ...         print(x)
+    >>> gen_to_integer(pari("1.0 - 2^64"))
+    -18446744073709551615L
+    >>> gen_to_integer(pari("1 - 2^64"))
+    -18446744073709551615L
 
-    Check some corner cases::
+    Check some corner cases:
 
-        sage: for s in [1, -1]:
-        ....:     for a in [1, 2**31, 2**32, 2**63, 2**64]:
-        ....:         for b in [-1, 0, 1]:
-        ....:             Nstr = str(s * (a + b))
-        ....:             N1 = gen_to_integer(pari(Nstr))  # Convert via PARI
-        ....:             N2 = int(Nstr)                   # Convert via Python
-        ....:             if N1 != N2:
-        ....:                 print(Nstr, N1, N2)
-        ....:             if type(N1) is not type(N2):
-        ....:                 print(N1, type(N1), N2, type(N2))
+    >>> for s in [1, -1]:
+    ...     for a in [1, 2**31, 2**32, 2**63, 2**64]:
+    ...         for b in [-1, 0, 1]:
+    ...             Nstr = str(s * (a + b))
+    ...             N1 = gen_to_integer(pari(Nstr))  # Convert via PARI
+    ...             N2 = int(Nstr)                   # Convert via Python
+    ...             if N1 != N2:
+    ...                 print(Nstr, N1, N2)
+    ...             if type(N1) is not type(N2):
+    ...                 print(N1, type(N1), N2, type(N2))
     """
     # First convert the input to a t_INT
     cdef GEN g = gtoi(x.g)
@@ -440,136 +444,138 @@ cpdef gen_to_python(Gen z):
     - other PARI types are not supported and the function will raise a
       ``NotImplementedError``
 
-    EXAMPLES::
+    Examples:
 
-        sage: from sage.libs.cypari2.convert import gen_to_python
+    >>> from cypari2 import Pari
+    >>> from cypari2.convert import gen_to_python
+    >>> pari = Pari()
 
-    Converting integers::
+    Converting integers:
 
-        sage: z = pari('42'); z
-        42
-        sage: a = gen_to_python(z); a
-        42
-        sage: type(a)
-        <... 'int'>
+    >>> z = pari('42'); z
+    42
+    >>> a = gen_to_python(z); a
+    42
+    >>> type(a)
+    <... 'int'>
 
-        sage: a = gen_to_python(pari('3^50'))
-        sage: type(a)
-        <... 'long'>
+    >>> a = gen_to_python(pari('3^50'))
+    >>> type(a)
+    <... 'long'>
 
-    Converting rational numbers::
+    Converting rational numbers:
 
-        sage: z = pari('2/3'); z
-        2/3
-        sage: a = gen_to_python(z); a
-        Fraction(2, 3)
-        sage: type(a)
-        <class 'fractions.Fraction'>
+    >>> z = pari('2/3'); z
+    2/3
+    >>> a = gen_to_python(z); a
+    Fraction(2, 3)
+    >>> type(a)
+    <class 'fractions.Fraction'>
 
-    Converting real numbers (and infinities)::
+    Converting real numbers (and infinities):
 
-        sage: z = pari('1.2'); z
-        1.20000000000000
-        sage: a = gen_to_python(z); a
-        1.2
-        sage: type(a)
-        <... 'float'>
+    >>> z = pari('1.2'); z
+    1.20000000000000
+    >>> a = gen_to_python(z); a
+    1.2
+    >>> type(a)
+    <... 'float'>
 
-        sage: z = pari('oo'); z
-        +oo
-        sage: a = gen_to_python(z); a
-        inf
-        sage: type(a)
-        <... 'float'>
+    >>> z = pari('oo'); z
+    +oo
+    >>> a = gen_to_python(z); a
+    inf
+    >>> type(a)
+    <... 'float'>
 
-        sage: z = pari('-oo'); z
-        -oo
-        sage: a = gen_to_python(z); a
-        -inf
-        sage: type(a)
-        <... 'float'>
+    >>> z = pari('-oo'); z
+    -oo
+    >>> a = gen_to_python(z); a
+    -inf
+    >>> type(a)
+    <... 'float'>
 
-    Converting complex numbers::
+    Converting complex numbers:
 
-        sage: z = pari('1 + I'); z
-        1 + I
-        sage: a = gen_to_python(z); a
-        (1+1j)
-        sage: type(a)
-        <... 'complex'>
+    >>> z = pari('1 + I'); z
+    1 + I
+    >>> a = gen_to_python(z); a
+    (1+1j)
+    >>> type(a)
+    <... 'complex'>
 
-        sage: z = pari('2.1 + 3.03*I'); z
-        2.10000000000000 + 3.03000000000000*I
-        sage: a = gen_to_python(z); a
-        (2.1+3.03j)
+    >>> z = pari('2.1 + 3.03*I'); z
+    2.10000000000000 + 3.03000000000000*I
+    >>> a = gen_to_python(z); a
+    (2.1+3.03j)
 
-    Converting vectors::
+    Converting vectors:
 
-        sage: z1 = pari('Vecsmall([1,2,3])'); z1
-        Vecsmall([1, 2, 3])
-        sage: z2 = pari('[1, 3.4, [-5, 2], oo]'); z2
-        [1, 3.40000000000000, [-5, 2], +oo]
-        sage: z3 = pari('[1, 5.2]~'); z3
-        [1, 5.20000000000000]~
-        sage: z1.type(), z2.type(), z3.type()
-        ('t_VECSMALL', 't_VEC', 't_COL')
+    >>> z1 = pari('Vecsmall([1,2,3])'); z1
+    Vecsmall([1, 2, 3])
+    >>> z2 = pari('[1, 3.4, [-5, 2], oo]'); z2
+    [1, 3.40000000000000, [-5, 2], +oo]
+    >>> z3 = pari('[1, 5.2]~'); z3
+    [1, 5.20000000000000]~
+    >>> z1.type(), z2.type(), z3.type()
+    ('t_VECSMALL', 't_VEC', 't_COL')
 
-        sage: a1 = gen_to_python(z1); a1
-        [1, 2, 3]
-        sage: type(a1)
-        <... 'list'>
-        sage: map(type, a1)
-        [<... 'int'>, <... 'int'>, <... 'int'>]
+    >>> a1 = gen_to_python(z1); a1
+    [1, 2, 3]
+    >>> type(a1)
+    <... 'list'>
+    >>> map(type, a1)
+    [<... 'int'>, <... 'int'>, <... 'int'>]
 
-        sage: a2 = gen_to_python(z2); a2
-        [1, 3.4, [-5, 2], inf]
-        sage: type(a2)
-        <... 'list'>
-        sage: map(type, a2)
-        [<... 'int'>, <... 'float'>, <... 'list'>, <... 'float'>]
+    >>> a2 = gen_to_python(z2); a2
+    [1, 3.4, [-5, 2], inf]
+    >>> type(a2)
+    <... 'list'>
+    >>> map(type, a2)
+    [<... 'int'>, <... 'float'>, <... 'list'>, <... 'float'>]
 
-        sage: a3 = gen_to_python(z3); a3
-        [1, 5.2]
-        sage: type(a3)
-        <... 'list'>
-        sage: map(type, a3)
-        [<... 'int'>, <... 'float'>]
+    >>> a3 = gen_to_python(z3); a3
+    [1, 5.2]
+    >>> type(a3)
+    <... 'list'>
+    >>> map(type, a3)
+    [<... 'int'>, <... 'float'>]
 
-    Converting matrices::
+    Converting matrices:
 
-        sage: z = pari('[1,2;3,4]')
-        sage: gen_to_python(z)
-        [[1, 2], [3, 4]]
+    >>> z = pari('[1,2;3,4]')
+    >>> gen_to_python(z)
+    [[1, 2], [3, 4]]
 
-        sage: z = pari('[[1, 3], [[2]]; 3, [4, [5, 6]]]')
-        sage: gen_to_python(z)
-        [[[1, 3], [[2]]], [3, [4, [5, 6]]]]
+    >>> z = pari('[[1, 3], [[2]]; 3, [4, [5, 6]]]')
+    >>> gen_to_python(z)
+    [[[1, 3], [[2]]], [3, [4, [5, 6]]]]
 
-    Converting strings::
+    Converting strings:
 
-        sage: z = pari('"Hello"')
-        sage: a = gen_to_python(z); a
-        'Hello'
-        sage: type(a)
-        <... 'str'>
+    >>> z = pari('"Hello"')
+    >>> a = gen_to_python(z); a
+    'Hello'
+    >>> type(a)
+    <... 'str'>
 
-    Some currently unsupported types::
+    Some currently unsupported types:
 
-        sage: z = pari('x')
-        sage: z.type()
-        't_POL'
-        sage: gen_to_python(z)
-        Traceback (most recent call last):
-        ...
-        NotImplementedError: conversion not implemented for t_POL
+    >>> z = pari('x')
+    >>> z.type()
+    't_POL'
+    >>> gen_to_python(z)
+    Traceback (most recent call last):
+    ...
+    NotImplementedError: conversion not implemented for t_POL
 
-        sage: z = pari('12 + O(2^13)')
-        sage: z.type()
-        't_PADIC'
-        sage: gen_to_python(z)
-        Traceback (most recent call last):
-        ...
-        NotImplementedError: conversion not implemented for t_PADIC
+    >>> z = pari('12 + O(2^13)')
+    >>> z.type()
+    't_PADIC'
+    >>> gen_to_python(z)
+    Traceback (most recent call last):
+    ...
+    NotImplementedError: conversion not implemented for t_PADIC
     """
     cdef GEN g = z.g
     cdef long t = typ(g)

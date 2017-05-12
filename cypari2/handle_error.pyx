@@ -41,13 +41,15 @@ class PariError(RuntimeError):
         r"""
         Return the PARI error number corresponding to this exception.
 
-        EXAMPLES::
+        EXAMPLES:
 
-            sage: try:
-            ....:     pari('1/0')
-            ....: except PariError as err:
-            ....:     print(err.errnum())
-            31
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> try:
+        ...     pari('1/0')
+        ... except PariError as err:
+        ...     print(err.errnum())
+        31
         """
         return self.args[0]
 
@@ -55,14 +57,15 @@ class PariError(RuntimeError):
         """
         Return the message output by PARI when this error occurred.
 
-        EXAMPLES::
+        EXAMPLES:
 
-            sage: try:
-            ....:     pari('pi()')
-            ....: except PariError as e:
-            ....:     print(e.errtext())
-            not a function in function call
-
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> try:
+        ...     pari('pi()')
+        ... except PariError as e:
+        ...     print(e.errtext())
+        not a function in function call
         """
         return self.args[1]
 
@@ -71,26 +74,30 @@ class PariError(RuntimeError):
         Return the error data (a ``t_ERROR`` gen) corresponding to this
         error.
 
-        EXAMPLES::
+        EXAMPLES:
 
-            sage: try:
-            ....:     pari('Mod(2,6)')**-1
-            ....: except PariError as e:
-            ....:     E = e.errdata()
-            sage: E
-            error("impossible inverse in Fp_inv: Mod(2, 6).")
-            sage: E.component(2)
-            Mod(2, 6)
-        """
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> try:
+        ...     pari('Mod(2,6)')**-1
+        ... except PariError as e:
+        ...     E = e.errdata()
+        >>> E
+        error("impossible inverse in Fp_inv: Mod(2, 6).")
+        >>> E.component(2)
+        Mod(2, 6)
+    """
         return self.args[2]
 
     def __repr__(self):
         r"""
-        TESTS::
+        TESTS:
 
-            sage: PariError(11)
-            PariError(11)
-        """
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> PariError(11)
+        PariError(11)
+    """
         return "PariError(%d)"%self.errnum()
 
     def __str__(self):
@@ -100,20 +107,22 @@ class PariError(RuntimeError):
         This is simply the error text with certain trailing characters
         stripped.
 
-        EXAMPLES::
+        EXAMPLES:
 
-            sage: try:
-            ....:     pari('1/0')
-            ....: except PariError as err:
-            ....:     print(err)
-            _/_: impossible inverse in gdiv: 0
+        >>> import cypari2
+        >>> pari = cypari2.Pari()
+        >>> try:
+        ...     pari('1/0')
+        ... except PariError as err:
+        ...     print(err)
+        _/_: impossible inverse in gdiv: 0
 
         A syntax error::
 
-            sage: pari('!@#$%^&*()')
-            Traceback (most recent call last):
-            ...
-            PariError: syntax error, unexpected $undefined
+        >>> pari('!@#$%^&*()')
+        Traceback (most recent call last):
+        ...
+        PariError: syntax error, unexpected $undefined
         """
         return self.errtext().rstrip(" .:")
 
@@ -122,18 +131,20 @@ cdef void _pari_init_error_handling():
     """
     Set up our code for handling PARI errors.
 
-    TESTS::
+    TESTS:
 
-        sage: try:
-        ....:     p = pari.polcyclo(-1)
-        ....: except PariError as e:
-        ....:     print(e.errtext())
-        domain error in polcyclo: index <= 0
+    >>> import cypari2
+    >>> pari = cypari2.Pari()
+    >>> try:
+    ...     p = pari.polcyclo(-1)
+    ... except PariError as e:
+    ...     print(e.errtext())
+    domain error in polcyclo: index <= 0
 
     Warnings still work just like in GP::
 
-        sage: pari('warning("test")')
-          ***   user warning: test
+    >>> pari('warning("test")')
+      ***   user warning: test
     """
     global cb_pari_err_handle
     global cb_pari_err_recover
@@ -147,17 +158,18 @@ cdef int _pari_err_handle(GEN E) except 0:
 
     This function is a callback from the PARI error handler.
 
-    EXAMPLES::
+    EXAMPLES:
 
-        sage: pari('error("test")')
-        Traceback (most recent call last):
-        ...
-        PariError: error: user error: test
-        sage: pari(1)/pari(0)
-        Traceback (most recent call last):
-        ...
-        PariError: impossible inverse in gdiv: 0
-
+    >>> import cypari2
+    >>> pari = cypari2.Pari()
+    >>> pari('error("test")')
+    Traceback (most recent call last):
+    ...
+    PariError: error: user error: test
+    >>> pari(1)/pari(0)
+    Traceback (most recent call last):
+    ...
+    PariError: impossible inverse in gdiv: 0
     """
     cdef long errnum = E[1]
     cdef char* errstr
@@ -193,14 +205,15 @@ cdef void _pari_err_recover(long errnum):
     TEST:
 
     Perform a computation that requires doubling the default stack
-    several times::
+    several times:
 
-        sage: pari.allocatemem(2**12, 2**26)
-        PARI stack size set to 4096 bytes, maximum size set to 67108864
-        sage: x = pari('2^(2^26)')
-        sage: x == 2**(2**26)
-        True
-
+    >>> import cypari2
+    >>> pari = cypari2.Pari()
+    >>> pari.allocatemem(2**12, 2**26)
+    PARI stack size set to 4096 bytes, maximum size set to 67108864
+    >>> x = pari('2^(2^26)')
+    >>> x == 2**(2**26)
+    True
     """
     # An exception was raised.  Jump to the signal-handling code
     # which will cause sig_on() to see the exception.
