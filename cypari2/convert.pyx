@@ -615,7 +615,7 @@ cpdef gen_to_python(Gen z):
     elif t == t_VEC or t == t_COL:
         return [gen_to_python(x) for x in z.python_list()]
     elif t == t_VECSMALL:
-       return z.python_list_small()
+        return z.python_list_small()
     elif t == t_MAT:
         nc = lg(g)-1
         nr = 0 if nc == 0 else lg(gel(g,1))-1
