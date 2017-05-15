@@ -138,8 +138,7 @@ cpdef Gen objtoclosure(f):
     Examples:
 
     >>> from cypari2.closure import objtoclosure
-    >>> def pymul(i,j): return i*j
-    >>> mul = objtoclosure(pymul)
+    >>> mul = objtoclosure(lambda i,j: i*j)
     >>> mul
     (v1,v2,v3,v4,v5)->call_python(v1,v2,v3,v4,v5,...)
     >>> mul.type()
