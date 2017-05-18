@@ -1,5 +1,6 @@
 """
-Functions for handling PARI errors
+Handling PARI errors
+********************
 
 AUTHORS:
 

@@ -1,5 +1,6 @@
 """
 Convert Python functions to PARI closures
+*****************************************
 
 AUTHORS:
 
