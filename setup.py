@@ -28,8 +28,13 @@ class build_ext(_build_ext):
         from autogen import rebuild
         rebuild()
 
+        self.directives = dict(binding=True)
+
         self.distribution.ext_modules[:] = cythonize(
-            self.distribution.ext_modules, include_path=sys.path)
+            self.distribution.ext_modules,
+            compiler_directives=self.directives,
+            include_path=sys.path)
+
         _build_ext.finalize_options(self)
 
 
