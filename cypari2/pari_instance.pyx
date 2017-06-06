@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 PARI C-library interface
 
@@ -231,6 +232,7 @@ import sys
 from libc.stdio cimport *
 cimport cython
 
+from .string_utils cimport to_string, to_bytes
 from .paridecl cimport *
 from .paripriv cimport *
 from .gen cimport Gen, objtogen
@@ -390,19 +392,13 @@ cdef void python_putchar(char c):
     cdef char s[2]
     s[0] = c
     s[1] = 0
-    IF PY_MAJOR_VERSION == 2:
-        sys.stdout.write(s)
-    ELSE:
-        sys.stdout.write(bytes(s).decode('ascii'))
+    sys.stdout.write(to_string(<bytes> s))
     # Let PARI think the last character was a newline,
     # so it doesn't print one when an error occurs.
     pari_set_last_newline(1)
 
 cdef void python_puts(const char* s):
-    IF PY_MAJOR_VERSION == 2:
-        sys.stdout.write(s)
-    ELSE:
-        sys.stdout.write(bytes(s).decode('ascii'))
+    sys.stdout.write(to_string(<bytes> s))
     pari_set_last_newline(1)
 
 cdef void python_flush():
@@ -793,6 +789,10 @@ cdef class Pari(Pari_auto):
         (1, 't_INT')
         >>> a = pari('1/2'); a, a.type()
         (1/2, 't_FRAC')
+
+        >>> s = pari(u'"éàèç"')
+        >>> s.type()
+        't_STR'
 
         See :func:`pari` for more examples.
         """
@@ -1379,14 +1379,7 @@ cdef long get_var(v) except -2:
             return varno
     if v == -1:
         return -1
-    cdef bytes s
-    IF PY_MAJOR_VERSION == 2:
-        s = bytes(v)
-    ELSE:
-        if isinstance(v, str):
-            s = (<str>v).encode('ascii')
-        else:
-            s = bytes(v)
+    cdef bytes s = to_bytes(v)
     sig_on()
     varno = fetch_user_var(s)
     sig_off()

@@ -76,6 +76,7 @@ include "cysignals/memory.pxi"
 include "cysignals/signals.pxi"
 
 from .paridecl cimport *
+from .string_utils cimport to_string, to_bytes
 from .paripriv cimport *
 from .convert cimport (integer_to_gen, gen_to_integer,
                        new_gen_from_double, new_t_COMPLEX_from_double)
@@ -159,10 +160,7 @@ cdef class Gen(Gen_auto):
 
         s = bytes(c)
         pari_free(c)
-        IF PY_MAJOR_VERSION == 2:
-            return s
-        ELSE:
-            return s.decode('ascii')
+        return to_string(s)
 
     def __str__(self):
         """
@@ -186,10 +184,8 @@ cdef class Gen(Gen_auto):
         """
         # Use __repr__ except for strings
         if typ(self.g) == t_STR:
-            IF PY_MAJOR_VERSION == 2:
-                return GSTR(self.g)
-            ELSE:
-                return bytes(GSTR(self.g)).decode('ascii')
+            # CHANGED
+            return <str> GSTR(self.g)
         return repr(self)
 
     def __hash__(self):
@@ -327,10 +323,8 @@ cdef class Gen(Gen_auto):
             return (x[i] for i in range(1, lg(x)))
         elif t == t_STR:
             # Special case: convert to str
-            IF PY_MAJOR_VERSION == 2:
-                return iter(GSTR(self.g))
-            ELSE:
-                return iter(bytes(GSTR(self.g)).decode('ascii'))
+            # CHANGED
+            return iter(<str> GSTR(self.g))
         else:
             v = self.Vec()
 
@@ -5062,7 +5056,7 @@ cpdef Gen objtogen(s):
     # isinstance(s, (unicode, bytes))
     if PyUnicode_Check(s) | PyBytes_Check(s):
         sig_on()
-        g = gp_read_str(s)
+        g = gp_read_str(to_bytes(s))
         if g == gnil:
             clear_stack()
             return None

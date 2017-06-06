@@ -51,6 +51,7 @@ from libc.math cimport INFINITY
 
 from .paridecl cimport *
 from .stack cimport new_gen
+from .string_utils cimport to_string
 
 cdef extern from *:
     Py_ssize_t* Py_SIZE_PTR "&Py_SIZE"(object)
@@ -223,14 +224,10 @@ cdef GEN gtoi(GEN g0) except NULL:
             sig_error()
         sig_off()
     except RuntimeError:
-        IF PY_MAJOR_VERSION == 2:
-            raise TypeError(stack_sprintf(
+        s = to_string(stack_sprintf(
             "unable to convert PARI object %Ps of type %s to an integer",
             g0, type_name(typ(g0))))
-        ELSE:
-            s = bytes(stack_sprintf("unable to convert PARI object %Ps of type %s to an integer",
-                      g0, type_name(typ(g0))))
-            raise TypeError(s.decode('ascii'))
+        raise TypeError(s)
     return g
 
 
@@ -624,9 +621,6 @@ cpdef gen_to_python(Gen z):
         else:
             return -INFINITY
     elif t == t_STR:
-        IF PY_MAJOR_VERSION == 2:
-            return GSTR(g)
-        ELSE:
-            return bytes(GSTR(g)).decode('ascii')
+        return to_string(<bytes> GSTR(g))
     else:
         raise NotImplementedError("conversion not implemented for {}".format(z.type()))

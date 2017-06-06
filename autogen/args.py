@@ -12,9 +12,6 @@ Arguments for PARI calls
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
-import sys
-PY_MAJOR_VERSION = sys.version_info.major
-
 # Some replacements for reserved words
 replacements = {'char': 'character'}
 
@@ -217,22 +214,14 @@ class PariArgumentString(PariArgumentObject):
         return "str"
     def convert_code(self):
         if self.default is None:
-            if PY_MAJOR_VERSION == 2:
-                s = "        {name} = str({name})\n"
-            else:
-                s = "        {name} = {name}.encode('ascii') if isinstance({name}, str) else bytes({name})\n"
+            s  = "        {name} = to_bytes({name})\n"
             s += "        cdef char* {tmp} = <bytes> {name}\n"
         else:
             s  = "        cdef char* {tmp}\n"
             s += "        if {name} is None:\n"
             s += "            {tmp} = {default}\n"
             s += "        else:\n"
-            if PY_MAJOR_VERSION == 2:
-                s += "            {name} = bytes({name})\n"
-                s += "            {tmp} = <bytes> {name}\n"
-            else:
-                s += "            {name} = {name}.encode('ascii') if isinstance({name}, str) else bytes({name})\n"
-                s += "            {tmp} = <bytes> {name}\n"
+            s += "            {tmp} = to_bytes({name})\n"
         return s.format(name=self.name, tmp=self.tmpname, default=self.default)
     def call_code(self):
         return self.tmpname
