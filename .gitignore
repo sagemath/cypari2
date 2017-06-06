@@ -10,7 +10,6 @@ cypari2/gen.c
 cypari2/handle_error.c
 cypari2/pari_instance.c
 cypari2/stack.c
-cypari2/system.pxi
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
