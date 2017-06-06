@@ -28,14 +28,9 @@ class build_ext(_build_ext):
         from autogen import rebuild
         rebuild()
 
-        # Write compilation constants in system.pxi
-        import sys
-        with open('cypari2/system.pxi', 'w') as output:
-            output.write('DEF PY_MAJOR_VERSION = %d\n' % sys.version_info.major)
-            output.write('DEF PY_MINOR_VERSION = %d\n' % sys.version_info.minor)
-
         self.distribution.ext_modules[:] = cythonize(
-            self.distribution.ext_modules, include_path=sys.path)
+            self.distribution.ext_modules, include_path=sys.path,
+            compile_time_env={'PY_MAJOR_VERSION': sys.version_info.major})
         _build_ext.finalize_options(self)
 
 

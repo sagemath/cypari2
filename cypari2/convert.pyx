@@ -55,8 +55,6 @@ from .stack cimport new_gen
 cdef extern from *:
     Py_ssize_t* Py_SIZE_PTR "&Py_SIZE"(object)
 
-include "system.pxi"
-
 ####################################
 # Integers
 ####################################

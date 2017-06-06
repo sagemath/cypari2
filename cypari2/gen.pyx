@@ -84,10 +84,7 @@ from .pari_instance cimport (prec_bits_to_words, prec_words_to_bits,
 from .stack cimport new_gen, new_gen_noclear, clear_stack
 from .closure cimport objtoclosure
 
-
 include 'auto_gen.pxi'
-include 'system.pxi'
-
 
 @cython.final
 cdef class Gen(Gen_auto):
