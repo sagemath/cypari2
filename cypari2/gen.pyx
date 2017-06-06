@@ -2,9 +2,8 @@
 #
 # cython: c_string_encoding=default
 """
-Sage class for PARI's GEN type
-
-See the ``Pari`` class for documentation and examples.
+The Gen class wrapping PARI's GEN type
+**************************************
 
 AUTHORS:
 

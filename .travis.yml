@@ -23,10 +23,10 @@ before_install:
 # command to install dependencies
 install: 
   - pip install Cython
-  - pip install cysignals --verbose
+  - pip install --verbose cysignals
+  - pip install Sphinx
   - pip install .
 # command to run tests
 script:
-  - cd tests
-  - python rundoctest.py
-
+  - (cd tests && python rundoctest.py)
+  - (cd docs && make html)

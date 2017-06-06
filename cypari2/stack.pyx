@@ -1,5 +1,9 @@
 """
-Utility functions to handle the PARI stack and copy objects from it.
+Utility functions to handle the PARI stack and copy objects from it
+*******************************************************************
+
+NOTE: nothing in this module is accessible from Python (only Cython),
+so it is not included in the documentation.
 """
 
 #*****************************************************************************

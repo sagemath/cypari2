@@ -28,9 +28,15 @@ class build_ext(_build_ext):
         from autogen import rebuild
         rebuild()
 
+        self.directives = dict(binding=True)
+        self.compile_time_env = dict(PY_MAJOR_VERSION=sys.version_info.major)
+
         self.distribution.ext_modules[:] = cythonize(
-            self.distribution.ext_modules, include_path=sys.path,
-            compile_time_env={'PY_MAJOR_VERSION': sys.version_info.major})
+            self.distribution.ext_modules,
+            compile_time_env=self.compile_time_env,
+            compiler_directives=self.directives,
+            include_path=sys.path)
+
         _build_ext.finalize_options(self)
 
 

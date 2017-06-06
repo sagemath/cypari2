@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-PARI C-library interface
+Interface to the PARI library
+*****************************
 
 AUTHORS:
 
