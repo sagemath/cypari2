@@ -222,7 +222,7 @@ class PariArgumentString(PariArgumentObject):
             s += "            {tmp} = {default}\n"
             s += "        else:\n"
             s += "            {name} = to_bytes({name})\n"
-            s += "            {tmp} = <bytes> name\n"
+            s += "            {tmp} = <bytes> {name}\n"
         return s.format(name=self.name, tmp=self.tmpname, default=self.default)
     def call_code(self):
         return self.tmpname
