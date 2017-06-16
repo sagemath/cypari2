@@ -23,7 +23,7 @@ cpdef bytes to_bytes(s):
     True
     """
     if isinstance(s, bytes):
-        return s
+        return <bytes> s
     elif isinstance(s, unicode):
         return (<unicode> s).encode(encoding)
     else:
@@ -49,7 +49,7 @@ cpdef unicode to_unicode(s):
     if isinstance(s, bytes):
         return (<bytes> s).decode(encoding)
     elif isinstance(s, unicode):
-        return s
+        return <unicode> s
     else:
         raise TypeError
 
@@ -70,9 +70,7 @@ cpdef to_string(s):
     >>> s1 == s2 == s3 == 'hello'
     True
     """
-    if PY_MAJOR_VERSION == 2:
+    if PY_MAJOR_VERSION <= 2:
         return to_bytes(s)
-    elif PY_MAJOR_VERSION == 3:
-        return to_unicode(s)
     else:
-        raise RuntimeError
+        return to_unicode(s)
