@@ -5,6 +5,7 @@ Conversion functions for bytes/unicode
 
 import sys
 encoding = sys.getfilesystemencoding()
+cdef int PY_MAJOR_VERSION = sys.version_info.major
 
 cpdef bytes to_bytes(s):
     """
@@ -69,7 +70,9 @@ cpdef to_string(s):
     >>> s1 == s2 == s3 == 'hello'
     True
     """
-    IF PY_MAJOR_VERSION == 2:
+    if PY_MAJOR_VERSION == 2:
         return to_bytes(s)
-    ELSE:
+    elif PY_MAJOR_VERSION == 3:
         return to_unicode(s)
+    else:
+        raise RuntimeError

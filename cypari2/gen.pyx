@@ -1489,170 +1489,143 @@ cdef class Gen(Gen_auto):
         sig_off()
         return r
 
-    IF PY_MAJOR_VERSION == 2:
-        def __cmp__(self, Gen other):
-            """
-            Compare ``left`` and ``right``.
+    def __cmp__(self, Gen other):
+        """
+        Compare ``left`` and ``right``.
 
-            This uses PARI's ``cmp_universal()`` routine, which defines
-            a total ordering on the set of all PARI objects (up to the
-            indistinguishability relation given by ``gidentical()``).
+        This uses PARI's ``cmp_universal()`` routine, which defines
+        a total ordering on the set of all PARI objects (up to the
+        indistinguishability relation given by ``gidentical()``).
 
-            .. WARNING::
+        .. WARNING::
 
-                This comparison is only mathematically meaningful when
-                comparing 2 integers. In particular, when comparing
-                rationals or reals, this does not correspond to the natural
-                ordering.
+            This comparison is only mathematically meaningful when
+            comparing 2 integers. In particular, when comparing
+            rationals or reals, this does not correspond to the natural
+            ordering.
 
-            Examples:
+        Examples:
 
-            >>> from cypari2 import Pari
-            >>> pari = Pari()
+        >>> from cypari2 import Pari
+        >>> pari = Pari()
+        >>> import sys
 
-            >>> cmp(pari(5), 5)
-            0
-            >>> cmp(pari(5), 10)
-            -1
-            >>> cmp(pari(2.5), None)
-            1
-            >>> cmp(pari(3), pari(3))
-            0
-            >>> cmp(pari('x^2 + 1'), pari('I-1'))
-            1
-            >>> I = pari('I')
-            >>> cmp(I, I)
-            0
-
-            Beware when comparing rationals or reals:
-
-            >>> cmp(pari('2/3'), pari('2/5'))
-            -1
-            >>> two = pari('2.000000000000000000000000')
-            >>> cmp(two, pari(1.0))
-            1
-            >>> cmp(two, pari(2.0))
-            1
-            >>> cmp(two, pari(3.0))
-            1
-
-            Since :trac:`17026`, different elements with the same string
-            representation can be distinguished by ``cmp()``:
-
-            >>> a = pari(0); a
-            0
-            >>> b = pari("0*ffgen(ffinit(29, 10))"); b
-            0
-            >>> cmp(a, b)
-            -1
-
-            >>> x = pari("x"); x
-            x
-            >>> y = pari("ffgen(ffinit(3, 5))"); y
-            x
-            >>> cmp(x, y)
-            1
-            """
-            sig_on()
-            cdef int r = cmp_universal(self.g, other.g)
-            sig_off()
-            return r
+        >>> if sys.version_info.major == 2:
+        ...     assert cmp(pari(5), 5) == 0
+        ...     assert cmp(pari(5), 10) == -1
+        ...     assert cmp(pari(2.5), None) == 1
+        ...     assert cmp(pari(3), pari(3)) == 0
+        ...     assert cmp(pari('x^2 + 1'), pari('I-1')) == 1
+        ...     I = pari('I')
+        ...     assert cmp(I, I) == 0
+        ...     assert cmp(pari('2/3'), pari('2/5')) == -1
+        ...     two = pari('2.000000000000000000000000')
+        ...     assert cmp(two, pari(1.0)) == 1
+        ...     assert cmp(two, pari(2.0)) == 1
+        ...     assert cmp(two, pari(3.0)) == 1
+        ...     a = pari(0)
+        ...     b = pari("0*ffgen(ffinit(29, 10))")
+        ...     assert cmp(a, b) == -1
+        ...     x = pari("x")
+        ...     y = pari("ffgen(ffinit(3, 5))")
+        ...     assert cmp(x, y) == 1
+        """
+        sig_on()
+        cdef int r = cmp_universal(self.g, other.g)
+        sig_off()
+        return r
 
     def __copy__(self):
         sig_on()
         return new_gen(self.g)
 
-    # NOTE: In Python3, oct(xxx) calls __index__
-    IF PY_MAJOR_VERSION == 2:
-        def __oct__(self):
-            """
-            Return the octal digits of self in lower case.
-            """
-            cdef GEN x
-            cdef long lx
-            cdef long *xp
-            cdef long w
-            cdef char *s
-            cdef char *sp
-            cdef char *octdigits = "01234567"
-            cdef int i, j
-            cdef int size
-            x = self.g
-            if typ(x) != t_INT:
-                raise TypeError("gen must be of PARI type t_INT")
-            if not signe(x):
-                return "0"
-            lx = lgefint(x) - 2  # number of words
-            size = lx * 4 * sizeof(long)
-            s = <char *>sig_malloc(size+3) # 1 char for sign, 1 char for 0, 1 char for '\0'
-            sp = s + size + 3
-            sp[0] = 0
-            xp = int_LSW(x)
-            for i from 0 <= i < lx:
-                w = xp[0]
-                for j in range(4*sizeof(long)):
-                    sp -= 1
-                    sp[0] = octdigits[w & 7]
-                    w >>= 3
-                xp = int_nextW(xp)
-            # remove leading zeros!
-            while sp[0] == c'0':
-                sp += 1
-            sp -= 1
-            sp[0] = c'0'
-            if signe(x) < 0:
+    def __oct__(self):
+        """
+        Return the octal digits of self in lower case.
+        """
+        cdef GEN x
+        cdef long lx
+        cdef long *xp
+        cdef long w
+        cdef char *s
+        cdef char *sp
+        cdef char *octdigits = "01234567"
+        cdef int i, j
+        cdef int size
+        x = self.g
+        if typ(x) != t_INT:
+            raise TypeError("gen must be of PARI type t_INT")
+        if not signe(x):
+            return "0"
+        lx = lgefint(x) - 2  # number of words
+        size = lx * 4 * sizeof(long)
+        s = <char *>sig_malloc(size+3) # 1 char for sign, 1 char for 0, 1 char for '\0'
+        sp = s + size + 3
+        sp[0] = 0
+        xp = int_LSW(x)
+        for i from 0 <= i < lx:
+            w = xp[0]
+            for j in range(4*sizeof(long)):
                 sp -= 1
-                sp[0] = c'-'
-            k = <bytes> sp
-            sig_free(s)
-            return k
+                sp[0] = octdigits[w & 7]
+                w >>= 3
+            xp = int_nextW(xp)
+        # remove leading zeros!
+        while sp[0] == c'0':
+            sp += 1
+        sp -= 1
+        sp[0] = c'0'
+        if signe(x) < 0:
+            sp -= 1
+            sp[0] = c'-'
+        k = <bytes> sp
+        sig_free(s)
+        return k
 
-    # NOTE: In Python3, hex(xxx) calls __index__
-    IF PY_MAJOR_VERSION == 2:
-        def __hex__(self):
-            """
-            Return the hexadecimal digits of self in lower case.
-            """
-            cdef GEN x
-            cdef long lx
-            cdef long *xp
-            cdef long w
-            cdef char *s
-            cdef char *sp
-            cdef char *hexdigits = "0123456789abcdef"
-            cdef int i, j
-            cdef int size
-            x = self.g
-            if typ(x) != t_INT:
-                raise TypeError("gen must be of PARI type t_INT")
-            if not signe(x):
-                return "0x0"
-            lx = lgefint(x) - 2  # number of words
-            size = lx*2*sizeof(long)
-            s = <char *>sig_malloc(size+4) # 1 char for sign, 2 chars for 0x, 1 char for '\0'
-            sp = s + size + 4
-            sp[0] = 0
-            xp = int_LSW(x)
-            for i from 0 <= i < lx:
-                w = xp[0]
-                for j in range(2*sizeof(long)):
-                    sp -= 1
-                    sp[0] = hexdigits[w & 15]
-                    w >>= 4
-                xp = int_nextW(xp)
-            # remove leading zeros!
-            while sp[0] == c'0':
-                sp = sp + 1
-            sp -= 1
-            sp[0] = 'x'
-            sp -= 1
-            sp[0] = '0'
-            if signe(x) < 0:
+    def __hex__(self):
+        """
+        Return the hexadecimal digits of self in lower case.
+        """
+        cdef GEN x
+        cdef long lx
+        cdef long *xp
+        cdef long w
+        cdef char *s
+        cdef char *sp
+        cdef char *hexdigits = "0123456789abcdef"
+        cdef int i, j
+        cdef int size
+        x = self.g
+        if typ(x) != t_INT:
+            raise TypeError("gen must be of PARI type t_INT")
+        if not signe(x):
+            return "0x0"
+        lx = lgefint(x) - 2  # number of words
+        size = lx*2*sizeof(long)
+        s = <char *>sig_malloc(size+4) # 1 char for sign, 2 chars for 0x, 1 char for '\0'
+        sp = s + size + 4
+        sp[0] = 0
+        xp = int_LSW(x)
+        for i from 0 <= i < lx:
+            w = xp[0]
+            for j in range(2*sizeof(long)):
                 sp -= 1
-                sp[0] = c'-'
-            k = <bytes> sp
-            sig_free(s)
-            return k
+                sp[0] = hexdigits[w & 15]
+                w >>= 4
+            xp = int_nextW(xp)
+        # remove leading zeros!
+        while sp[0] == c'0':
+            sp = sp + 1
+        sp -= 1
+        sp[0] = 'x'
+        sp -= 1
+        sp[0] = '0'
+        if signe(x) < 0:
+            sp -= 1
+            sp[0] = c'-'
+        k = <bytes> sp
+        sig_free(s)
+        return k
 
     def __int__(self):
         """
@@ -1820,40 +1793,34 @@ cdef class Gen(Gen_auto):
         from sage.libs.pari.convert_sage import gen_to_sage
         return gen_to_sage(self, locals)
 
-    IF PY_MAJOR_VERSION == 2:
-        def __long__(self):
-            """
-            Convert ``self`` to a Python ``long``.
+    def __long__(self):
+        """
+        Convert ``self`` to a Python ``long``.
 
-            Examples:
+        Examples:
 
-            >>> from cypari2 import Pari
-            >>> pari = Pari()
+        >>> from cypari2 import Pari
+        >>> pari = Pari()
+        >>> import sys
 
-            >>> long(pari(0))
-            0L
-            >>> long(pari(10))
-            10L
-            >>> long(pari(-10))
-            -10L
-            >>> long(pari(123456789012345678901234567890))
-            123456789012345678901234567890L
-            >>> long(pari(-123456789012345678901234567890))
-            -123456789012345678901234567890L
-            >>> long(pari(2**31-1))
-            2147483647L
-            >>> long(pari(-2**31))
-            -2147483648L
-            >>> long(pari("Pol(10)"))
-            10L
-            >>> long(pari("Mod(2, 7)"))
-            2L
-            """
-            x = gen_to_integer(self)
-            if isinstance(x, long):
-                return x
-            else:
-                return long(x)
+        >>> if sys.version_info.major == 3:
+        ...     long = int
+        >>> assert isinstance(long(pari(0)), long)
+        >>> assert long(pari(0)) == 0
+        >>> assert long(pari(10)) == 10
+        >>> assert long(pari(-10)) == -10
+        >>> assert long(pari(123456789012345678901234567890)) == 123456789012345678901234567890
+        >>> assert long(pari(-123456789012345678901234567890)) == -123456789012345678901234567890
+        >>> assert long(pari(2**31-1)) == 2147483647
+        >>> assert long(pari(-2**31)) == -2147483648
+        >>> assert long(pari("Pol(10)")) == 10
+        >>> assert long(pari("Mod(2, 7)")) == 2
+        """
+        x = gen_to_integer(self)
+        if isinstance(x, long):
+            return x
+        else:
+            return long(x)
 
     def __float__(self):
         """

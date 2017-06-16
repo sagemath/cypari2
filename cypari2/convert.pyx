@@ -54,6 +54,9 @@ from .paridecl cimport *
 from .stack cimport new_gen
 from .string_utils cimport to_string
 
+import sys
+cdef int PY_MAJOR_VERSION = sys.version_info.major
+
 cdef extern from *:
     Py_ssize_t* Py_SIZE_PTR "&Py_SIZE"(object)
 
@@ -91,17 +94,19 @@ cpdef integer_to_gen(x):
     ...         if pari(long(x)) != pari(x):
     ...             print(x)
     """
-    IF PY_MAJOR_VERSION == 2:
+    if PY_MAJOR_VERSION == 2:
         if isinstance(x, int):
             sig_on()
             return new_gen(stoi(PyInt_AS_LONG(x)))
         elif isinstance(x, long):
             sig_on()
             return new_gen(PyLong_AsGEN(x))
-    ELSE:
+    elif PY_MAJOR_VERSION == 3:
         if isinstance(x, int):
             sig_on()
             return new_gen(PyLong_AsGEN(x))
+    else:
+        raise RuntimeError
 
     raise TypeError("integer_to_gen() needs an int or long argument, not {}".format(type(x).__name__))
 
