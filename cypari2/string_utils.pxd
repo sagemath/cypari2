@@ -1,2 +1,3 @@
 cpdef bytes to_bytes(s)
-cpdef str to_string(s)
+cpdef unicode to_unicode(s)
+cpdef to_string(s)
