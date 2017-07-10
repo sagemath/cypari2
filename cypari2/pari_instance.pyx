@@ -393,13 +393,21 @@ cdef void python_putchar(char c):
     cdef char s[2]
     s[0] = c
     s[1] = 0
-    sys.stdout.write(to_string(<bytes> s))
+    try:
+        # avoid string conversion if possible
+        sys.stdout.buffer.write(s)
+    except AttributeError:
+        sys.stdout.write(to_string(s))
     # Let PARI think the last character was a newline,
     # so it doesn't print one when an error occurs.
     pari_set_last_newline(1)
 
 cdef void python_puts(const char* s):
-    sys.stdout.write(to_string(<bytes> s))
+    try:
+        # avoid string conversion if possible
+        sys.stdout.buffer.write(s)
+    except AttributeError:
+        sys.stdout.write(to_string(s))
     pari_set_last_newline(1)
 
 cdef void python_flush():
