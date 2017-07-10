@@ -1,6 +1,3 @@
-# Use sys.getdefaultencoding() to convert Unicode strings to <char*>
-#
-# cython: c_string_encoding=default
 """
 The Gen class wrapping PARI's GEN type
 **************************************
@@ -184,7 +181,7 @@ cdef class Gen(Gen_auto):
         # Use __repr__ except for strings
         if typ(self.g) == t_STR:
             # CHANGED
-            return <str> GSTR(self.g)
+            return to_string(<bytes> GSTR(self.g))
         return repr(self)
 
     def __hash__(self):
@@ -323,7 +320,7 @@ cdef class Gen(Gen_auto):
         elif t == t_STR:
             # Special case: convert to str
             # CHANGED
-            return iter(<str> GSTR(self.g))
+            return iter(to_string(<bytes> GSTR(self.g)))
         else:
             v = self.Vec()
 
@@ -653,7 +650,8 @@ cdef class Gen(Gen_auto):
         ...
         PariError: not a function in function call
         """
-        t = "_." + attr
+        attr = to_bytes(attr)
+        t = b"_." + attr
         sig_on()
         return new_gen(closure_callgen1(strtofunction(t), self.g))
 
