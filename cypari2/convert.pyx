@@ -618,6 +618,6 @@ cpdef gen_to_python(Gen z):
         else:
             return -INFINITY
     elif t == t_STR:
-        return to_string(<bytes> GSTR(g))
+        return to_string(GSTR(g))
     else:
         raise NotImplementedError("conversion not implemented for {}".format(z.type()))

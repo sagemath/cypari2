@@ -180,8 +180,7 @@ cdef class Gen(Gen_auto):
         """
         # Use __repr__ except for strings
         if typ(self.g) == t_STR:
-            # CHANGED
-            return to_string(<bytes> GSTR(self.g))
+            return to_string(GSTR(self.g))
         return repr(self)
 
     def __hash__(self):
@@ -320,7 +319,7 @@ cdef class Gen(Gen_auto):
         elif t == t_STR:
             # Special case: convert to str
             # CHANGED
-            return iter(to_string(<bytes> GSTR(self.g)))
+            return iter(to_string(GSTR(self.g)))
         else:
             v = self.Vec()
 
