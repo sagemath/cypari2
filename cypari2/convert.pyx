@@ -84,19 +84,20 @@ cpdef integer_to_gen(x):
     Tests:
 
     >>> import sys
-    >>> if sys.version_info.major == 2:
-    ...     assert integer_to_gen(long(12345)) == 12345
-    ...     for i in range(10000):
-    ...         x = 3**i
-    ...         if pari(long(x)) != pari(x):
-    ...             print(x)
+    >>> if sys.version_info.major == 3:
+    ...     long = int
+    >>> assert integer_to_gen(long(12345)) == 12345
+    >>> for i in range(10000):
+    ...     x = 3**i
+    ...     if pari(long(x)) != pari(x) or pari(int(x)) != pari(x):
+    ...         print(x)
     """
     if isinstance(x, long):
         sig_on()
         return new_gen(PyLong_AsGEN(x))
     elif isinstance(x, int):
-            sig_on()
-            return new_gen(stoi(PyInt_AS_LONG(x)))
+        sig_on()
+        return new_gen(stoi(PyInt_AS_LONG(x)))
     else:
         raise TypeError("integer_to_gen() needs an int or long argument, not {}".format(type(x).__name__))
 
@@ -155,12 +156,12 @@ cpdef gen_to_integer(Gen x):
     >>> gen_to_integer(pari("1 - 2^64")) == -18446744073709551615
     True
     >>> import sys
-    >>> if sys.version_info.major == 2:
-    ...     for i in range(10000):
-    ...         x = 3**i
-    ...         if long(pari(x)) != long(x):
-    ...             print(x)
-
+    >>> if sys.version_info.major == 3:
+    ...     long = int
+    >>> for i in range(10000):
+    ...     x = 3**i
+    ...     if long(pari(x)) != long(x) or int(pari(x)) != x:
+    ...         print(x)
 
     Check some corner cases:
 
