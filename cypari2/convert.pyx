@@ -536,21 +536,21 @@ cpdef gen_to_python(Gen z):
     [1, 2, 3]
     >>> type(a1)
     <... 'list'>
-    >>> list(map(type, a1))
+    >>> [type(x) for x in a1]
     [<... 'int'>, <... 'int'>, <... 'int'>]
 
     >>> a2 = gen_to_python(z2); a2
     [1, 3.4, [-5, 2], inf]
     >>> type(a2)
     <... 'list'>
-    >>> list(map(type, a2))
+    >>> [type(x) for x in a2]
     [<... 'int'>, <... 'float'>, <... 'list'>, <... 'float'>]
 
     >>> a3 = gen_to_python(z3); a3
     [1, 5.2]
     >>> type(a3)
     <... 'list'>
-    >>> list(map(type, a3))
+    >>> [type(x) for x in a3]
     [<... 'int'>, <... 'float'>]
 
     Converting matrices:
