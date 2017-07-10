@@ -4193,14 +4193,14 @@ cdef class Gen(Gen_auto):
                 return new_gen(gsubst(self.g, varn(self.g), t0.g))
 
         # Call substvec() using **kwds
-        vstr = list(kwds.keys())            # Variables as Python strings
-        t0 = objtogen(list(kwds.values()))  # Replacements
+        vstr = iter(kwds.keys())            # Variables as Python strings
+        t0 = objtogen(kwds.values())        # Replacements
 
         sig_on()
         cdef GEN v = cgetg(nkwds+1, t_VEC)  # Variables as PARI polynomials
         cdef long i
         for i in range(nkwds):
-            set_gel(v, i+1, pol_x(get_var(vstr[i])))
+            set_gel(v, i+1, pol_x(get_var(next(vstr))))
         return new_gen(gsubstvec(self.g, v, t0.g))
 
     def __call__(self, *args, **kwds):
