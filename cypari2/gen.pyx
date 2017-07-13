@@ -4193,7 +4193,7 @@ cdef class Gen(Gen_auto):
                 return new_gen(gsubst(self.g, varn(self.g), t0.g))
 
         # Call substvec() using **kwds
-        vstr = iter(kwds.keys())            # Variables as Python strings
+        vstr = iter(kwds.iterkeys())        # Variables as Python strings
         t0 = objtogen(kwds.values())        # Replacements
 
         sig_on()
