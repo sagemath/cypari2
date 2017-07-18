@@ -896,6 +896,36 @@ cdef class Gen(Gen_auto):
         sig_on()
         return new_gen(bnf_get_fu(self.g))
 
+    def idealmoddivisor(self, Gen ideal):
+        """
+        Return a 'small' ideal equivalent to ``ideal`` in the
+        ray class group that the bnr structure ``self`` encodes.
+
+        INPUT:
+
+        - ``self`` -- a bnr structure as outputted from bnrinit.
+        - ``ideal`` -- an ideal in the underlying number field of
+        the bnr structure.
+
+        OUTPUT:
+
+        - An ideal representing the same ray class as ``ideal``
+        but with 'small' generators. If ``ideal`` is not coprime to
+        the modulus of the bnr, this results in an error.
+
+        Examples:
+
+        >>> from cypari2 import Pari
+        >>> pari = Pari()
+        >>> i = pari('i')
+        >>> K = (i**4 - 2).bnfinit()
+        >>> R = K.bnrinit(5,1)
+        >>> R.idealmoddivisor(K[6][6][1])
+        [2, 0, 0, 0; 0, 1, 0, 0; 0, 0, 1, 0; 0, 0, 0, 1]
+        """
+        sig_on()
+        return new_gen(idealmoddivisor(self.g, ideal.g))
+
     def pr_get_p(self):
         """
         Returns the prime of `\ZZ` lying below this prime ideal.
