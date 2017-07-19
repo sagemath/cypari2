@@ -922,6 +922,12 @@ cdef class Gen(Gen_auto):
         >>> R = K.bnrinit(5,1)
         >>> R.idealmoddivisor(K[6][6][1])
         [2, 0, 0, 0; 0, 1, 0, 0; 0, 0, 1, 0; 0, 0, 0, 1]
+        >>> R.idealmoddivisor(K.idealhnf(5))
+        Traceback (most recent call last):
+        ...
+        PariError: elements not coprime in idealaddtoone:
+            [5, 0, 0, 0; 0, 5, 0, 0; 0, 0, 5, 0; 0, 0, 0, 5]
+            [5, 0, 0, 0; 0, 5, 0, 0; 0, 0, 5, 0; 0, 0, 0, 5]
         """
         sig_on()
         return new_gen(idealmoddivisor(self.g, ideal.g))
