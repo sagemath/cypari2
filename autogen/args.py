@@ -214,15 +214,15 @@ class PariArgumentString(PariArgumentObject):
         return "str"
     def convert_code(self):
         if self.default is None:
-            s  = "        {name} = str({name})\n"
-            s += "        cdef char* {tmp} = <bytes?>{name}\n"
+            s  = "        {name} = to_bytes({name})\n"
+            s += "        cdef char* {tmp} = <bytes> {name}\n"
         else:
             s  = "        cdef char* {tmp}\n"
             s += "        if {name} is None:\n"
             s += "            {tmp} = {default}\n"
             s += "        else:\n"
-            s += "            {name} = bytes({name})\n"
-            s += "            {tmp} = <bytes?>{name}\n"
+            s += "            {name} = to_bytes({name})\n"
+            s += "            {tmp} = <bytes> {name}\n"
         return s.format(name=self.name, tmp=self.tmpname, default=self.default)
     def call_code(self):
         return self.tmpname

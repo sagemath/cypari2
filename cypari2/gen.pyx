@@ -1,6 +1,3 @@
-# Use sys.getdefaultencoding() to convert Unicode strings to <char*>
-#
-# cython: c_string_encoding=default
 """
 The Gen class wrapping PARI's GEN type
 **************************************
@@ -38,6 +35,9 @@ AUTHORS:
 
 - Luca De Feo (2016-09-06): Separate Sage-specific components from
   generic C-interface in ``Pari`` (:trac:`20241`)
+
+- Vincent Delecroix (2017-04-29): Python 3 support and doctest
+  conversion
 """
 
 #*****************************************************************************
@@ -47,6 +47,7 @@ AUTHORS:
 #       Copyright (C) 2010 Robert Bradshaw <robertwb@math.washington.edu>
 #       Copyright (C) 2010-2016 Jeroen Demeyer <jdemeyer@cage.ugent.be>
 #       Copyright (C) 2016 Luca De Feo <luca.defeo@polytechnique.edu>
+#       Copyright (C) 2017 Vincent Delecroix <vincent.delecroix@labri.fr>
 #
 #  Distributed under the terms of the GNU General Public License (GPL)
 #  as published by the Free Software Foundation; either version 2 of
@@ -71,6 +72,7 @@ include "cysignals/memory.pxi"
 include "cysignals/signals.pxi"
 
 from .paridecl cimport *
+from .string_utils cimport to_string, to_bytes
 from .paripriv cimport *
 from .convert cimport (integer_to_gen, gen_to_integer,
                        new_gen_from_double, new_t_COMPLEX_from_double)
@@ -79,9 +81,7 @@ from .pari_instance cimport (prec_bits_to_words, prec_words_to_bits,
 from .stack cimport new_gen, new_gen_noclear, clear_stack
 from .closure cimport objtoclosure
 
-
 include 'auto_gen.pxi'
-
 
 @cython.final
 cdef class Gen(Gen_auto):
@@ -154,9 +154,9 @@ cdef class Gen(Gen_auto):
         sig_unblock()
         sig_off()
 
-        s = str(c)
+        s = bytes(c)
         pari_free(c)
-        return s
+        return to_string(s)
 
     def __str__(self):
         """
@@ -171,16 +171,16 @@ cdef class Gen(Gen_auto):
 
         >>> from cypari2 import Pari
         >>> pari = Pari()
-        >>> print(pari('vector(5,i,i)'))
-        [1, 2, 3, 4, 5]
-        >>> print(pari('[1,2;3,4]'))
-        [1, 2; 3, 4]
-        >>> print(pari('Str(hello)'))
-        hello
+        >>> str(pari('vector(5,i,i)'))
+        '[1, 2, 3, 4, 5]'
+        >>> str(pari('[1,2;3,4]'))
+        '[1, 2; 3, 4]'
+        >>> str(pari('Str(hello)'))
+        'hello'
         """
         # Use __repr__ except for strings
         if typ(self.g) == t_STR:
-            return GSTR(self.g)
+            return to_string(GSTR(self.g))
         return repr(self)
 
     def __hash__(self):
@@ -318,7 +318,8 @@ cdef class Gen(Gen_auto):
             return (x[i] for i in range(1, lg(x)))
         elif t == t_STR:
             # Special case: convert to str
-            return iter(GSTR(self.g))
+            # CHANGED
+            return iter(to_string(GSTR(self.g)))
         else:
             v = self.Vec()
 
@@ -343,7 +344,7 @@ cdef class Gen(Gen_auto):
         >>> type(L)
         <... 'list'>
         >>> type(L[0])
-        <type 'cypari2.gen.Gen'>
+        <... 'cypari2.gen.Gen'>
 
         For polynomials, list() returns the list of coefficients:
 
@@ -648,7 +649,8 @@ cdef class Gen(Gen_auto):
         ...
         PariError: not a function in function call
         """
-        t = "_." + attr
+        attr = to_bytes(attr)
+        t = b"_." + attr
         sig_on()
         return new_gen(closure_callgen1(strtofunction(t), self.g))
 
@@ -1325,7 +1327,7 @@ cdef class Gen(Gen_auto):
         >>> s
         [1, 0]
         >>> type(s[0])
-        <type 'cypari2.gen.Gen'>
+        <... 'cypari2.gen.Gen'>
         >>> s = pari(range(20)) ; s
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
         >>> s[0:10:2] = range(50,55) ; s
@@ -1341,7 +1343,7 @@ cdef class Gen(Gen_auto):
         >>> v
         [20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
         >>> type(v[0])
-        <type 'cypari2.gen.Gen'>
+        <... 'cypari2.gen.Gen'>
         """
         cdef Py_ssize_t i, j, step
         cdef Gen x = objtogen(y)
@@ -1503,49 +1505,27 @@ cdef class Gen(Gen_auto):
 
         >>> from cypari2 import Pari
         >>> pari = Pari()
+        >>> import sys
 
-        >>> cmp(pari(5), 5)
-        0
-        >>> cmp(pari(5), 10)
-        -1
-        >>> cmp(pari(2.5), None)
-        1
-        >>> cmp(pari(3), pari(3))
-        0
-        >>> cmp(pari('x^2 + 1'), pari('I-1'))
-        1
-        >>> I = pari('I')
-        >>> cmp(I, I)
-        0
-
-        Beware when comparing rationals or reals:
-
-        >>> cmp(pari('2/3'), pari('2/5'))
-        -1
-        >>> two = pari('2.000000000000000000000000')
-        >>> cmp(two, pari(1.0))
-        1
-        >>> cmp(two, pari(2.0))
-        1
-        >>> cmp(two, pari(3.0))
-        1
-
-        Since :trac:`17026`, different elements with the same string
-        representation can be distinguished by ``cmp()``:
-
-        >>> a = pari(0); a
-        0
-        >>> b = pari("0*ffgen(ffinit(29, 10))"); b
-        0
-        >>> cmp(a, b)
-        -1
-
-        >>> x = pari("x"); x
-        x
-        >>> y = pari("ffgen(ffinit(3, 5))"); y
-        x
-        >>> cmp(x, y)
-        1
+        >>> if sys.version_info.major == 2:
+        ...     assert cmp(pari(5), 5) == 0
+        ...     assert cmp(pari(5), 10) == -1
+        ...     assert cmp(pari(2.5), None) == 1
+        ...     assert cmp(pari(3), pari(3)) == 0
+        ...     assert cmp(pari('x^2 + 1'), pari('I-1')) == 1
+        ...     I = pari('I')
+        ...     assert cmp(I, I) == 0
+        ...     assert cmp(pari('2/3'), pari('2/5')) == -1
+        ...     two = pari('2.000000000000000000000000')
+        ...     assert cmp(two, pari(1.0)) == 1
+        ...     assert cmp(two, pari(2.0)) == 1
+        ...     assert cmp(two, pari(3.0)) == 1
+        ...     a = pari(0)
+        ...     b = pari("0*ffgen(ffinit(29, 10))")
+        ...     assert cmp(a, b) == -1
+        ...     x = pari("x")
+        ...     y = pari("ffgen(ffinit(3, 5))")
+        ...     assert cmp(x, y) == 1
         """
         sig_on()
         cdef int r = cmp_universal(self.g, other.g)
@@ -1556,27 +1536,9 @@ cdef class Gen(Gen_auto):
         sig_on()
         return new_gen(self.g)
 
-    def __hex__(self):
+    def __oct__(self):
         """
-        Return the hexadecimal digits of self in lower case.
-
-        Examples:
-
-        >>> from cypari2 import Pari
-        >>> pari = Pari()
-
-        >>> print(hex(pari(0)))
-        0
-        >>> print(hex(pari(15)))
-        f
-        >>> print(hex(pari(16)))
-        10
-        >>> print(hex(pari(16938402384092843092843098243)))
-        36bb1e3929d1a8fe2802f083
-        >>> print(hex(long(16938402384092843092843098243)))
-        0x36bb1e3929d1a8fe2802f083L
-        >>> print(hex(pari(-16938402384092843092843098243)))
-        -36bb1e3929d1a8fe2802f083
+        Return the octal digits of self in lower case.
         """
         cdef GEN x
         cdef long lx
@@ -1584,8 +1546,7 @@ cdef class Gen(Gen_auto):
         cdef long w
         cdef char *s
         cdef char *sp
-        cdef char *hexdigits
-        hexdigits = "0123456789abcdef"
+        cdef char *octdigits = "01234567"
         cdef int i, j
         cdef int size
         x = self.g
@@ -1593,26 +1554,73 @@ cdef class Gen(Gen_auto):
             raise TypeError("gen must be of PARI type t_INT")
         if not signe(x):
             return "0"
-        lx = lgefint(x)-2  # number of words
-        size = lx*2*sizeof(long)
-        s = <char *>sig_malloc(size+2) # 1 char for sign, 1 char for '\0'
-        sp = s + size+1
+        lx = lgefint(x) - 2  # number of words
+        size = lx * 4 * sizeof(long)
+        s = <char *>sig_malloc(size+3) # 1 char for sign, 1 char for 0, 1 char for '\0'
+        sp = s + size + 3
         sp[0] = 0
         xp = int_LSW(x)
         for i from 0 <= i < lx:
             w = xp[0]
-            for j from 0 <= j < 2*sizeof(long):
-                sp = sp-1
-                sp[0] = hexdigits[w & 15]
-                w = w>>4
+            for j in range(4*sizeof(long)):
+                sp -= 1
+                sp[0] = octdigits[w & 7]
+                w >>= 3
             xp = int_nextW(xp)
         # remove leading zeros!
         while sp[0] == c'0':
-            sp = sp+1
+            sp += 1
+        sp -= 1
+        sp[0] = c'0'
         if signe(x) < 0:
-            sp = sp-1
+            sp -= 1
             sp[0] = c'-'
-        k = <object>sp
+        k = <bytes> sp
+        sig_free(s)
+        return k
+
+    def __hex__(self):
+        """
+        Return the hexadecimal digits of self in lower case.
+        """
+        cdef GEN x
+        cdef long lx
+        cdef long *xp
+        cdef long w
+        cdef char *s
+        cdef char *sp
+        cdef char *hexdigits = "0123456789abcdef"
+        cdef int i, j
+        cdef int size
+        x = self.g
+        if typ(x) != t_INT:
+            raise TypeError("gen must be of PARI type t_INT")
+        if not signe(x):
+            return "0x0"
+        lx = lgefint(x) - 2  # number of words
+        size = lx*2*sizeof(long)
+        s = <char *>sig_malloc(size+4) # 1 char for sign, 2 chars for 0x, 1 char for '\0'
+        sp = s + size + 4
+        sp[0] = 0
+        xp = int_LSW(x)
+        for i from 0 <= i < lx:
+            w = xp[0]
+            for j in range(2*sizeof(long)):
+                sp -= 1
+                sp[0] = hexdigits[w & 15]
+                w >>= 4
+            xp = int_nextW(xp)
+        # remove leading zeros!
+        while sp[0] == c'0':
+            sp = sp + 1
+        sp -= 1
+        sp[0] = 'x'
+        sp -= 1
+        sp[0] = '0'
+        if signe(x) < 0:
+            sp -= 1
+            sp[0] = c'-'
+        k = <bytes> sp
         sig_free(s)
         return k
 
@@ -1634,10 +1642,10 @@ cdef class Gen(Gen_auto):
         10
         >>> int(pari(-10))
         -10
-        >>> int(pari(123456789012345678901234567890))
-        123456789012345678901234567890L
-        >>> int(pari(-123456789012345678901234567890))
-        -123456789012345678901234567890L
+        >>> int(pari(123456789012345678901234567890)) == 123456789012345678901234567890
+        True
+        >>> int(pari(-123456789012345678901234567890)) == -123456789012345678901234567890
+        True
         >>> int(pari(2**31-1))
         2147483647
         >>> int(pari(-2**31))
@@ -1677,6 +1685,14 @@ cdef class Gen(Gen_auto):
         Traceback (most recent call last):
         ...
         TypeError: cannot coerce 2.50000000000000 (type t_REAL) to integer
+
+        >>> for i in [0,1,2,15,16,17,1213051238]:
+        ...     assert bin(pari(i)) == bin(i)
+        ...     assert bin(pari(-i)) == bin(-i)
+        ...     assert oct(pari(i)) == oct(i)
+        ...     assert oct(pari(-i)) == oct(-i)
+        ...     assert hex(pari(i)) == hex(i)
+        ...     assert hex(pari(-i)) == hex(-i)
         """
         if typ(self.g) != t_INT:
             raise TypeError(f"cannot coerce {self!r} (type {self.type()}) to integer")
@@ -1727,7 +1743,7 @@ cdef class Gen(Gen_auto):
         >>> w
         [1, 2, 3, 10, 102, 10]
         >>> type(w[0])
-        <type 'cypari2.gen.Gen'>
+        <... 'cypari2.gen.Gen'>
         >>> pari("[1,2,3]").python_list()
         [1, 2, 3]
 
@@ -1782,25 +1798,20 @@ cdef class Gen(Gen_auto):
 
         >>> from cypari2 import Pari
         >>> pari = Pari()
+        >>> import sys
 
-        >>> long(pari(0))
-        0L
-        >>> long(pari(10))
-        10L
-        >>> long(pari(-10))
-        -10L
-        >>> long(pari(123456789012345678901234567890))
-        123456789012345678901234567890L
-        >>> long(pari(-123456789012345678901234567890))
-        -123456789012345678901234567890L
-        >>> long(pari(2**31-1))
-        2147483647L
-        >>> long(pari(-2**31))
-        -2147483648L
-        >>> long(pari("Pol(10)"))
-        10L
-        >>> long(pari("Mod(2, 7)"))
-        2L
+        >>> if sys.version_info.major == 3:
+        ...     long = int
+        >>> assert isinstance(long(pari(0)), long)
+        >>> assert long(pari(0)) == 0
+        >>> assert long(pari(10)) == 10
+        >>> assert long(pari(-10)) == -10
+        >>> assert long(pari(123456789012345678901234567890)) == 123456789012345678901234567890
+        >>> assert long(pari(-123456789012345678901234567890)) == -123456789012345678901234567890
+        >>> assert long(pari(2**31-1)) == 2147483647
+        >>> assert long(pari(-2**31)) == -2147483648
+        >>> assert long(pari("Pol(10)")) == 10
+        >>> assert long(pari("Mod(2, 7)")) == 2
         """
         x = gen_to_integer(self)
         if isinstance(x, long):
@@ -3422,7 +3433,7 @@ cdef class Gen(Gen_auto):
         >>> v = e.ellaplist(10); v
         [-2, -1, 1, -2]
         >>> type(v)
-        <type 'cypari2.gen.Gen'>
+        <... 'cypari2.gen.Gen'>
         >>> v.type()
         't_VEC'
         >>> e.ellan(10)
@@ -3438,7 +3449,7 @@ cdef class Gen(Gen_auto):
 
         >>> v = e.ellaplist(1)
         >>> v, type(v)
-        ([], <type 'cypari2.gen.Gen'>)
+        ([], <... 'cypari2.gen.Gen'>)
         >>> v = e.ellaplist(1, python_ints=True)
         >>> v, type(v)
         ([], <... 'list'>)
@@ -4182,14 +4193,14 @@ cdef class Gen(Gen_auto):
                 return new_gen(gsubst(self.g, varn(self.g), t0.g))
 
         # Call substvec() using **kwds
-        vstr = kwds.keys()            # Variables as Python strings
-        t0 = objtogen(kwds.values())  # Replacements
+        vstr = iter(kwds.iterkeys())        # Variables as Python strings
+        t0 = objtogen(kwds.values())        # Replacements
 
         sig_on()
         cdef GEN v = cgetg(nkwds+1, t_VEC)  # Variables as PARI polynomials
         cdef long i
         for i in range(nkwds):
-            set_gel(v, i+1, pol_x(get_var(vstr[i])))
+            set_gel(v, i+1, pol_x(get_var(next(vstr))))
         return new_gen(gsubstvec(self.g, v, t0.g))
 
     def __call__(self, *args, **kwds):
@@ -4940,7 +4951,7 @@ cpdef Gen objtogen(s):
 
     >>> pari(int(-5))
     -5
-    >>> pari(long(2**150))
+    >>> pari(2**150)
     1427247692705959881058285969449495136382746624
     >>> import math
     >>> pari(math.pi)
@@ -4961,7 +4972,7 @@ cpdef Gen objtogen(s):
 
     >>> pari("dummy = 0; kill(dummy)")
     >>> type(pari("dummy = 0; kill(dummy)"))
-    <type 'NoneType'>
+    <... 'NoneType'>
 
     Tests:
 
@@ -5008,7 +5019,7 @@ cpdef Gen objtogen(s):
     # isinstance(s, (unicode, bytes))
     if PyUnicode_Check(s) | PyBytes_Check(s):
         sig_on()
-        g = gp_read_str(s)
+        g = gp_read_str(to_bytes(s))
         if g == gnil:
             clear_stack()
             return None

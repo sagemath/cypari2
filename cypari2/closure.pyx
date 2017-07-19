@@ -156,7 +156,7 @@ cpdef Gen objtoclosure(f):
     >>> mul(4)
     Traceback (most recent call last):
     ...
-    TypeError: <lambda>() takes exactly 2 arguments (1 given)
+    TypeError: pymul() missing 1 required positional argument: 'j'
     >>> mul(None, None)
     Traceback (most recent call last):
     ...
