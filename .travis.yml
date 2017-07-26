@@ -13,9 +13,9 @@ python:
 # non python dependencies
 before_install:
   - sudo apt-get -qq update
-  - wget http://pari.math.u-bordeaux.fr/pub/pari/unix/pari-2.9.2.tar.gz
-  - tar xf pari-2.9.2.tar.gz
-  - cd pari-2.9.2/
+  - wget http://pari.math.u-bordeaux.fr/pub/pari/unix/pari-2.9.3.tar.gz
+  - tar xf pari-2.9.3.tar.gz
+  - cd pari-2.9.3/
   - ./Configure --prefix=/usr/
   - make gp
   - sudo make install
