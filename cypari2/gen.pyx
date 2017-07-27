@@ -68,8 +68,8 @@ from cpython.float cimport PyFloat_AS_DOUBLE
 from cpython.complex cimport PyComplex_RealAsDouble, PyComplex_ImagAsDouble
 from cpython.object cimport Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, Py_GT
 
-include "cysignals/memory.pxi"
-include "cysignals/signals.pxi"
+from cysignals.memory cimport sig_free, check_malloc
+from cysignals.signals cimport sig_check, sig_on, sig_off, sig_block, sig_unblock
 
 from .paridecl cimport *
 from .string_utils cimport to_string, to_bytes
@@ -1592,7 +1592,7 @@ cdef class Gen(Gen_auto):
             return "0"
         lx = lgefint(x) - 2  # number of words
         size = lx * 4 * sizeof(long)
-        s = <char *>sig_malloc(size+3) # 1 char for sign, 1 char for 0, 1 char for '\0'
+        s = <char *>check_malloc(size+3) # 1 char for sign, 1 char for 0, 1 char for '\0'
         sp = s + size + 3
         sp[0] = 0
         xp = int_LSW(x)
@@ -1635,7 +1635,7 @@ cdef class Gen(Gen_auto):
             return "0x0"
         lx = lgefint(x) - 2  # number of words
         size = lx*2*sizeof(long)
-        s = <char *>sig_malloc(size+4) # 1 char for sign, 2 chars for 0x, 1 char for '\0'
+        s = <char *>check_malloc(size+4) # 1 char for sign, 2 chars for 0x, 1 char for '\0'
         sp = s + size + 4
         sp[0] = 0
         xp = int_LSW(x)

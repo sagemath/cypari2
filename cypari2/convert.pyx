@@ -41,7 +41,7 @@ some bit shuffling.
 
 from __future__ import absolute_import, division, print_function
 
-include "cysignals/signals.pxi"
+from cysignals.signals cimport sig_on, sig_off, sig_error
 
 from cpython.object cimport Py_SIZE
 from cpython.int cimport PyInt_AS_LONG

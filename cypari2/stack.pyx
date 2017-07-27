@@ -18,11 +18,10 @@ so it is not included in the documentation.
 
 from __future__ import absolute_import, division, print_function
 
-include "cysignals/signals.pxi"
-include "cysignals/memory.pxi"
-
 cdef extern from *:
     int sig_on_count "cysigs.sig_on_count"
+from cysignals.signals cimport sig_off
+from cysignals.memory cimport check_malloc
 
 from .paridecl cimport pari_mainstack, avma, paristack_setsize, gsizebyte, gcopy_avma, gnil
 
