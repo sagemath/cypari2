@@ -66,7 +66,7 @@ cdef extern from "<pari/pari.h>":
     long    evalexpo(long x)
     long    evallgefint(long x)
 
-    # Various structures that we don't use in Sage but which need to be
+    # Various structures that we don't interface but which need to be
     # declared, such that Cython understands the declarations of
     # functions using these types.
     struct bb_group

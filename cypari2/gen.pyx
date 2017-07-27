@@ -1354,7 +1354,7 @@ cdef class Gen(Gen_auto):
         [[0]]
         >>> v[0] = w
 
-        Now there is a circular reference. Accessing v[0] will crash Sage.
+        Now there is a circular reference. Accessing v[0] will crash Python.
 
         >>> s = pari.vector(2,[0,0])
         >>> s[:1]
@@ -1814,7 +1814,7 @@ cdef class Gen(Gen_auto):
 
     def sage(self, locals=None):
         r"""
-        Return the closest Sage equivalent of the given PARI object.
+        Return the closest SageMath equivalent of the given PARI object.
 
         INPUT:
 
@@ -3838,11 +3838,6 @@ cdef class Gen(Gen_auto):
             - a matrix: a partial factorization of the discriminant
               of ``x``.
 
-        .. NOTE::
-
-            In earlier versions of Sage, other bits in ``flag`` were
-            defined but these are now simply ignored.
-
         Examples:
 
         >>> from cypari2 import Pari
@@ -4481,7 +4476,7 @@ cdef class Gen(Gen_auto):
           returned factors larger than `2^{64}` may only be pseudoprimes.
           If ``True``, always check primality. If not given, use the
           global PARI default ``factor_proven`` which is ``True`` by
-          default in Sage.
+          default in cypari.
 
         Examples:
 
@@ -4919,11 +4914,11 @@ cdef Gen list_of_Gens_to_Gen(list s):
 
 cpdef Gen objtogen(s):
     """
-    Convert any Sage/Python object to a PARI :class:`Gen`.
+    Convert any SageMath/Python object to a PARI :class:`Gen`.
 
-    For Sage types, this uses the ``__pari__()`` method on the object.
-    Basic Python types like ``int`` are converted directly. For other
-    types, the string representation is used.
+    For SageMath types, this uses the ``__pari__()`` method on the
+    object. Basic Python types like ``int`` are converted directly.
+    For other types, the string representation is used.
 
     Examples:
 

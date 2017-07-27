@@ -313,7 +313,7 @@ pari_arg_types = {
         'b': PariArgumentBitprec,
         'P': PariArgumentSeriesPrec,
 
-    # Codes which are known but not actually supported for Sage
+    # Codes which are known but not actually supported yet
         '&': None,
         'V': None,
         'I': None,

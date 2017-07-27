@@ -155,7 +155,7 @@ cdef void _pari_init_error_handling():
 
 cdef int _pari_err_handle(GEN E) except 0:
     """
-    Convert a PARI error into a Sage exception.
+    Convert a PARI error into a Python exception.
 
     This function is a callback from the PARI error handler.
 

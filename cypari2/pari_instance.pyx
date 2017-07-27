@@ -210,7 +210,7 @@ inputs and the ``precision`` argument is ignored:
 Tests:
 
 Check that output from PARI's print command is actually seen by
-Sage (:trac:`9636`):
+Python (:trac:`9636`):
 
 >>> pari('print("test")')
 test
@@ -629,9 +629,9 @@ cdef class Pari(Pari_auto):
         for printing. It determines the number of digits in which real
         numbers numbers are printed. It also determines the precision
         of objects created by parsing strings (e.g. pari('1.2')), which
-        is *not* the normal way of creating new pari objects in Sage.
-        It has *no* effect on the precision of computations within the
-        PARI library.
+        is *not* the normal way of creating new PARI objects using
+        cypari. It has *no* effect on the precision of computations
+        within the PARI library.
 
         .. seealso:: :meth:`set_real_precision` to set the
            precision in decimal digits.
@@ -658,9 +658,9 @@ cdef class Pari(Pari_auto):
         for printing. It determines the number of digits in which real
         numbers numbers are printed. It also determines the precision
         of objects created by parsing strings (e.g. pari('1.2')), which
-        is *not* the normal way of creating new pari objects in Sage.
-        It has *no* effect on the precision of computations within the
-        PARI library.
+        is *not* the normal way of creating new PARI objects using
+        cypari. It has *no* effect on the precision of computations
+        within the PARI library.
 
         .. seealso:: :meth:`get_real_precision` to get the
            precision in decimal digits.
@@ -908,9 +908,9 @@ cdef class Pari(Pari_auto):
         The PARI stack is never automatically shrunk.  You can use the
         command ``pari.allocatemem(10^6)`` to reset the size to `10^6`,
         which is the default size at startup.  Note that the results of
-        computations using Sage's PARI interface are copied to the
-        Python heap, so they take up no space in the PARI stack.
-        The PARI stack is cleared after every computation.
+        computations using cypari are copied to the Python heap, so they
+        take up no space in the PARI stack. The PARI stack is cleared
+        after every computation.
 
         It does no real harm to set this to a small value as the PARI
         stack will be automatically doubled when we run out of memory.
@@ -1183,10 +1183,6 @@ cdef class Pari(Pari_auto):
 
         - ``seed`` -- either a strictly positive integer or a GEN of
           type ``t_VECSMALL`` as output by ``getrand()``
-
-        This should not be called directly; instead, use Sage's global
-        random number seed handling in ``sage.misc.randstate``
-        and call ``current_randstate().set_seed_pari()``.
 
         Examples:
 

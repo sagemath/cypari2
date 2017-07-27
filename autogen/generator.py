@@ -42,8 +42,8 @@ cdef class Pari_auto:
     """
     Part of the :class:`Pari` class containing auto-generated functions.
 
-    You must never use this class directly (in fact, Sage may crash if
-    you do), use the derived class :class:`Pari` instead.
+    You must never use this class directly (in fact, Python may crash
+    if you do), use the derived class :class:`Pari` instead.
     """
 '''.format(__file__)
 
@@ -70,7 +70,7 @@ class PariFunctionGenerator(object):
 
     def can_handle_function(self, function, cname="", **kwds):
         """
-        Can we actually handle this function in Sage?
+        Can we actually handle this function?
 
         EXAMPLES::
 
@@ -92,7 +92,7 @@ class PariFunctionGenerator(object):
             # Not a legal function name, like "!_"
             return False
         if cname not in self.declared:
-            # PARI function not in Sage's decl.pxi or declinl.pxi
+            # PARI function not in paridecl.pxd or declinl.pxi
             return False
         cls = kwds.get("class", "unknown")
         sec = kwds.get("section", "unknown")
@@ -108,7 +108,7 @@ class PariFunctionGenerator(object):
     def handle_pari_function(self, function, cname="", prototype="", help="", obsolete=None, **kwds):
         r"""
         Handle one PARI function: decide whether or not to add the
-        function to Sage, in which file (as method of :class:`Gen` or
+        function, in which file (as method of :class:`Gen` or
         of :class:`Pari`?) and call :meth:`write_method` to
         actually write the code.
 
