@@ -1,0 +1,4 @@
+setuptools
+Cython
+cysignals
+Sphinx>=1.6

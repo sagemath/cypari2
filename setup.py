@@ -1,9 +1,21 @@
+#!/usr/bin/env python
+
+import os
 import sys
+
+if "READTHEDOCS" in os.environ:
+    # When building with readthedocs, install the dependencies too.
+    # See https://github.com/rtfd/readthedocs.org/issues/2776
+    for reqs in ["requirements.txt"]:
+        if os.path.isfile(reqs):
+            from subprocess import check_call
+            check_call([sys.executable, "-m", "pip", "install", "-r", reqs])
+
+
 from setuptools import setup
 from distutils.command.build_ext import build_ext as _build_ext
 from setuptools.command.bdist_egg import bdist_egg as _bdist_egg
 from setuptools.extension import Extension
-
 
 
 # Adapted from Cython's new_build_ext
