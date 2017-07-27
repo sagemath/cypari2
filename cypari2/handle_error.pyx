@@ -23,9 +23,9 @@ AUTHORS:
 
 from __future__ import absolute_import, division, print_function
 
-include "cysignals/signals.pxi"
-
 from cpython cimport PyErr_Occurred
+
+from cysignals.signals cimport sig_block, sig_unblock, sig_error
 
 from .paridecl cimport *
 from .paripriv cimport *

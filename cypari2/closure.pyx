@@ -33,7 +33,7 @@ Examples:
 
 from __future__ import absolute_import, division, print_function
 
-include "cysignals/signals.pxi"
+from cysignals.signals cimport sig_on, sig_off, sig_block, sig_unblock, sig_error
 
 from cpython.tuple cimport *
 from cpython.object cimport PyObject_Call

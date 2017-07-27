@@ -227,11 +227,11 @@ test
 
 from __future__ import absolute_import, division
 
-include "cysignals/signals.pxi"
-
 import sys
 from libc.stdio cimport *
 cimport cython
+
+from cysignals.signals cimport sig_check, sig_on, sig_off
 
 from .string_utils cimport to_string, to_bytes
 from .paridecl cimport *

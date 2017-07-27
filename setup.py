@@ -32,8 +32,7 @@ class build_ext(_build_ext):
 
         self.distribution.ext_modules[:] = cythonize(
             self.distribution.ext_modules,
-            compiler_directives=self.directives,
-            include_path=sys.path)
+            compiler_directives=self.directives)
 
         _build_ext.finalize_options(self)
 
