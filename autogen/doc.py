@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Handle PARI documentation for Sage
+Handle PARI documentation
 """
 
 from __future__ import unicode_literals
@@ -222,7 +222,7 @@ def raw_to_rest(doc):
     doc = prototype.sub("", doc)
 
     # Remove everything starting with "The library syntax is"
-    # (this is not relevant for Sage)
+    # (this is not relevant for Python)
     doc = library_syntax.sub("", doc)
 
     # Allow at most 2 consecutive newlines

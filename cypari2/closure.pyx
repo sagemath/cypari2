@@ -49,7 +49,7 @@ cdef inline GEN call_python_func_impl "call_python_func"(GEN* args, object py_fu
     Call ``py_func(*args)`` where ``py_func`` is a Python function
     and ``args`` is an array of ``GEN``s terminated by ``NULL``.
 
-    The arguments are converted from ``GEN`` to a Sage ``gen`` before
+    The arguments are converted from ``GEN`` to a cypari ``gen`` before
     calling ``py_func``. The result is converted back to a PARI ``GEN``.
     """
     # How many arguments are there?
