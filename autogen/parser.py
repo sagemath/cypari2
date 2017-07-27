@@ -40,7 +40,15 @@ def pari_share():
     out = gp.communicate(b"print(default(datadir))")[0]
     datadir = out.strip()
     if not os.path.isdir(datadir):
-        raise EnvironmentError("PARI data directory {!r} does not exist".format(datadir))
+        # As a fallback, try a path relative to the gp executable.
+        # This is useful for broken Conda versions, see
+        # https://github.com/conda-forge/pari-feedstock/issues/4
+        from distutils.spawn import find_executable
+        gppath = find_executable("gp")
+        if gppath is not None:
+            datadir = os.path.join(os.path.dirname(gppath), "..", "share", "pari")
+        if not os.path.isdir(datadir):
+            raise EnvironmentError("PARI data directory {!r} does not exist".format(datadir))
     return datadir
 
 
