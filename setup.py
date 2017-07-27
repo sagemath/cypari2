@@ -11,6 +11,12 @@ if "READTHEDOCS" in os.environ:
             from subprocess import check_call
             check_call([sys.executable, "-m", "pip", "install", "-r", reqs])
 
+    # Print PARI/GP defaults and environment variables for debugging
+    from subprocess import Popen, PIPE
+    Popen(["gp", "-f", "-q"], stdin=PIPE).communicate("default()")
+    for item in os.environ.items():
+        print("%s=%r" % item)
+
 
 from setuptools import setup
 from distutils.command.build_ext import build_ext as _build_ext
