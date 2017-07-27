@@ -1,6 +1,7 @@
 import sys
 from setuptools import setup
 from distutils.command.build_ext import build_ext as _build_ext
+from setuptools.command.bdist_egg import bdist_egg as _bdist_egg
 from setuptools.extension import Extension
 
 
@@ -38,6 +39,12 @@ class build_ext(_build_ext):
         _build_ext.finalize_options(self)
 
 
+class no_egg(_bdist_egg):
+    def run(self):
+        from distutils.errors import DistutilsOptionError
+        raise DistutilsOptionError("The package cypari2 will not function correctly when built as egg. Therefore, it cannot be installed using 'python setup.py install' or 'easy_install'. Instead, use 'pip install' to install cypari2.")
+
+
 setup(
     name='cypari2',
     version=open("VERSION").read().strip(),
@@ -51,5 +58,5 @@ setup(
     packages=['cypari2'],
     package_dir={'cypari2': 'cypari2'},
     package_data={'cypari2': ['declinl.pxi', '*.pxd', '*.h']},
-    cmdclass=dict(build_ext=build_ext)
+    cmdclass=dict(build_ext=build_ext, bdist_egg=no_egg)
 )
