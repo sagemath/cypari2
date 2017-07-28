@@ -191,6 +191,13 @@ class PariArgumentGEN(PariArgumentObject):
         elif self.default is None:
             s  = "        {name} = objtogen({name})\n"
             s += "        cdef GEN {tmp} = (<Gen>{name}).g\n"
+        elif self.default is False:
+            # This is actually a required argument
+            # See parse_prototype() in parser.py why we need this
+            s  = "        if {name} is None:\n"
+            s += "            raise TypeError(\"missing required argument: '{name}'\")\n"
+            s += "        {name} = objtogen({name})\n"
+            s += "        cdef GEN {tmp} = (<Gen>{name}).g\n"
         elif self.default == "NULL":
             s  = "        cdef GEN {tmp} = {default}\n"
             s += "        if {name} is not None:\n"

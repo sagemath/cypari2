@@ -41,13 +41,23 @@ Examples:
 (120*x + 10)/x
 >>> pari('intnum(x=0,13,sin(x)+sin(x^2) + x)')
 85.6215190762676
->>> f = pari('x^3-1')
+>>> f = pari('x^3 - 1')
 >>> v = f.factor(); v
 [x - 1, 1; x^2 + x + 1, 1]
 >>> v[0]   # indexing is 0-based unlike in GP.
 [x - 1, x^2 + x + 1]~
 >>> v[1]
 [1, 1]~
+
+For most functions, you can call the function as method of ``pari``
+or you can first create a :class:`Gen` object and then call the
+function as method of that. In other words, the following two commands
+do the same:
+
+>>> pari('x^3 - 1').factor()
+[x - 1, 1; x^2 + x + 1, 1]
+>>> pari.factor('x^3 - 1')
+[x - 1, 1; x^2 + x + 1, 1]
 
 Arithmetic operations cause all arguments to be converted to PARI:
 
@@ -214,6 +224,14 @@ Python (:trac:`9636`):
 
 >>> pari('print("test")')
 test
+
+Verify that ``nfroots()`` (which has an unusual signature with a
+non-default argument following a default argument) works:
+
+>>> pari.nfroots(x='x^4 - 1')
+[-1, 1]
+>>> pari.nfroots(pari.nfinit('t^2 + 1'), "x^4 - 1")
+[-1, 1, Mod(-t, t^2 + 1), Mod(t, t^2 + 1)]
 
 """
 

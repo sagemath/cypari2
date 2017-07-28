@@ -156,7 +156,7 @@ def parse_prototype(proto, help, initial_args=[]):
 
     # Go over the prototype characters and build up the arguments
     args = list(initial_args)
-    default = None
+    have_default = False  # Have we seen any default argument?
     while n < len(proto):
         c = proto[n]; n += 1
 
@@ -184,6 +184,25 @@ def parse_prototype(proto, help, initial_args=[]):
                 raise ValueError('unknown prototype character %r' % c)
 
         arg = t(names, default, index=len(args))
+        if arg.default is not None:
+            have_default = True
+        elif have_default:
+            # We have a non-default argument following a default
+            # argument, which means trouble...
+            #
+            # A syntactical wart of Python is that it does not allow
+            # that: something like def foo(x=None, y) is a SyntaxError
+            # (at least with Python-2.7.13, Python-3.6.1 and Cython-0.25.2)
+            #
+            # A small number of GP functions (nfroots() for example)
+            # wants to do this anyway. Luckily, this seems to occur only
+            # for arguments of type GEN (prototype code "G")
+            #
+            # To work around this, we add a "fake" default value and
+            # then raise an error if it was not given...
+            if c != "G":
+                raise NotImplementedError("non-default argument after default argument is only implemented for GEN arguments")
+            arg.default = False
         args.append(arg)
 
     return (args, ret)
