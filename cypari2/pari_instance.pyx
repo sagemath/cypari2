@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+r"""
 Interface to the PARI library
 *****************************
 
@@ -208,6 +208,12 @@ inputs and the ``precision`` argument is ignored:
 128
 
 Tests:
+
+Check that the documentation is generated correctly:
+
+>>> from inspect import getdoc
+>>> getdoc(pari.Pi)
+'The constant :math:`\\pi` ...'
 
 Check that output from PARI's print command is actually seen by
 Python (:trac:`9636`):
