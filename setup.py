@@ -23,6 +23,9 @@ from distutils.command.build_ext import build_ext as _build_ext
 from setuptools.command.bdist_egg import bdist_egg as _bdist_egg
 from setuptools.extension import Extension
 
+from autogen import rebuild
+from autogen.paths import include_dirs, library_dirs
+
 
 # Adapted from Cython's new_build_ext
 class build_ext(_build_ext):
@@ -44,7 +47,6 @@ class build_ext(_build_ext):
             sys.exit(1)
 
         # Generate auto-generated sources from pari.desc
-        from autogen import rebuild
         rebuild()
 
         self.directives = dict(binding=True)
@@ -70,7 +72,8 @@ setup(
     author='Many people',
     author_email="sage-devel@googlegroups.com",
     license='GNU General Public License, version 2 or later',
-    ext_modules=[Extension("*", ["cypari2/*.pyx"])],
+    ext_modules=[Extension("*", ["cypari2/*.pyx"],
+            include_dirs=include_dirs(), library_dirs=library_dirs())],
     keywords='PARI/GP number theory',
     packages=['cypari2'],
     package_dir={'cypari2': 'cypari2'},

@@ -23,33 +23,7 @@ import os, re
 
 from .args import pari_arg_types
 from .ret import pari_ret_types
-
-
-def pari_share():
-    r"""
-    Return the directory where the PARI data files are stored.
-
-    EXAMPLES::
-
-        sage: from sage_setup.autogen.pari.parser import pari_share
-        sage: pari_share()
-        '.../share/pari'
-    """
-    from subprocess import Popen, PIPE
-    gp = Popen(["gp", "-f", "-q"], stdin=PIPE, stdout=PIPE)
-    out = gp.communicate(b"print(default(datadir))")[0]
-    datadir = out.strip()
-    if not os.path.isdir(datadir):
-        # As a fallback, try a path relative to the gp executable.
-        # This is useful for broken Conda versions, see
-        # https://github.com/conda-forge/pari-feedstock/issues/4
-        from distutils.spawn import find_executable
-        gppath = find_executable("gp")
-        if gppath is not None:
-            datadir = os.path.join(os.path.dirname(gppath), "..", "share", "pari")
-        if not os.path.isdir(datadir):
-            raise EnvironmentError("PARI data directory {!r} does not exist".format(datadir))
-    return datadir
+from .paths import pari_share
 
 
 paren_re = re.compile(r"[(](.*)[)]")

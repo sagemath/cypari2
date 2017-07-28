@@ -5,7 +5,7 @@ import os
 from os.path import join, getmtime, exists
 
 from .generator import PariFunctionGenerator
-from .parser import pari_share
+from .paths import pari_share
 
 
 def rebuild(force=False):
