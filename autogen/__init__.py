@@ -11,7 +11,7 @@ from .paths import pari_share
 def rebuild(force=False):
     pari_module_path = 'cypari2'
     src_files = [join(pari_share(), b'pari.desc')] + \
-                 glob.glob(join('autogen', 'pari', '*.py'))
+                 glob.glob(join('autogen', '*.py'))
     gen_files = [join(pari_module_path, 'auto_gen.pxi')]
 
     if all(exists(f) for f in gen_files):
