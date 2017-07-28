@@ -49,7 +49,10 @@ class build_ext(_build_ext):
         # Generate auto-generated sources from pari.desc
         rebuild()
 
-        self.directives = dict(binding=True)
+        self.directives = {
+            "autotestdict.cdef": True,
+            "binding": True,
+        }
 
         self.distribution.ext_modules[:] = cythonize(
             self.distribution.ext_modules,

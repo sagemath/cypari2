@@ -145,7 +145,6 @@ cdef void _pari_init_error_handling():
     Warnings still work just like in GP::
 
     >>> pari('warning("test")')
-      ***   user warning: test
     """
     global cb_pari_err_handle
     global cb_pari_err_recover
