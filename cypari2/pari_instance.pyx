@@ -645,7 +645,7 @@ cdef class Pari(Pari_auto):
         1.20000000000000000000000000000000000000000000000000000000000
         >>> pari.set_real_precision_bits(53)
         """
-        cdef bytes strn = str(n).encode("ascii")
+        cdef bytes strn = to_bytes(n)
         sig_on()
         sd_realbitprecision(strn, d_SILENT)
         sig_off()
