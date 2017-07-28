@@ -190,20 +190,19 @@ class PariFunctionGenerator(object):
         except NotImplementedError:
             return  # Skip unsupported prototype codes
 
-        # Is the first argument a GEN?
-        if len(args) > 0 and isinstance(args[0], PariArgumentGEN):
-            # If yes, write a method of the Gen class.
-            cargs = args
-            f = self.gen_file
-        else:
-            # If no, write a method of the Pari class.
-            # Parse again with an extra "self" argument.
-            args, ret = parse_prototype(prototype, help, [PariInstanceArgument()])
-            cargs = args[1:]
-            f = self.instance_file
+        doc = get_rest_doc(function)
 
-        self.write_method(function, cname, args, ret, cargs, f,
-                get_rest_doc(function), obsolete)
+        if len(args) > 0 and isinstance(args[0], PariArgumentGEN):
+            # If the first argument is a GEN, write a method of the
+            # Gen class.
+            self.write_method(function, cname, args, ret, args,
+                    self.gen_file, doc, obsolete)
+
+        # In any case, write a method of the Pari class.
+        # Parse again with an extra "self" argument.
+        args, ret = parse_prototype(prototype, help, [PariInstanceArgument()])
+        self.write_method(function, cname, args, ret, args[1:],
+                self.instance_file, doc, obsolete)
 
     def write_method(self, function, cname, args, ret, cargs, file, doc, obsolete):
         """
