@@ -228,7 +228,9 @@ class PariFunctionGenerator(object):
           given whenever this method is called
         """
         doc = doc.replace("\n", "\n        ")  # Indent doc
-        doc = doc.encode("utf-8")
+        # doc is unicode, we want str => need to convert on Python 2
+        if not isinstance(doc, str):
+            doc = doc.encode("utf-8")
 
         protoargs = ", ".join(a.prototype_code() for a in args)
         callargs = ", ".join(a.call_code() for a in cargs)
