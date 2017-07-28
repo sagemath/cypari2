@@ -10,73 +10,75 @@ This library supports both Python 2 and Python 3.
 Installation
 ------------
 
-We describe here how to install cypari2. Any other kind of installation
-is not supported. In particular, ``python setup.py install`` does NOT work.
-
 GNU/Linux
 ^^^^^^^^^
 
-Check if a package `python-cypari2` or `python2-cypari2` or `python3-cypari2`
-is available through your package manager.
+A package `python-cypari2` or `python2-cypari2` or `python3-cypari2` might be
+available in your package manager.
 
-Generic install via PyPI
-^^^^^^^^^^^^^^^^^^^^^^^^
+Using pip
+^^^^^^^^^
 
-1. Install libpari, pip, cysignals
+Requirements:
 
-2. Install cypari2 via the Python Package Index (PyPI) via::
+- PARI/GP (header files and library)
+- python >= 2.7
+- pip
+- `cysignals <https://pypi.python.org/pypi/cysignals/>`_
+
+Install cypari2 via the Python Package Index (PyPI) via
+
+::
 
     $ pip install cypari2 [--user]
 
 (the optional option *--user* allows to install cypari2 for a single user
-and avoids using pip with administrator rights)
+and avoids using pip with administrator rights). Depending on your operating
+system the pip command might also be called pip2 or pip3.
 
-Development version
-^^^^^^^^^^^^^^^^^^^
-
-If you want to try the development version, you can replace step 2
-of the "Generic install via PyPI" by
+If you want to try the development version use
 
 ::
 
     $ pip install git+https://github.com/defeo/cypari2.git [--user]
 
+Other
+^^^^^
+
+Any other way to install cypari2 is not supported. In particular, ``python
+setup.py install`` will produce an error.
 
 Usage
 -----
 
-Just launch Python and then you can perform some PARI/GP computation
+Here is an example of some PARI/GP computations in Python
 
 ::
 
     >>> import cypari2
     >>> pari = cypari2.Pari()
+
     >>> pari(2).zeta()
     1.64493406684823
+
+    >>> pari(2197).ispower(3)
+    (3, 13)
 
     >>> K = pari("bnfinit(x^3 - 2)")
     >>> K.bnfunit()
     [x - 1]
 
-The object **pari** above is the object for the interface. It can be called
-with basic Python objects like integer or floating point. When called with
-a string as in the second example above, the corresponding code is interpreted
-by libpari
+The object **pari** above is the object for the interface and acts as a
+constructor. It can be called with basic Python objects like integer
+or floating point. When called with a string as in the last example
+the corresponding string is interpreted as if it was executed in a GP shell.
 
-Any object you get a handle on is of type **Gen** (that is a wrapper around the
-**GEN** type from libpari). All PARI/GP functions are then available as *method*
-of the object **Gen**.
+Beyond the interface object **pari** of type **Pari**, any object you get a
+handle on is of type **Gen** (that is a wrapper around the **GEN** type from
+libpari). All PARI/GP functions are then available in their original names as
+*methods* like **zeta**, **ispower** or **bnfunit** above.
 
-Issues
-------
-
-1) If you change your PARI installation you need to recompile cysignals and cypari2 using
-the *--no-cache-dir* option of pip
-
-::
-
-     pip install cysignals --no-cache-dir --force-reinstall [--user]
-     pip install cypari2 --no-cache-dir --force-reinstall [--user]
+The complete documentation is available at http://cypari2.readthedocs.io
 
 Contributing
 ------------
