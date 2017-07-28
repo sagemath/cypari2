@@ -2374,7 +2374,7 @@ cdef class Gen(Gen_auto):
             R -= 1
         return new_gen(v)
 
-    def Ser(f, v=-1, long precision=-1):
+    def Ser(f, v=None, long precision=-1):
         """
         Return a power series or Laurent series in the variable `v`
         constructed from the object `f`.
@@ -3755,7 +3755,7 @@ cdef class Gen(Gen_auto):
         sig_on()
         return new_gen(eltreltoabs(self.g, t0.g))
 
-    def galoissubfields(self, long flag=0, v=-1):
+    def galoissubfields(self, long flag=0, v=None):
         """
         List all subfields of the Galois group ``self``.
 
@@ -4298,7 +4298,7 @@ cdef class Gen(Gen_auto):
         sig_on()
         return new_gen(factorpadic(self.g, t0.g, r))
 
-    def poldegree(self, var=-1):
+    def poldegree(self, var=None):
         """
         Return the degree of this polynomial.
         """

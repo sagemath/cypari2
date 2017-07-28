@@ -1328,7 +1328,7 @@ cdef long get_var(v) except -2:
     Convert ``v`` into a PARI variable number.
 
     If ``v`` is a PARI object, return the variable number of
-    ``variable(v)``. If ``v`` is ``None`` or ``-1``, return -1.
+    ``variable(v)``. If ``v`` is ``None``, return -1.
     Otherwise, treat ``v`` as a string and return the number of
     the variable named ``v``.
 
@@ -1354,6 +1354,8 @@ cdef long get_var(v) except -2:
     2*x
     >>> pari("[Pi,0]").Pol('!@#$%^&')
     3.14159265358979*!@#$%^&
+    >>> pari("[1,0]").Pol(-1)  # Deprecated
+    x
 
     We can use ``varhigher()`` and ``varlower()`` to create
     temporary variables without a name. The ``"xx"`` below is just a
@@ -1383,6 +1385,8 @@ cdef long get_var(v) except -2:
         else:
             return varno
     if v == -1:
+        from warnings import warn
+        warn("using '-1' as variable name is deprecated, use 'None' to mean 'no variable'", DeprecationWarning)
         return -1
     cdef bytes s = to_bytes(v)
     sig_on()
