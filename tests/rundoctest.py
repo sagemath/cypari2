@@ -3,17 +3,21 @@
 import os
 import sys
 import cypari2
+import autogen
 import doctest
 
 path = os.path.dirname(__file__)
 if path:
     os.chdir(path)
+    os.chdir('..')
 
 failed = 0
 attempted = 0
 for mod in [cypari2.closure, cypari2.convert, cypari2.gen,
             cypari2.handle_error, cypari2.pari_instance, cypari2.stack,
-            cypari2.string_utils]:
+            cypari2.string_utils,
+            autogen.doc, autogen.generator, autogen.parser,
+            autogen.paths]:
 
     print("="*80)
     print("Testing {}".format(mod.__name__))

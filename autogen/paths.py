@@ -35,9 +35,9 @@ def pari_share():
 
     EXAMPLES::
 
-        sage: from sage_setup.autogen.pari.parser import pari_share
-        sage: pari_share()
-        '.../share/pari'
+        >>> from autogen.parser import pari_share
+        >>> pari_share().endswith(b'/share/pari')
+        True
     """
     from subprocess import Popen, PIPE
     if not gppath:
