@@ -10,6 +10,7 @@ path = os.path.dirname(__file__)
 if path:
     os.chdir(path)
 os.chdir('..')
+sys.path += os.getcwd()
 
 failed = 0
 attempted = 0
