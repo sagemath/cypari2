@@ -5,12 +5,10 @@ import sys
 import cypari2
 import doctest
 
-path = os.path.dirname(__file__)
-if path:
-    os.chdir(path)
-os.chdir('..')
-sys.path.append(os.getcwd())
-
+# Autogen tests must be run in the root dir, and with the proper module path
+path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
+os.chdir(path)
+sys.path.append(path)
 import autogen
 
 failed = 0
