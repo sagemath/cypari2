@@ -1,10 +1,5 @@
 """
 Read and parse the file pari.desc
-
-Run tests from the ``SAGE_SRC`` directory::
-
-    sage: from sage.env import SAGE_SRC
-    sage: os.chdir(SAGE_SRC)
 """
 
 #*****************************************************************************
@@ -39,16 +34,16 @@ def read_pari_desc():
 
     EXAMPLES::
 
-        sage: from sage_setup.autogen.pari.parser import read_pari_desc
-        sage: D = read_pari_desc()
-        sage: D["cos"]
-        {'class': 'basic',
-         'cname': 'gcos',
-         'doc': 'cosine of $x$.',
-         'function': 'cos',
-         'help': 'cos(x): cosine of x.',
-         'prototype': 'Gp',
-         'section': 'transcendental'}
+        >>> from autogen.parser import read_pari_desc
+        >>> D = read_pari_desc()
+        >>> D["cos"] == { 'class': 'basic',
+        ...   'cname': 'gcos',
+        ...   'doc': 'cosine of $x$.',
+        ...   'function': 'cos',
+        ...   'help': 'cos(x): cosine of x.',
+        ...   'prototype': 'Gp',
+        ...   'section': 'transcendental'}
+        True
     """
     with open(os.path.join(pari_share(), b'pari.desc')) as f:
         lines = f.readlines()
@@ -89,9 +84,9 @@ def read_decl():
 
     EXAMPLES::
 
-        sage: from sage_setup.autogen.pari.parser import read_decl
-        sage: read_decl()
-        {'ABC_to_bnr', ..., 'zx_to_zv'}
+        >>> from autogen.parser import read_decl
+        >>> sorted(read_decl())
+        ['ABC_to_bnr', ..., 'zx_to_zv']
     """
     s = set()
     with open(os.path.join("cypari2", "paridecl.pxd")) as f:
@@ -126,12 +121,12 @@ def parse_prototype(proto, help, initial_args=[]):
 
     EXAMPLES::
 
-        sage: from sage_setup.autogen.pari.parser import parse_prototype
-        sage: proto = 'GD0,L,DGDGDG'
-        sage: help = 'qfbred(x,{flag=0},{d},{isd},{sd})'
-        sage: parse_prototype(proto, help)
+        >>> from autogen.parser import parse_prototype
+        >>> proto = 'GD0,L,DGDGDG'
+        >>> help = 'qfbred(x,{flag=0},{d},{isd},{sd})'
+        >>> parse_prototype(proto, help)
         ([GEN x, long flag=0, GEN d=NULL, GEN isd=NULL, GEN sd=NULL], GEN)
-        sage: parse_prototype("lp", "foo()", ["TEST"])
+        >>> parse_prototype("lp", "foo()", ["TEST"])
         (['TEST', prec precision=0], long)
     """
     # Use the help string just for the argument names.

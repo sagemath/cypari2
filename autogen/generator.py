@@ -1,10 +1,5 @@
 """
 Auto-generate methods for PARI functions.
-
-Run tests from the ``SAGE_SRC`` directory::
-
-    sage: from sage.env import SAGE_SRC
-    sage: os.chdir(SAGE_SRC)
 """
 
 #*****************************************************************************
@@ -74,15 +69,15 @@ class PariFunctionGenerator(object):
 
         EXAMPLES::
 
-            sage: from sage_setup.autogen.pari.generator import PariFunctionGenerator
-            sage: G = PariFunctionGenerator()
-            sage: G.can_handle_function("bnfinit", "bnfinit0", **{"class":"basic"})
+            >>> from autogen.generator import PariFunctionGenerator
+            >>> G = PariFunctionGenerator()
+            >>> G.can_handle_function("bnfinit", "bnfinit0", **{"class":"basic"})
             True
-            sage: G.can_handle_function("_bnfinit", "bnfinit0", **{"class":"basic"})
+            >>> G.can_handle_function("_bnfinit", "bnfinit0", **{"class":"basic"})
             False
-            sage: G.can_handle_function("bnfinit", "BNFINIT0", **{"class":"basic"})
+            >>> G.can_handle_function("bnfinit", "BNFINIT0", **{"class":"basic"})
             False
-            sage: G.can_handle_function("bnfinit", "bnfinit0", **{"class":"hard"})
+            >>> G.can_handle_function("bnfinit", "bnfinit0", **{"class":"hard"})
             False
         """
         if function in function_blacklist:
@@ -114,15 +109,15 @@ class PariFunctionGenerator(object):
 
         EXAMPLES::
 
-            sage: from sage_setup.autogen.pari.parser import read_pari_desc
-            sage: from sage_setup.autogen.pari.generator import PariFunctionGenerator
-            sage: G = PariFunctionGenerator()
-            sage: G.gen_file = sys.stdout
-            sage: G.instance_file = sys.stdout
-            sage: G.handle_pari_function("bnfinit",
-            ....:     cname="bnfinit0", prototype="GD0,L,DGp",
-            ....:     help=r"bnfinit(P,{flag=0},{tech=[]}): compute...",
-            ....:     **{"class":"basic", "section":"number_fields"})
+            >>> from autogen.parser import read_pari_desc
+            >>> from autogen.generator import PariFunctionGenerator
+            >>> G = PariFunctionGenerator()
+            >>> G.gen_file = sys.stdout
+            >>> G.instance_file = sys.stdout
+            >>> G.handle_pari_function("bnfinit",
+            ...     cname="bnfinit0", prototype="GD0,L,DGp",
+            ...     help=r"bnfinit(P,{flag=0},{tech=[]}): compute...",
+            ...     **{"class":"basic", "section":"number_fields"})
                 def bnfinit(P, long flag=0, tech=None, long precision=0):
                     ...
                     cdef GEN _P = P.g
@@ -135,10 +130,11 @@ class PariFunctionGenerator(object):
                     cdef GEN _ret = bnfinit0(_P, flag, _tech, precision)
                     return new_gen(_ret)
             <BLANKLINE>
-            sage: G.handle_pari_function("ellmodulareqn",
-            ....:     cname="ellmodulareqn", prototype="LDnDn",
-            ....:     help=r"ellmodulareqn(N,{x},{y}): return...",
-            ....:     **{"class":"basic", "section":"elliptic_curves"})
+                ...
+            >>> G.handle_pari_function("ellmodulareqn",
+            ...     cname="ellmodulareqn", prototype="LDnDn",
+            ...     help=r"ellmodulareqn(N,{x},{y}): return...",
+            ...     **{"class":"basic", "section":"elliptic_curves"})
                 def ellmodulareqn(self, long N, x=None, y=None):
                     ...
                     cdef long _x = -1
@@ -151,11 +147,11 @@ class PariFunctionGenerator(object):
                     cdef GEN _ret = ellmodulareqn(N, _x, _y)
                     return new_gen(_ret)
             <BLANKLINE>
-            sage: G.handle_pari_function("setrand",
-            ....:     cname="setrand", prototype="vG",
-            ....:     help=r"setrand(n): reset the seed...",
-            ....:     doc=r"reseeds the random number generator...",
-            ....:     **{"class":"basic", "section":"programming/specific"})
+            >>> G.handle_pari_function("setrand",
+            ...     cname="setrand", prototype="vG",
+            ...     help=r"setrand(n): reset the seed...",
+            ...     doc=r"reseeds the random number generator...",
+            ...     **{"class":"basic", "section":"programming/specific"})
                 def setrand(n):
                     r'''
                     Reseeds the random number generator using the seed :math:`n`. No value is
@@ -169,11 +165,12 @@ class PariFunctionGenerator(object):
                     setrand(_n)
                     clear_stack()
             <BLANKLINE>
-            sage: G.handle_pari_function("bernvec",
-            ....:     cname="bernvec", prototype="L",
-            ....:     help="bernvec(x): this routine is obsolete, use bernfrac repeatedly.",
-            ....:     obsolete="2007-03-30",
-            ....:     **{"class":"basic", "section":"transcendental"})
+                ...
+            >>> G.handle_pari_function("bernvec",
+            ...     cname="bernvec", prototype="L",
+            ...     help="bernvec(x): this routine is obsolete, use bernfrac repeatedly.",
+            ...     obsolete="2007-03-30",
+            ...     **{"class":"basic", "section":"transcendental"})
                 def bernvec(self, long x):
                     r'''
                     This routine is obsolete, kept for backward compatibility only.
