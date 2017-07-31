@@ -28,5 +28,5 @@ install:
   - pip install --verbose .
 # command to run tests
 script:
-  - (cd tests && python rundoctest.py)
+  - python tests/rundoctest.py
   - (cd docs && make html)

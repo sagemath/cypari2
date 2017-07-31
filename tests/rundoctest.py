@@ -9,7 +9,7 @@ import doctest
 path = os.path.dirname(__file__)
 if path:
     os.chdir(path)
-    os.chdir('..')
+os.chdir('..')
 
 failed = 0
 attempted = 0
