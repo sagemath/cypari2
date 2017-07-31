@@ -3431,7 +3431,7 @@ cdef class Gen(Gen_auto):
         <... 'int'>
         """
         sig_on()
-        cdef GEN g = anell(self.g, n)
+        cdef GEN g = ellan(self.g, n)
         if python_ints:
             v = [gtolong(gel(g, i+1)) for i in range(glength(g))]
             clear_stack()

@@ -1342,7 +1342,7 @@ cdef class Pari(Pari_auto):
         """
         if x is None:
             sig_on()
-            return new_gen(listcreate())
+            return new_gen(mklist())
         cdef Gen t0 = objtogen(x)
         sig_on()
         return new_gen(gtolist(t0.g))
