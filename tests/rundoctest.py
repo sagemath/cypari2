@@ -3,14 +3,15 @@
 import os
 import sys
 import cypari2
-import autogen
 import doctest
 
 path = os.path.dirname(__file__)
 if path:
     os.chdir(path)
 os.chdir('..')
-sys.path += os.getcwd()
+sys.path.append(os.getcwd())
+
+import autogen
 
 failed = 0
 attempted = 0
