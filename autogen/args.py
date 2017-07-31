@@ -179,10 +179,14 @@ class PariInstanceArgument(PariArgumentObject):
         PariArgument.__init__(self, iter(["self"]), None, 0)
     def _typerepr(self):
         return "Pari"
+    def ctype(self):
+        return "GEN"
 
 
 class PariArgumentGEN(PariArgumentObject):
     def _typerepr(self):
+        return "GEN"
+    def ctype(self):
         return "GEN"
     def convert_code(self):
         if self.index == 0:
@@ -219,6 +223,8 @@ class PariArgumentGEN(PariArgumentObject):
 class PariArgumentString(PariArgumentObject):
     def _typerepr(self):
         return "str"
+    def ctype(self):
+        return "char *"
     def convert_code(self):
         if self.default is None:
             s  = "        {name} = to_bytes({name})\n"
@@ -237,6 +243,8 @@ class PariArgumentString(PariArgumentObject):
 class PariArgumentVariable(PariArgumentObject):
     def _typerepr(self):
         return "var"
+    def ctype(self):
+        return "long"
     def default_default(self):
         return "-1"
     def convert_code(self):

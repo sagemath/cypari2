@@ -20,7 +20,6 @@ from .args import pari_arg_types
 from .ret import pari_ret_types
 from .paths import pari_share
 
-
 paren_re = re.compile(r"[(](.*)[)]")
 argname_re = re.compile(r"[ {]*([A-Za-z_][A-Za-z0-9_]*)")
 
@@ -70,31 +69,6 @@ def read_pari_desc():
         functions[name] = fun
 
     return functions
-
-
-decl_re = re.compile(" ([A-Za-z][A-Za-z0-9_]*)[(]")
-
-def read_decl():
-    """
-    Read the files ``paridecl.pxd`` and ``declinl.pxi`` and return a set
-    of all declared PARI library functions.
-
-    We do a simple regexp search, so there might be false positives.
-    The main use is to skip undeclared functions.
-
-    EXAMPLES::
-
-        >>> from autogen.parser import read_decl
-        >>> sorted(read_decl())
-        ['ABC_to_bnr', ..., 'zx_to_zv']
-    """
-    s = set()
-    with open(os.path.join("cypari2", "paridecl.pxd")) as f:
-        s.update(decl_re.findall(f.read()))
-    with open(os.path.join("cypari2", "declinl.pxi")) as f:
-        s.update(decl_re.findall(f.read()))
-    return s
-
 
 def parse_prototype(proto, help, initial_args=[]):
     """

@@ -2987,6 +2987,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN     listput0(GEN list, GEN object, long index)
     void    listsort(GEN list, long flag)
     GEN     matsize(GEN x)
+    GEN     mklist()
     GEN     mklistcopy(GEN x)
     GEN     normalize(GEN x)
     GEN     normalizepol(GEN x)

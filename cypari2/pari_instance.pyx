@@ -259,6 +259,7 @@ from cysignals.signals cimport sig_check, sig_on, sig_off
 
 from .string_utils cimport to_string, to_bytes
 from .paridecl cimport *
+from .auto_paridecl cimport *
 from .paripriv cimport *
 from .gen cimport Gen, objtogen
 from .stack cimport new_gen, new_gen_noclear, clear_stack
