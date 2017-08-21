@@ -71,6 +71,14 @@ class PariArgument(object):
         """
         return "(generic)"
 
+    def ctype(self):
+        """
+        The corresponding C type. This is used for auto-generating
+        the declarations of the C function. In some cases, this is also
+        used for passing the argument from Python to Cython.
+        """
+        raise NotImplementedError
+
     def always_default(self):
         """
         If this returns not ``None``, it is a value which is always
@@ -156,9 +164,6 @@ class PariArgumentClass(PariArgument):
 
     The C/Cython type is given by ``self.ctype()``.
     """
-    def ctype(self):
-        raise NotImplementedError
-
     def prototype_code(self):
         """
         Return code to appear in the prototype of the Cython wrapper.
@@ -179,10 +184,14 @@ class PariInstanceArgument(PariArgumentObject):
         PariArgument.__init__(self, iter(["self"]), None, 0)
     def _typerepr(self):
         return "Pari"
+    def ctype(self):
+        return "GEN"
 
 
 class PariArgumentGEN(PariArgumentObject):
     def _typerepr(self):
+        return "GEN"
+    def ctype(self):
         return "GEN"
     def convert_code(self):
         if self.index == 0:
@@ -219,6 +228,8 @@ class PariArgumentGEN(PariArgumentObject):
 class PariArgumentString(PariArgumentObject):
     def _typerepr(self):
         return "str"
+    def ctype(self):
+        return "char *"
     def convert_code(self):
         if self.default is None:
             s  = "        {name} = to_bytes({name})\n"
@@ -237,6 +248,8 @@ class PariArgumentString(PariArgumentObject):
 class PariArgumentVariable(PariArgumentObject):
     def _typerepr(self):
         return "var"
+    def ctype(self):
+        return "long"
     def default_default(self):
         return "-1"
     def convert_code(self):

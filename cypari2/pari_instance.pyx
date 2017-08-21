@@ -259,6 +259,7 @@ from cysignals.signals cimport sig_check, sig_on, sig_off
 
 from .string_utils cimport to_string, to_bytes
 from .paridecl cimport *
+from .auto_paridecl cimport *
 from .paripriv cimport *
 from .gen cimport Gen, objtogen
 from .stack cimport new_gen, new_gen_noclear, clear_stack
@@ -1341,7 +1342,7 @@ cdef class Pari(Pari_auto):
         """
         if x is None:
             sig_on()
-            return new_gen(listcreate())
+            return new_gen(mklist())
         cdef Gen t0 = objtogen(x)
         sig_on()
         return new_gen(gtolist(t0.g))

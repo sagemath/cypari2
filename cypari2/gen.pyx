@@ -71,7 +71,7 @@ from cpython.object cimport Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, Py_GT
 from cysignals.memory cimport sig_free, check_malloc
 from cysignals.signals cimport sig_check, sig_on, sig_off, sig_block, sig_unblock
 
-from .paridecl cimport *
+from .types cimport *
 from .string_utils cimport to_string, to_bytes
 from .paripriv cimport *
 from .convert cimport (integer_to_gen, gen_to_integer,
@@ -80,6 +80,9 @@ from .pari_instance cimport (prec_bits_to_words, prec_words_to_bits,
                              default_bitprec, get_var)
 from .stack cimport new_gen, new_gen_noclear, clear_stack
 from .closure cimport objtoclosure
+
+from .paridecl cimport *
+from .auto_paridecl cimport *
 
 include 'auto_gen.pxi'
 
@@ -3426,7 +3429,7 @@ cdef class Gen(Gen_auto):
         <... 'int'>
         """
         sig_on()
-        cdef GEN g = anell(self.g, n)
+        cdef GEN g = ellan(self.g, n)
         if python_ints:
             v = [gtolong(gel(g, i+1)) for i in range(glength(g))]
             clear_stack()
