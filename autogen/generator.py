@@ -136,7 +136,7 @@ class PariFunctionGenerator(object):
             return False
         return True
 
-    def handle_pari_function(self, function, cname="", prototype="", help="", obsolete=None, **kwds):
+    def handle_pari_function(self, function, cname, prototype="", help="", obsolete=None, **kwds):
         r"""
         Handle one PARI function: decide whether or not to add the
         function, in which file (as method of :class:`Gen` or
@@ -155,6 +155,7 @@ class PariFunctionGenerator(object):
             ...     cname="bnfinit0", prototype="GD0,L,DGp",
             ...     help=r"bnfinit(P,{flag=0},{tech=[]}): compute...",
             ...     **{"class":"basic", "section":"number_fields"})
+                GEN bnfinit0(GEN, long, GEN, long)
                 def bnfinit(P, long flag=0, tech=None, long precision=0):
                     ...
                     cdef GEN _P = P.g
@@ -172,7 +173,7 @@ class PariFunctionGenerator(object):
             ...     cname="ellmodulareqn", prototype="LDnDn",
             ...     help=r"ellmodulareqn(N,{x},{y}): return...",
             ...     **{"class":"basic", "section":"elliptic_curves"})
-                GEN ellmodulareqn(long N, long x, long y)
+                GEN ellmodulareqn(long, long, long)
                 def ellmodulareqn(self, long N, x=None, y=None):
                     ...
                     cdef long _x = -1
@@ -190,6 +191,7 @@ class PariFunctionGenerator(object):
             ...     help=r"setrand(n): reset the seed...",
             ...     doc=r"reseeds the random number generator...",
             ...     **{"class":"basic", "section":"programming/specific"})
+                void setrand(GEN)
                 def setrand(n):
                     r'''
                     Reseeds the random number generator using the seed :math:`n`. No value is
@@ -209,7 +211,7 @@ class PariFunctionGenerator(object):
             ...     help="bernvec(x): this routine is obsolete, use bernfrac repeatedly.",
             ...     obsolete="2007-03-30",
             ...     **{"class":"basic", "section":"transcendental"})
-                GEN bernvec(long x)
+                GEN bernvec(long)
                 def bernvec(self, long x):
                     r'''
                     This routine is obsolete, kept for backward compatibility only.
@@ -221,8 +223,6 @@ class PariFunctionGenerator(object):
                     return new_gen(_ret)
             <BLANKLINE>
         """
-        if not cname:
-            raise ValueError('function {} has no associated C name'.format(function))
         try:
             args, ret = parse_prototype(prototype, help)
         except NotImplementedError:
@@ -230,23 +230,36 @@ class PariFunctionGenerator(object):
 
         doc = get_rest_doc(function)
 
+        self.write_declaration(cname, args, ret, self.decl_file)
+
         if len(args) > 0 and isinstance(args[0], PariArgumentGEN):
             # If the first argument is a GEN, write a method of the
             # Gen class.
             self.write_method(function, cname, args, ret, args,
                     self.gen_file, doc, obsolete)
 
-        # In any case, write a declaration and a method of the Pari class.
-        self.write_header(cname, args, ret, self.decl_file)
-
+        # In any case, write a method of the Pari class.
         # Parse again with an extra "self" argument.
         args, ret = parse_prototype(prototype, help, [PariInstanceArgument()])
         self.write_method(function, cname, args, ret, args[1:],
                 self.instance_file, doc, obsolete)
 
-    def write_header(self, cname, args, ret, file):
-        args = ", ".join('{} {}'.format(a.ctype(), a.name) for a in args)
-        print('    {ret} {function}({args})'.format(ret=ret.ctype(), function=cname, args=args), file=file)
+    def write_declaration(self, cname, args, ret, file):
+        """
+        Write a .pxd declaration of a PARI library function.
+
+        INPUT:
+
+        - ``cname`` -- name of the PARI C library call
+
+        - ``args``, ``ret`` -- output from ``parse_prototype``
+
+        - ``file`` -- a file object where the declaration should be
+          written to
+        """
+        args = ", ".join(a.ctype() for a in args)
+        s = '    {ret} {function}({args})'.format(ret=ret.ctype(), function=cname, args=args)
+        print(s, file=file)
 
     def write_method(self, function, cname, args, ret, cargs, file, doc, obsolete):
         """

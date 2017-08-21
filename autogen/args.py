@@ -71,6 +71,14 @@ class PariArgument(object):
         """
         return "(generic)"
 
+    def ctype(self):
+        """
+        The corresponding C type. This is used for auto-generating
+        the declarations of the C function. In some cases, this is also
+        used for passing the argument from Python to Cython.
+        """
+        raise NotImplementedError
+
     def always_default(self):
         """
         If this returns not ``None``, it is a value which is always
@@ -156,9 +164,6 @@ class PariArgumentClass(PariArgument):
 
     The C/Cython type is given by ``self.ctype()``.
     """
-    def ctype(self):
-        raise NotImplementedError
-
     def prototype_code(self):
         """
         Return code to appear in the prototype of the Cython wrapper.
