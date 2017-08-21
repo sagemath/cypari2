@@ -907,11 +907,9 @@ cdef class Gen(Gen_auto):
 
         - ``self`` -- a bnr structure as outputted from bnrinit.
         - ``ideal`` -- an ideal in the underlying number field of
-        the bnr structure.
+          the bnr structure.
 
-        OUTPUT:
-
-        - An ideal representing the same ray class as ``ideal``
+        OUTPUT: An ideal representing the same ray class as ``ideal``
         but with 'small' generators. If ``ideal`` is not coprime to
         the modulus of the bnr, this results in an error.
 
