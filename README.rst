@@ -21,7 +21,7 @@ Using pip
 
 Requirements:
 
-- PARI/GP (header files and library)
+- PARI/GP >= 2.8.1 (header files and library)
 - python >= 2.7
 - pip
 - `cysignals <https://pypi.python.org/pypi/cysignals/>`_
