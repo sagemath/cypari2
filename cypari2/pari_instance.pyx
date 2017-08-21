@@ -1026,8 +1026,16 @@ cdef class Pari(Pari_auto):
             print("PARI stack size set to {} bytes, maximum size set to {}".
                 format(self.stacksize(), self.stacksizemax()))
 
-    def pari_version(self):
-        return str(PARIVERSION)
+    @staticmethod
+    def pari_version():
+        """
+        Return a string describing the version of PARI/GP.
+
+        >>> from cypari2 import Pari
+        >>> Pari.pari_version()
+        'GP/PARI CALCULATOR Version ...'
+        """
+        return to_string(PARIVERSION)
 
     def init_primes(self, unsigned long M):
         """
