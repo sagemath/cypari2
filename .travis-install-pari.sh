@@ -3,6 +3,8 @@
 # Exit on error
 set -e
 
+PARI_URL="http://pari.math.u-bordeaux.fr/pub/pari/$URLDIR"
+
 # Figure out PARI version and download location
 # Note that we support giving a list of URLs
 if [ "$PARI_VERSION" = snapshot ]; then
