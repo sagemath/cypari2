@@ -12,8 +12,12 @@ python:
   - "3.6"
 env:
   - PARI_VERSION=pari-2.8.1.beta
+    URLDIR=unstable
   - PARI_VERSION=pari-2.9.3
+    URLDIR=unix
   - PARI_VERSION=snapshot
+    URLDIR=snapshots
+
 before_install:
   - export PATH="/usr/lib/ccache:$PATH"
   - ccache -M 256M && ccache -s
