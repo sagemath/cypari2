@@ -688,14 +688,6 @@ cdef class Gen(Gen_auto):
     def polred(self, *args, **kwds):
         r'''
         This function is :emphasis:`deprecated`, use :meth:`.polredbest` instead.
-
-        Tests:
-
-        >>> from cypari2 import Pari
-        >>> pari = Pari()
-
-        >>> pari('x^4 + 8').polred(2)
-        [1, x - 1; 1/2*x^2 + 1, x^2 - 2*x + 3; -1/2*x^2 + 1, x^2 - 2*x + 3; 1/2*x^2, x^2 + 2; 1/4*x^3, x^4 + 2]
         '''
         import warnings
         with warnings.catch_warnings():
@@ -2899,12 +2891,10 @@ cdef class Gen(Gen_auto):
         >>> pari(1.0).sizeword() == (4 if bitness == '32' else 3)
         True
 
-        >>> pari('x').sizeword()
-        9
-        >>> pari('x^20').sizeword()
-        66
-        >>> pari('[x, I]').sizeword()
-        20
+        >>> pari('x + 1').sizeword()
+        10
+        >>> pari('[x + 1, 1]').sizeword()
+        16
         """
         return gsizeword(x.g)
 
@@ -4504,14 +4494,6 @@ cdef class Gen(Gen_auto):
         Traceback (most recent call last):
         ...
         PariError: incorrect type in boundfact (t_POL)
-
-        PARI doesn't have an algorithm for factoring multivariate
-        polynomials:
-
-        >>> pari('x^3 - y^3').factor()
-        Traceback (most recent call last):
-        ...
-        PariError: sorry, factor for general polynomials is not yet implemented
         """
         cdef GEN g
         global factor_proven
@@ -4816,13 +4798,13 @@ cdef class Gen(Gen_auto):
         >>> from cypari2 import Pari
         >>> pari = Pari()
 
-        >>> pari('[1/2, 1.0*I]').debug()
+        >>> pari('[1/2, 1 + 1.0*I]').debug()
         [&=...] VEC(lg=3):...
           1st component = [&=...] FRAC(lg=3):...
             num = [&=...] INT(lg=3):... (+,lgefint=3):...
             den = [&=...] INT(lg=3):... (+,lgefint=3):...
           2nd component = [&=...] COMPLEX(lg=3):...
-            real = [&=...] INT(lg=2):... (0,lgefint=2):...
+            real = [&=...] INT(lg=3):... (+,lgefint=3):...
             imag = [&=...] REAL(lg=3):... (+,expo=0):...
         """
         sig_on()
