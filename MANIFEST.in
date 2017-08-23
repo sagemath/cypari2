@@ -1,7 +1,7 @@
-include LICENSE README.md VERSION
+include LICENSE README.rst VERSION
 global-include *.py *.pyx *.pxd *.pxi
 
-recursive-exclude cypari2 auto_*.pxi
-global-exclude *.c .gitignore .travis.yml
+recursive-exclude cypari2 auto_*
+global-exclude *.c .gitignore .travis* readthedocs*
 
 prune dist
