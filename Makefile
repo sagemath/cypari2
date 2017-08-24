@@ -12,9 +12,12 @@ build:
 install:
 	$(PIP) install --no-index --ignore-installed .
 
+check:
+	$(PYTHON) tests/rundoctest.py
+
 dist:
 	chmod go+rX-w -R .
 	umask 0022 && $(PYTHON) setup.py sdist --formats=gztar
 
 
-.PHONY: build install dist
+.PHONY: build install check dist

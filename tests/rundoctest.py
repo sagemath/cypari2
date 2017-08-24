@@ -2,14 +2,17 @@
 
 import os
 import sys
-import cypari2
-import doctest
 
 # Autogen tests must be run in the root dir, and with the proper module path
 path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
 os.chdir(path)
 sys.path.append(path)
 import autogen
+import cypari2
+import doctest
+
+# The doctests assume utf-8 encoding
+cypari2.string_utils.encoding = "utf-8"
 
 failed = 0
 attempted = 0
