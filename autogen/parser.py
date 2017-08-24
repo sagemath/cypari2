@@ -12,9 +12,9 @@ Read and parse the file pari.desc
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
-import os, re
+import os, re, io
 
 from .args import pari_arg_types
 from .ret import pari_ret_types
@@ -44,7 +44,8 @@ def read_pari_desc():
         ...   'section': 'transcendental'}
         True
     """
-    with open(os.path.join(pari_share(), b'pari.desc')) as f:
+    pari_desc = os.path.join(pari_share(), b'pari.desc')
+    with io.open(pari_desc, encoding="utf-8") as f:
         lines = f.readlines()
 
     n = 0
@@ -100,7 +101,7 @@ def parse_prototype(proto, help, initial_args=[]):
         >>> help = 'qfbred(x,{flag=0},{d},{isd},{sd})'
         >>> parse_prototype(proto, help)
         ([GEN x, long flag=0, GEN d=NULL, GEN isd=NULL, GEN sd=NULL], GEN)
-        >>> parse_prototype("lp", "foo()", ["TEST"])
+        >>> parse_prototype("lp", "foo()", [str("TEST")])
         (['TEST', prec precision=0], long)
     """
     # Use the help string just for the argument names.
