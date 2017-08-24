@@ -19,6 +19,7 @@ env:
     URLDIR=snapshots
 
 before_install:
+  - export LC_ALL=C  # Test that this doesn't break Unicode
   - export PATH="/usr/lib/ccache:$PATH"
   - ccache -M 256M && ccache -s
 install:
