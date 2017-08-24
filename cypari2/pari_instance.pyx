@@ -956,13 +956,13 @@ cdef class Pari(Pari_auto):
         >>> import cypari2
         >>> pari = cypari2.Pari()
         >>> pari.allocatemem(10**7)
-        PARI stack size set to 10000000 bytes, maximum size set to 10002432
+        PARI stack size set to 10000000 bytes, maximum size set to 100...
         >>> pari.allocatemem()  # Double the current size
-        PARI stack size set to 20000000 bytes, maximum size set to 20000768
+        PARI stack size set to 20000000 bytes, maximum size set to 200...
         >>> pari.stacksize()
         20000000
         >>> pari.allocatemem(10**6)
-        PARI stack size set to 1000000 bytes, maximum size set to 20000768
+        PARI stack size set to 1000000 bytes, maximum size set to 200...
 
         The following computation will automatically increase the PARI
         stack size:
