@@ -320,11 +320,16 @@ class PariFunctionGenerator(object):
         D = sorted(D.values(), key=lambda d: d['function'])
         sys.stdout.write("Generating PARI functions:")
 
-        self.gen_file = open(self.gen_filename + '.tmp', 'w')
+        # Stupid Python 3 forces us to specify an encoding
+        if "encoding" in open.__doc__:
+            kwds = dict(mode="wt", encoding="utf-8")
+        else:
+            kwds = dict(mode="wt")
+        self.gen_file = open(self.gen_filename + '.tmp', **kwds)
         self.gen_file.write(gen_banner)
-        self.instance_file = open(self.instance_filename + '.tmp', 'w')
+        self.instance_file = open(self.instance_filename + '.tmp', **kwds)
         self.instance_file.write(instance_banner)
-        self.decl_file = open(self.decl_filename + '.tmp', 'w')
+        self.decl_file = open(self.decl_filename + '.tmp', **kwds)
         self.decl_file.write(decl_banner)
 
         for v in D:
