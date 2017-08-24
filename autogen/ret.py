@@ -12,6 +12,8 @@ Return types for PARI calls
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
+from __future__ import unicode_literals
+
 class PariReturn(object):
     """
     This class represents the return value of a PARI call.

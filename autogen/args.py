@@ -12,6 +12,8 @@ Arguments for PARI calls
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
+from __future__ import unicode_literals
+
 # Some replacements for reserved words
 replacements = {'char': 'character'}
 

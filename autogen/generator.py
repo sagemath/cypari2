@@ -13,8 +13,8 @@ Auto-generate methods for PARI functions.
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
-from __future__ import absolute_import, print_function
-import os, re, sys
+from __future__ import absolute_import, print_function, unicode_literals
+import os, re, sys, io
 
 from .args import PariArgumentGEN, PariInstanceArgument
 from .parser import read_pari_desc, parse_prototype
@@ -284,9 +284,6 @@ class PariFunctionGenerator(object):
           given whenever this method is called
         """
         doc = doc.replace("\n", "\n        ")  # Indent doc
-        # doc is unicode, we want str => need to convert on Python 2
-        if not isinstance(doc, str):
-            doc = doc.encode("utf-8")
 
         protoargs = ", ".join(a.prototype_code() for a in args)
         callargs = ", ".join(a.call_code() for a in cargs)
@@ -320,16 +317,11 @@ class PariFunctionGenerator(object):
         D = sorted(D.values(), key=lambda d: d['function'])
         sys.stdout.write("Generating PARI functions:")
 
-        # Stupid Python 3 forces us to specify an encoding
-        if "encoding" in open.__doc__:
-            kwds = dict(mode="wt", encoding="utf-8")
-        else:
-            kwds = dict(mode="wt")
-        self.gen_file = open(self.gen_filename + '.tmp', **kwds)
+        self.gen_file = io.open(self.gen_filename + '.tmp', 'w', encoding='utf-8')
         self.gen_file.write(gen_banner)
-        self.instance_file = open(self.instance_filename + '.tmp', **kwds)
+        self.instance_file = io.open(self.instance_filename + '.tmp', 'w', encoding='utf-8')
         self.instance_file.write(instance_banner)
-        self.decl_file = open(self.decl_filename + '.tmp', **kwds)
+        self.decl_file = io.open(self.decl_filename + '.tmp', 'w', encoding='utf-8')
         self.decl_file.write(decl_banner)
 
         for v in D:
