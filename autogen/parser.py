@@ -44,7 +44,7 @@ def read_pari_desc():
         ...   'section': 'transcendental'}
         True
     """
-    pari_desc = os.path.join(pari_share(), b'pari.desc')
+    pari_desc = os.path.join(pari_share(), 'pari.desc')
     with io.open(pari_desc, encoding="utf-8") as f:
         lines = f.readlines()
 

@@ -20,7 +20,7 @@ from distutils.spawn import find_executable
 
 
 # find_executable() returns None if nothing was found
-gppath = find_executable("gp") or ""
+gppath = find_executable("gp")
 if gppath is None:
     # This almost certainly won't work, but we need to put something here
     prefix = "."
@@ -36,7 +36,7 @@ def pari_share():
     EXAMPLES::
 
         >>> from autogen.parser import pari_share
-        >>> pari_share().endswith(b'/share/pari')
+        >>> pari_share().endswith('/share/pari')
         True
     """
     from subprocess import Popen, PIPE
@@ -44,6 +44,10 @@ def pari_share():
         raise EnvironmentError("cannot find an installation of PARI/GP: make sure that the 'gp' program is in your $PATH")
     gp = Popen([gppath, "-f", "-q"], stdin=PIPE, stdout=PIPE)
     out = gp.communicate(b"print(default(datadir))")[0]
+    # Convert out to str if needed
+    if not isinstance(out, str):
+        from sys import getfilesystemencoding
+        out = out.decode(getfilesystemencoding(), "surrogateescape")
     datadir = out.strip()
     if not os.path.isdir(datadir):
         # As a fallback, try a path relative to the prefix
