@@ -86,6 +86,37 @@ from .auto_paridecl cimport *
 
 include 'auto_gen.pxi'
 
+
+cdef bint ellwp_flag1_bug = -1
+cdef inline bint have_ellwp_flag1_bug():
+    """
+    The PARI function ``ellwp(..., flag=1)`` has a bug in PARI versions
+    up to 2.9.3 where the derivative is a factor 2 too small.
+
+    This function does a cached check for this bug, returning 1 if
+    the bug is there and 0 if not.
+    """
+    global ellwp_flag1_bug
+    if ellwp_flag1_bug >= 0:
+        return ellwp_flag1_bug
+
+    # Check whether our PARI/GP version is buggy or not. This
+    # computation should return 1.0, but in older PARI versions it
+    # returns 0.5.
+    sig_on()
+    cdef GEN res = gp_read_str(b"localbitprec(128); my(E=ellinit([0,1/4])); ellwp(E,ellpointtoz(E,[0,1/2]),1)[2]")
+    cdef double d = gtodouble(res)
+    sig_off()
+
+    if d == 1.0:
+        ellwp_flag1_bug = 0
+    elif d == 0.5:
+        ellwp_flag1_bug = 1
+    else:
+        raise AssertionError(f"unexpected result from ellwp() test: {d}")
+    return ellwp_flag1_bug
+
+
 @cython.final
 cdef class Gen(Gen_auto):
     """
@@ -4736,18 +4767,24 @@ cdef class Gen(Gen_auto):
         With flag=1, compute the pair P(z) and P'(z):
 
         >>> E.ellwp(1, flag=1)
-        [13.9658695257485, 50.5619300880073]
+        [13.9658695257485, 101.123860176015]
         """
         cdef Gen t0 = objtogen(z)
         cdef GEN g0 = t0.g
 
-        # Emulate toser_i() but with given precision
         sig_on()
+        # Polynomial or rational function as input:
+        # emulate toser_i() but with given precision
         if typ(g0) == t_POL:
             g0 = RgX_to_ser(g0, n+4)
         elif typ(g0) == t_RFRAC:
             g0 = rfrac_to_ser(g0, n+4)
-        return new_gen(ellwp0(self.g, g0, flag, prec_bits_to_words(precision)))
+
+        cdef GEN r = ellwp0(self.g, g0, flag, prec_bits_to_words(precision))
+        if flag == 1 and have_ellwp_flag1_bug():
+            # Work around ellwp() bug: double the second element
+            set_gel(r, 2, gmulgs(gel(r, 2), 2))
+        return new_gen(r)
 
     def debug(self, long depth = -1):
         r"""
