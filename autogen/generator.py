@@ -194,18 +194,23 @@ class PariFunctionGenerator(object):
                 void setrand(GEN)
                 def setrand(n):
                     r'''
-                    Reseeds the random number generator using the seed :math:`n`. No value is
-                    returned. The seed is either a technical array output by :literal:`getrand`, or a
-                    small positive integer, used to generate deterministically a suitable state
-                    array. For instance, running a randomized computation starting by
-                    :literal:`setrand(1)` twice will generate the exact same output.
+                    Reseeds the random number generator...
                     '''
                     cdef GEN _n = n.g
                     sig_on()
                     setrand(_n)
                     clear_stack()
             <BLANKLINE>
-                ...
+                def setrand(self, n):
+                    r'''
+                    Reseeds the random number generator...
+                    '''
+                    n = objtogen(n)
+                    cdef GEN _n = (<Gen>n).g
+                    sig_on()
+                    setrand(_n)
+                    clear_stack()
+            <BLANKLINE>
             >>> G.handle_pari_function("bernvec",
             ...     cname="bernvec", prototype="L",
             ...     help="bernvec(x): this routine is obsolete, use bernfrac repeatedly.",
