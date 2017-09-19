@@ -26,5 +26,8 @@ cdef extern from "pari/paripriv.h":
 
     extern gp_data* GP_DATA
 
-cdef extern:  # Declared in private PARI header file "anal.h"
-    const char* closure_func_err()
+# In older versions of PARI, this is declared in the private
+# non-installed PARI header file "anal.h". More recently, this is
+# declared in "paripriv.h". Since a double declaration does not hurt,
+# we declare it here regardless.
+cdef extern const char* closure_func_err()
