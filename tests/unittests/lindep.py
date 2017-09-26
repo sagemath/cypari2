@@ -34,6 +34,8 @@ pari = Pari()
 
 
 class TestLindep(unittest.TestCase):
+    def setUp(self):
+        pari.set_real_precision(15)
     def test_lindep(self):
         self.assertEquals(pari.lindep([pari.sqrt(2), pari.sqrt(3), pari.sqrt(2) + pari.sqrt(3)]), '[-1, -1, 1]~')
         self.assertEquals(pari.lindep('[1, 2 + 3 + 3^2 + 3^3 + 3^4 + O(3^5)]'), '[1, -2]~')

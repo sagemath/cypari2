@@ -19,7 +19,8 @@ testmodules = [
     'isprime',
     'lambert',
     'lex',
-    'lindep'
+    'lindep',
+    'linear'
     ]
 
 suite = unittest.TestSuite()

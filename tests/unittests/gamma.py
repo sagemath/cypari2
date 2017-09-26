@@ -62,9 +62,16 @@ pari = Pari()
 
 
 class TestGamma(unittest.TestCase):
-    def test_gamma(self):
+
+    def setUp(self):
         pari.set_real_precision(38)
         pari.set_series_precision(6)
+
+    def tearDown(self):
+        pari.set_real_precision(15)
+        pari.set_series_precision(16)
+
+    def test_gamma(self):
         self.assertEquals(str(pari.gamma('2+I+x', precision=127)),
                           '(0.65296549642016672783864624794608469715 + 0.3430658398165453575' +
                           '8873598697831148676*I) + (0.19044897540645184469078131473790885364 + 0.580552467319476' +
@@ -122,8 +129,6 @@ class TestGamma(unittest.TestCase):
                           '95286760197004854674329979420483457441111886014601499071559796851143')
 
     def test_psi(self):
-        pari.set_real_precision(38)
-        pari.set_series_precision(6)
         self.assertEquals(str(pari.psi('2+I+x', precision=127)), '(0.59465032062247697727187848272191072247 + 0.5' +
                           '7667404746858117413405079475000049045*I) + (0.46300009662276378629832651818418579441 -' +
                           ' 0.29423354275931886558301361715690299591*I)*x + (-0.065723534206032414131682728509702' +
@@ -153,8 +158,6 @@ class TestGamma(unittest.TestCase):
         self.assertEquals(str(pari.psi('x+O(x^2)', precision=127)), '-x^-1 + O(x^0)')
 
     def test_lngamma(self):
-        pari.set_real_precision(38)
-        pari.set_series_precision(6)
         self.assertEquals(str(pari.lngamma('2+I+x', precision=127)), '(-0.30434960902188368417660077077485938103 ' +
                           '+ 0.48375784292991511172812918802297918039*I) + (0.59465032062247697727187848272191072' +
                           '247 + 0.57667404746858117413405079475000049045*I)*x + (0.23150004831138189314916325909' +
