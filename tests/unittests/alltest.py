@@ -20,7 +20,18 @@ testmodules = [
     'lambert',
     'lex',
     'lindep',
-    'linear'
+    'linear',
+    'list',
+    'log',
+    'mathnf',
+    'contfrac',
+    'minim',
+    'minmax',
+    'modfun',
+    'modular',
+    'nfrootsof1',
+    'nfsplitting',
+    'norm'
     ]
 
 suite = unittest.TestSuite()
