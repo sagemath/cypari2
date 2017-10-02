@@ -31,7 +31,9 @@ testmodules = [
     'modular',
     'nfrootsof1',
     'nfsplitting',
-    'norm'
+    'norm',
+    'number',
+    'pol'
     ]
 
 suite = unittest.TestSuite()
