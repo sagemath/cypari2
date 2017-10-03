@@ -33,7 +33,14 @@ testmodules = [
     'nfsplitting',
     'norm',
     'number',
-    'pol'
+    'pol',
+    'prec',
+    'prime',
+    'primes',
+    'qfb',
+    'qfbclassno',
+    'qfsolve',
+    'quadray'
     ]
 
 suite = unittest.TestSuite()
