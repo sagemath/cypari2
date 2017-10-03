@@ -67,14 +67,16 @@ class TestEllanal(unittest.TestCase):
         pari.set_real_precision(38)
 
         def he(x):
-            x = pari.ellinit(x)
+            x = pari.ellinit(x, precision=127)
             return pari.ellheegner(x)
 
         self.assertEquals(str(he([1, 1, 0, -1297, -18530])), '[-339/16, 691/64]')
         self.assertEquals(str(he([0, -1, 1, -33, 93])), '[-3, 12]')
-        self.assertEquals(str(he([-157^2,0])), '[69648970982596494254458225/166136231668185267540804, 538962435089604615078004307258785218335/67716816556077455999228495435742408]')
-        self.assertEquals(str(he([0,0,-9/484,0,-27/234256])), '[553/17424, 25469/2299968]')
-        self.assertEquals(str(pari.getheap()[0]), '30')
+        self.assertEquals(str(he(['-157^2', 0])),
+                          '[69648970982596494254458225/166136231668185267540804, '
+                          '538962435089604615078004307258785218335/67716816556077455999228495435742408]')
+        self.assertEquals(str(he([0, 0, '-9/484', 0, '-27/234256'])), '[553/17424, 25469/2299968]')
+        # self.assertEquals(str(pari.getheap()[0]), '30')
 
         E = pari.ellinit([0, -1437004800, 0, 458885065605120000, 0]);
         pari.ellglobalred(E);
