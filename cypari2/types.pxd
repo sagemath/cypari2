@@ -1,4 +1,3 @@
-# distutils: depends = pari/pari.h
 """
 Declarations for types used by PARI
 
@@ -19,7 +18,7 @@ from PARI's include files.
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
-cdef extern from "<pari/pari.h>":
+cdef extern from "pari/pari.h":
     ctypedef unsigned long ulong "pari_ulong"
 
     ctypedef long* GEN
@@ -91,9 +90,14 @@ cdef extern from "<pari/pari.h>":
     struct hashentry
     struct hashtable
 
-
-cdef extern from "cypari.h":
+    # These are actually defined in cypari.h but we put them here to
+    # prevent Cython from reordering the includes.
     GEN set_gel(GEN x, long n, GEN z)              # gel(x, n) = z
     GEN set_gmael(GEN x, long i, long j, GEN z)    # gmael(x, i, j) = z
     GEN set_gcoeff(GEN x, long i, long j, GEN z)   # gcoeff(x, i, j) = z
     GEN set_uel(GEN x, long n, ulong z)            # uel(x, n) = z
+
+
+# It is important that this gets included *after* all PARI includes
+cdef extern from "cypari.h":
+    pass
