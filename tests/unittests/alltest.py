@@ -40,7 +40,13 @@ testmodules = [
     'qfb',
     'qfbclassno',
     'qfsolve',
-    'quadray'
+    'quadray',
+    'rootsreal',
+    'ser',
+    'subst',
+    'sumdedekind',
+    'sumformal',
+    'zeta'
     ]
 
 suite = unittest.TestSuite()
