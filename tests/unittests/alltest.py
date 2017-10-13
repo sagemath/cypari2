@@ -48,7 +48,8 @@ testmodules = [
     'sumformal',
     'zeta',
     'polred',
-    'bit'
+    'bit',
+    'charpoly'
     ]
 
 suite = unittest.TestSuite()
