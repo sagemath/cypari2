@@ -47,7 +47,8 @@ testmodules = [
     'sumdedekind',
     'sumformal',
     'zeta',
-    'polred'
+    'polred',
+    'bit'
     ]
 
 suite = unittest.TestSuite()
