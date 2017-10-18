@@ -46,8 +46,8 @@ class TestNorm(unittest.TestCase):
         self.assertEqual(pari.normlp('I', 1), '1')
 
         pari.set_real_precision(38)
-        F = [lambda x: pari.normlp(x, 1, precision=127), lambda x: pari.normlp(x, 2, precision=127),
-             lambda x: pari.normlp(x, '2.5', precision=127), lambda x: pari.normlp(x, precision=127)];
+        F = [lambda x: pari.normlp(x, 1, precision=128), lambda x: pari.normlp(x, 2, precision=128),
+             lambda x: pari.normlp(x, '2.5', precision=128), lambda x: pari.normlp(x, precision=128)];
 
         res = [['6',
                '10',

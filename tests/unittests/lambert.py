@@ -42,7 +42,7 @@ pari = Pari()
 
 class TestLambert(unittest.TestCase):
     def test_lambert(self):
-        def do(y, precision=127):
+        def do(y, precision=128):
             x = pari.lambertw(y, precision=precision)
             return pari.exp(x)*x/y;
         with self.assertRaises(PariError) as context:
@@ -59,7 +59,7 @@ class TestLambert(unittest.TestCase):
                           '999999999999999999999999999999999999999999999999999999999999999999999999999999999' +
                           '999999999999999999999999999999999999999999999999999999999999999')
 
-        def do2(y, precision=127):
+        def do2(y, precision=128):
             x = pari.lambertw(y, precision=precision)
             e = pari.normlp(pari.Vec(pari.exp(x)*x - y))
             self.assertLessEqual(e, 5e-38)

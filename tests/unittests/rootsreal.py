@@ -122,39 +122,39 @@ class TestRootsreal(unittest.TestCase):
         self.assertEquals(str(pari.polsturm(T, '2.', 3)), '2')
         self.assertEquals(str(pari.polsturm(T, None, 2)), '2')
         self.assertEquals(str(pari.polrootsreal('x^10 + 23*x^9 + 19*x^8 + 18*x^7 + 39*x^6 + 41*x^5 + 46*x^4 + 24*x^3'
-                                            ' - 4*x^2 + 2*x + 42', precision=127)),
+                                            ' - 4*x^2 + 2*x + 42', precision=128)),
                           '[-22.176420046821213834911725420609849287, -1.2204011038823372357354593544256902868]~')
-        self.assertEquals(str(pari.polrootsreal(pari.polchebyshev(9), precision=127)),
+        self.assertEquals(str(pari.polrootsreal(pari.polchebyshev(9), precision=128)),
                           '[-0.98480775301220805936674302458952301367, -0.86602540378443864676372317075293618347, -' +
                           '0.64278760968653932632264340990726343291, -0.34202014332566873304409961468225958076, 0.E' +
                           '-38, 0.34202014332566873304409961468225958076, 0.64278760968653932632264340990726343291,' +
                           ' 0.86602540378443864676372317075293618347, 0.98480775301220805936674302458952301367]~')
-        self.assertEquals(str(pari.polrootsreal(pari.polchebyshev(10), precision=127)),
+        self.assertEquals(str(pari.polrootsreal(pari.polchebyshev(10), precision=128)),
                           '[-0.98768834059513772619004024769343726076, -0.89100652418836786235970957141362631277, -' +
                           '0.70710678118654752440084436210484903928, -0.45399049973954679156040836635787119898, -0.' +
                           '15643446504023086901010531946716689231, 0.15643446504023086901010531946716689231, 0.4539' +
                           '9049973954679156040836635787119898, 0.70710678118654752440084436210484903928, 0.89100652' +
                           '418836786235970957141362631277, 0.98768834059513772619004024769343726076]~')
-        self.assertEquals(str(pari.polrootsreal('x^0', precision=127)), '[]~')
-        self.assertEquals(str(pari.polrootsreal(1, precision=127)), '[]~')
+        self.assertEquals(str(pari.polrootsreal('x^0', precision=128)), '[]~')
+        self.assertEquals(str(pari.polrootsreal(1, precision=128)), '[]~')
 
         with self.assertRaises(PariError) as context:
-            pari.polrootsreal(0, precision=127)
+            pari.polrootsreal(0, precision=128)
         self.assertTrue('zero polynomial in realroots' in str(context.exception))
         with self.assertRaises(PariError) as context:
-            pari.polrootsreal(pari.Pol(0), precision=127)
+            pari.polrootsreal(pari.Pol(0), precision=128)
         self.assertTrue('zero polynomial in realroots' in str(context.exception))
         with self.assertRaises(PariError) as context:
-            pari.polrootsreal(pari.Mod(1, 2), precision=127)
+            pari.polrootsreal(pari.Mod(1, 2), precision=128)
         self.assertTrue('incorrect type in realroots (t_INTMOD)' in str(context.exception))
 
         self.assertEquals(pari.polroots('(x^3-6*x^2+11*x-6)*x+0.'),
                           '[0.E-38 + 0.E-38*I, 1.0000000000000000000000000000000000000 + 0.E-38*I, 2.00000000000000' +
                           '00000000000000000000000 + 0.E-38*I, 3.0000000000000000000000000000000000000 + 0.E-38*I]~')
         self.assertEquals(pari.polroots(1), '[]~')
-        self.assertEquals(str(pari.polrootsreal(T, [1, 1], precision=127)),
+        self.assertEquals(str(pari.polrootsreal(T, [1, 1], precision=128)),
                           '[1.0000000000000000000000000000000000000]~')
-        self.assertEquals(str(pari.polrootsreal(T, [0, 0], precision=127)), '[]~')
+        self.assertEquals(str(pari.polrootsreal(T, [0, 0], precision=128)), '[]~')
         self.assertEquals(str(pari.polsturm(T, [1, 1])), '1')
         self.assertEquals(str(pari.polsturm(T, [2, 1])), '0')
 
@@ -165,14 +165,14 @@ class TestRootsreal(unittest.TestCase):
 
         self.assertEquals(str(pari.polrootsreal('x', [1, 2])), '[]~')
         self.assertEquals(str(pari.polrootsreal('x', [-2, -1])), '[]~')
-        self.assertEquals(str(pari.polrootsreal('x', [-1, 1], precision=127)), '[0.E-38]~')
+        self.assertEquals(str(pari.polrootsreal('x', [-1, 1], precision=128)), '[0.E-38]~')
 
-        self.assertEquals(str(pari.polrootsreal('x^3-2', precision=127)), '[1.2599210498948731647672106072782283506]~')
-        self.assertEquals(str(pari.polrootsreal('x^3+2', precision=127)), '[-1.2599210498948731647672106072782283506]~')
+        self.assertEquals(str(pari.polrootsreal('x^3-2', precision=128)), '[1.2599210498948731647672106072782283506]~')
+        self.assertEquals(str(pari.polrootsreal('x^3+2', precision=128)), '[-1.2599210498948731647672106072782283506]~')
 
         # #1605
         self.assertEquals(str(pari.polsturm('33*x^2-4*x-1')), '2')
-        self.assertEquals(str(pari.polrootsreal('4*x', precision=127)), '[0.E-38]~')
+        self.assertEquals(str(pari.polrootsreal('4*x', precision=128)), '[0.E-38]~')
         self.assertEquals(str(pari.polsturm('-4*x')), '1')
         with self.assertRaises(PariError) as context:
             pari.polsturm('(x^4-2)^2')
@@ -180,7 +180,7 @@ class TestRootsreal(unittest.TestCase):
 
         # #1807
         T = 'x^3+x^2-x+2';
-        self.assertEquals(str(pari.polrootsreal(T, precision=127)), '[-2.0000000000000000000000000000000000000]~')
+        self.assertEquals(str(pari.polrootsreal(T, precision=128)), '[-2.0000000000000000000000000000000000000]~')
         self.assertEquals(str(pari.polsturm(T)), '1')
         self.assertEquals(str(pari.polsturm(T, [-3, -1])), '1')
         self.assertEquals(str(pari.polsturm(T, [-2, -1])), '1')
@@ -194,18 +194,18 @@ class TestRootsreal(unittest.TestCase):
         self.assertEquals(str(pari.polsturm(T, [1, 3])), '1')
 
         # #1808
-        self.assertEquals(str(pari.polrootsreal('3*x^3-4*x^2+3*x-1', precision=127)),
+        self.assertEquals(str(pari.polrootsreal('3*x^3-4*x^2+3*x-1', precision=128)),
                               '[0.59441447601624956642908249516963028371]~')
 
         # #1809
-        self.assertEquals(str(pari.polrootsreal('x^3-3*x^2-3*x+2', precision=127)),
+        self.assertEquals(str(pari.polrootsreal('x^3-3*x^2-3*x+2', precision=128)),
                           '[-1.1451026912004224304268100262663119669, 0.47602360291813403446915767711979045497, '
                           '3.6690790882822883959576523491465215119]~')
 
         # #1810
-        self.assertEquals(str(pari.polrootsreal('x^3-x^2', precision=127)),
+        self.assertEquals(str(pari.polrootsreal('x^3-x^2', precision=128)),
                           '[0.E-38, 0.E-38, 1.0000000000000000000000000000000000000]~')
-        self.assertEquals(str(pari.polrootsreal('(x^3-x^2)*(x-2)^3*(x-3)^2', precision=127)),
+        self.assertEquals(str(pari.polrootsreal('(x^3-x^2)*(x-2)^3*(x-3)^2', precision=128)),
                           '[0.E-38, 0.E-38, 1.0000000000000000000000000000000000000, 2.00000000000000000000' +
                           '00000000000000000, 2.0000000000000000000000000000000000000, 2.000000000000000000' +
                           '0000000000000000000, 3.0000000000000000000000000000000000000, 3.0000000000000000' +
@@ -217,7 +217,7 @@ class TestRootsreal(unittest.TestCase):
         # #1884
         pari.set_real_precision(38)
         self.assertEquals(str(pari.polsturm('x^2-1', [-1, 1])), '2')
-        self.assertEquals(str(pari.polrootsreal('x^2-1', [-1, 1], precision=127)),
+        self.assertEquals(str(pari.polrootsreal('x^2-1', [-1, 1], precision=128)),
                           '[-1.0000000000000000000000000000000000000, 1.0000000000000000000000000000000000000]~')
 
 """**** Original expected results ****

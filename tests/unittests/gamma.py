@@ -72,7 +72,7 @@ class TestGamma(unittest.TestCase):
         pari.set_series_precision(16)
 
     def test_gamma(self):
-        self.assertEquals(str(pari.gamma('2+I+x', precision=127)),
+        self.assertEquals(str(pari.gamma('2+I+x', precision=128)),
                           '(0.65296549642016672783864624794608469715 + 0.3430658398165453575' +
                           '8873598697831148676*I) + (0.19044897540645184469078131473790885364 + 0.580552467319476' +
                           '92349794265298068695525*I)*x + (0.090862784286733058570355592072096462602 + 0.21088392' +
@@ -80,43 +80,43 @@ class TestGamma(unittest.TestCase):
                           '.15168994440796279268955277197772465641*I)*x^3 + (-0.009313921054078589415919785948439' +
                           '2067432 + 0.033064651796439913976828620551277428299*I)*x^4 + (0.0066762623841895560506' +
                           '752315759505427095 + 0.015164046675666586697065188398143396917*I)*x^5 + O(x^6)')
-        self.assertEquals(str(pari.gamma('1+x', precision=127)), '1 - 0.57721566490153286060651209008240243104*x ' +
+        self.assertEquals(str(pari.gamma('1+x', precision=128)), '1 - 0.57721566490153286060651209008240243104*x ' +
                           '+ 0.98905599532797255539539565150063470794*x^2 - 0.90747907608088628901656016735627511' +
                           '493*x^3 + 0.98172808683440018733638029402185085036*x^4 - 0.981995068903145202104701413' +
                           '79137467551*x^5 + O(x^6)')
-        self.assertEquals(str(pari.gamma('2+x', precision=127)), '1 + 0.42278433509846713939348790991759756896*x ' +
+        self.assertEquals(str(pari.gamma('2+x', precision=128)), '1 + 0.42278433509846713939348790991759756896*x ' +
                           '+ 0.41184033042643969478888356141823227689*x^2 + 0.08157691924708626637883548414435959' +
                           '3009*x^3 + 0.074249010753513898319820126665575735431*x^4 - 0.0002669820687450147683211' +
                           '1976952382515602*x^5 + O(x^6)')
-        self.assertEquals(str(pari.gamma('-2+x', precision=127)), '0.50000000000000000000000000000000000000*x^-1 ' +
+        self.assertEquals(str(pari.gamma('-2+x', precision=128)), '0.50000000000000000000000000000000000000*x^-1 ' +
                           '+ 0.46139216754923356969674395495879878448 + 0.93661624898783663224281375818851553069*' +
                           'x + 0.72048875166669501900756857612523634633*x^2 + 1.103289046423324306058136132104522' +
                           '1793*x^3 + O(x^4)')
-        self.assertEquals(str(pari.gamma('-1/2+x', precision=127)), '-3.5449077018110320545963349666822903656 - 0' +
+        self.assertEquals(str(pari.gamma('-1/2+x', precision=128)), '-3.5449077018110320545963349666822903656 - 0' +
                           '.12935358979554005531547953707588123112*x - 15.838884621997332891305490359174586834*x^' +
                           '2 - 0.088235140923071374511750322744686276244*x^3 - 63.9341199241678177373752902777138' +
                           '85431*x^4 - 0.042848354492868684268292005312709223076*x^5 + O(x^6)')
-        self.assertEquals(str(pari.gamma('1+a*x+O(x^2)', precision=127)),
+        self.assertEquals(str(pari.gamma('1+a*x+O(x^2)', precision=128)),
                           '1 - 0.57721566490153286060651209008240243104*a*x + O(x^2)')
 
         with self.assertRaises(PariError) as context:
-            pari.gamma('O(x)', precision=127)
+            pari.gamma('O(x)', precision=128)
         self.assertTrue('domain error in gamma: argument = 0' in str(context.exception))
 
-        self.assertEquals(str(pari.gamma('x', precision=127)), 'x^-1 - 0.57721566490153286060651209008240243104 + ' +
+        self.assertEquals(str(pari.gamma('x', precision=128)), 'x^-1 - 0.57721566490153286060651209008240243104 + ' +
                           '0.98905599532797255539539565150063470794*x - 0.90747907608088628901656016735627511493*x' +
                           '^2 + 0.98172808683440018733638029402185085036*x^3 - 0.981995068903145202104701413791374' +
                           '67551*x^4 + O(x^5)')
-        self.assertEquals(str(pari.gamma(1000, precision=127)), '4.0238726007709377354370243392300398572 E2564')
-        self.assertEquals(str(pari.gamma('x+O(x^2)', precision=127)), 'x^-1 + O(x^0)')
-        self.assertEquals(str(pari.gamma('-1-10^-16', precision=127)), '9999999999999999.5772156649015330017905')
-        self.assertEquals(str(pari.gamma('10^-16', precision=127)), '9999999999999999.4227843350984672382991')
+        self.assertEquals(str(pari.gamma(1000, precision=128)), '4.0238726007709377354370243392300398572 E2564')
+        self.assertEquals(str(pari.gamma('x+O(x^2)', precision=128)), 'x^-1 + O(x^0)')
+        self.assertEquals(str(pari.gamma('-1-10^-16', precision=128)), '9999999999999999.5772156649015330017905')
+        self.assertEquals(str(pari.gamma('10^-16', precision=128)), '9999999999999999.4227843350984672382991')
 
         self.assertEquals(str(pari.binomial('2^64+1', 2)), '170141183460469231740910675752738881536')
         self.assertEquals(str(pari.binomial('1001.', 1000)), '1001.0000000000000000000000000000000000')
 
-        self.assertEquals(str(pari.gammah(400, precision=127)), '3.2007257594901922498857741835634344245 E867')
-        self.assertEquals(str(pari.gammah('400+I', precision=127)),
+        self.assertEquals(str(pari.gammah(400, precision=128)), '3.2007257594901922498857741835634344245 E867')
+        self.assertEquals(str(pari.gammah('400+I', precision=128)),
                           '3.0616681090421088936612867355651954590 E867 - 9.1937706728127042134545128900883765323 E' +
                           '866*I')
 
@@ -129,7 +129,7 @@ class TestGamma(unittest.TestCase):
                           '95286760197004854674329979420483457441111886014601499071559796851143')
 
     def test_psi(self):
-        self.assertEquals(str(pari.psi('2+I+x', precision=127)), '(0.59465032062247697727187848272191072247 + 0.5' +
+        self.assertEquals(str(pari.psi('2+I+x', precision=128)), '(0.59465032062247697727187848272191072247 + 0.5' +
                           '7667404746858117413405079475000049045*I) + (0.46300009662276378629832651818418579441 -' +
                           ' 0.29423354275931886558301361715690299591*I)*x + (-0.065723534206032414131682728509702' +
                           '607416 + 0.13332642517253310620134768881568504070*I)*x^2 + (-0.00381240815891599630224' +
@@ -137,28 +137,28 @@ class TestGamma(unittest.TestCase):
                           '168721646303099647994255377 + 0.017474497859917982232442372031895951470*I)*x^4 + (-0.0' +
                           '077757069690405743408170730434310459472 - 0.0040345642341327827815714280332882428196*I' +
                           ')*x^5 + O(x^6)')
-        self.assertEquals(str(pari.psi('1+x', precision=127)), '-0.57721566490153286060651209008240243104 + 1.644' +
+        self.assertEquals(str(pari.psi('1+x', precision=128)), '-0.57721566490153286060651209008240243104 + 1.644' +
                           '9340668482264364724151666460251892*x - 1.2020569031595942853997381615114499908*x^2 + 1' +
                           '.0823232337111381915160036965411679028*x^3 - 1.0369277551433699263313654864570341681*x' +
                           '^4 + 1.0173430619844491397145179297909205279*x^5 + O(x^6)')
-        self.assertEquals(str(pari.psi('-2+x', precision=127)), '-x^-1 + 0.92278433509846713939348790991759756896' +
+        self.assertEquals(str(pari.psi('-2+x', precision=128)), '-x^-1 + 0.92278433509846713939348790991759756896' +
                           ' + 2.8949340668482264364724151666460251892*x - 0.0770569031595942853997381615114499907' +
                           '62*x^2 + 2.1448232337111381915160036965411679028*x^3 + O(x^4)')
-        self.assertEquals(str(pari.psi('x', precision=127)), '-x^-1 - 0.57721566490153286060651209008240243104 + 1' +
+        self.assertEquals(str(pari.psi('x', precision=128)), '-x^-1 - 0.57721566490153286060651209008240243104 + 1' +
                           '.6449340668482264364724151666460251892*x - 1.2020569031595942853997381615114499908*x^2 ' +
                           '+ 1.0823232337111381915160036965411679028*x^3 - 1.0369277551433699263313654864570341681' +
                           '*x^4 + 1.0173430619844491397145179297909205279*x^5 + O(x^6)')
 
         with self.assertRaises(PariError) as context:
-            pari.psi('O(x)', precision=127)
+            pari.psi('O(x)', precision=128)
         self.assertTrue('domain error in psi: argument = 0' in str(context.exception))
 
-        self.assertEquals(str(pari.psi('2^400', precision=127)), '277.25887222397812376689284858327062723')
-        self.assertEquals(str(pari.psi('-1.5', precision=127)), '0.70315664064524318722569033366791109947')
-        self.assertEquals(str(pari.psi('x+O(x^2)', precision=127)), '-x^-1 + O(x^0)')
+        self.assertEquals(str(pari.psi('2^400', precision=128)), '277.25887222397812376689284858327062723')
+        self.assertEquals(str(pari.psi('-1.5', precision=128)), '0.70315664064524318722569033366791109947')
+        self.assertEquals(str(pari.psi('x+O(x^2)', precision=128)), '-x^-1 + O(x^0)')
 
     def test_lngamma(self):
-        self.assertEquals(str(pari.lngamma('2+I+x', precision=127)), '(-0.30434960902188368417660077077485938103 ' +
+        self.assertEquals(str(pari.lngamma('2+I+x', precision=128)), '(-0.30434960902188368417660077077485938103 ' +
                           '+ 0.48375784292991511172812918802297918039*I) + (0.59465032062247697727187848272191072' +
                           '247 + 0.57667404746858117413405079475000049045*I)*x + (0.23150004831138189314916325909' +
                           '209289721 - 0.14711677137965943279150680857845149795*I)*x^2 + (-0.02190784473534413804' +
@@ -166,35 +166,35 @@ class TestGamma(unittest.TestCase):
                           '03972899907556180572534221362410 - 0.013220274110915027434116360959758682565*I)*x^4 + ' +
                           '(0.0023292347420337443292606199295988510753 + 0.00349489957198359644648847440637919029' +
                           '41*I)*x^5 + O(x^6)')
-        self.assertEquals(str(pari.lngamma('1+x', precision=127)), '-0.57721566490153286060651209008240243104*x +' +
+        self.assertEquals(str(pari.lngamma('1+x', precision=128)), '-0.57721566490153286060651209008240243104*x +' +
                           ' 0.82246703342411321823620758332301259461*x^2 - 0.400685634386531428466579387170483330' +
                           '25*x^3 + 0.27058080842778454787900092413529197569*x^4 - 0.2073855510286739852662730972' +
                           '9140683361*x^5 + O(x^6)')
         with self.assertRaises(PariError) as context:
-            pari.lngamma('-2+x', precision=127)
+            pari.lngamma('-2+x', precision=128)
         self.assertTrue('domain error in intformal: residue(series, pole) != 0' in str(context.exception))
-        self.assertEquals(str(pari.lngamma('2+x', precision=127)), '0.42278433509846713939348790991759756896*x + ' +
+        self.assertEquals(str(pari.lngamma('2+x', precision=128)), '0.42278433509846713939348790991759756896*x + ' +
                           '0.32246703342411321823620758332301259461*x^2 - 0.0673523010531980951332460538371499969' +
                           '21*x^3 + 0.020580808427784547879000924135291975694*x^4 - 0.007385551028673985266273097' +
                           '2914068336108*x^5 + O(x^6)')
-        self.assertEquals(str(pari.lngamma(1, precision=127)), '0.E-38')
-        self.assertEquals(str(pari.lngamma('1.', precision=127)), '0.E-38')
-        self.assertEquals(str(pari.lngamma('1+a*x+O(x^2)', precision=127)),
+        self.assertEquals(str(pari.lngamma(1, precision=128)), '0.E-38')
+        self.assertEquals(str(pari.lngamma('1.', precision=128)), '0.E-38')
+        self.assertEquals(str(pari.lngamma('1+a*x+O(x^2)', precision=128)),
                           '-0.57721566490153286060651209008240243104*a*x + O(x^2)')
         with self.assertRaises(PariError) as context:
-            pari.lngamma('O(x)', precision=127)
+            pari.lngamma('O(x)', precision=128)
         self.assertTrue('domain error in lngamma: argument = 0' in str(context.exception))
 
-        self.assertEquals(str(pari.lngamma('-1-10^-16', precision=127)),
+        self.assertEquals(str(pari.lngamma('-1-10^-16', precision=128)),
                           '36.841361487904730902009429765103126607 - 6.2831853071795864769252867665590057684*I')
-        self.assertEquals(str(pari.lngamma('10^-16', precision=127)), '36.841361487904730886566296784796549486')
+        self.assertEquals(str(pari.lngamma('10^-16', precision=128)), '36.841361487904730886566296784796549486')
 
-        self.assertEquals(str(pari.lngamma('2^301', precision=127)), '8.4592930575197658134779513864578051837 E92')
-        self.assertEquals(str(pari.lngamma('2^301 + 2*I', precision=127)),
+        self.assertEquals(str(pari.lngamma('2^301', precision=128)), '8.4592930575197658134779513864578051837 E92')
+        self.assertEquals(str(pari.lngamma('2^301 + 2*I', precision=128)),
                           '8.4592930575197658134779513864578051837 E92 + 417.27460269708707626917373711782229398*I')
-        self.assertEquals(str(pari.lngamma('2^64 + 2*I', precision=127)),
+        self.assertEquals(str(pari.lngamma('2^64 + 2*I', precision=128)),
                           '799877009219260410589.21059353880333769 + 88.722839111672999605351501438022325492*I')
-        self.assertEquals(str(pari.lngamma('-200.5', precision=127)),
+        self.assertEquals(str(pari.lngamma('-200.5', precision=128)),
                           '-864.73828787067971564321683481711497423 - 631.46012337154844093099132003918007972*I')
 
         pari.set_real_precision(115)

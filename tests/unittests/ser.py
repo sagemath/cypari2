@@ -130,14 +130,14 @@ class TestSer(unittest.TestCase):
                 '[0.88137358701954302523260932497979230903 + O(x^16)]']
 
         for i in range(0, len(f)):
-            self.assertEquals(str(f[i](s, precision=127)), res1[i]);
-            self.assertEquals(str(f[i]('O(x^5)', precision=127)), res2[i]);
-            self.assertEquals(str(f[i]([pari.Pol(1)], precision=127)), res3[i]);
+            self.assertEquals(str(f[i](s, precision=128)), res1[i]);
+            self.assertEquals(str(f[i]('O(x^5)', precision=128)), res2[i]);
+            self.assertEquals(str(f[i]([pari.Pol(1)], precision=128)), res3[i]);
 
-        self.assertEquals(str(pari.atanh(s, precision=127)), 'x + x^2 + 1/3*x^3 + x^4 + O(x^5)')
-        self.assertEquals(str(pari.atanh('O(x^5)', precision=127)), 'O(x^5)')
+        self.assertEquals(str(pari.atanh(s, precision=128)), 'x + x^2 + 1/3*x^3 + x^4 + O(x^5)')
+        self.assertEquals(str(pari.atanh('O(x^5)', precision=128)), 'O(x^5)')
         with self.assertRaises(PariError) as context:
-            pari.atanh([pari.Pol(1)], precision=127)
+            pari.atanh([pari.Pol(1)], precision=128)
         self.assertTrue('impossible inverse in div_ser: O(x^16)' in str(context.exception))
         self.assertEquals(pari.trace('I*x+1+O(x^2)'), '2 + O(x^2)')
         self.assertEquals(pari.norm('I*x+1+O(x^2)'), '1 + O(x^2)')

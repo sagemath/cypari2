@@ -236,7 +236,7 @@ class TestLinear(unittest.TestCase):
         self.assertEquals(pari.matdet('[1,2,3;1,5,6;9,8,7]',1), '-30')
         self.assertEquals(pari.matdetint('[1,2,3;4,5,6]'), '3')
         self.assertEquals(pari.matdiagonal('[2,4,6]'), '[2,0,0;0,4,0;0,0,6]')
-        self.assertEquals(str(pari.mateigen('[1,2,3;4,5,6;7,8,9]', precision=127)),
+        self.assertEquals(str(pari.mateigen('[1,2,3;4,5,6;7,8,9]', precision=128)),
                           '[1, -1.2833494518006402717978106547571267252, 0.2833494518006402717978' +
                           '1065475712672521; -2, -0.14167472590032013589890532737856336261, 0.6416' +
                           '7472590032013589890532737856336260; 1, 1, 1]')
@@ -323,7 +323,7 @@ class TestLinear(unittest.TestCase):
         self.assertEquals(pari.qfgaussred(pari.mathilbert(5)),
                           '[1, 1/2, 1/3, 1/4, 1/5; 0, 1/12, 1, 9/10, 4/5; 0, 0, 1/180, 3/2, 12/7; 0, 0, 0, 1/2800, ' +
                           '2; 0, 0, 0, 0, 1/44100]')
-        self.assertEquals(str(pari.qfjacobi(pari.mathilbert(6), precision=127)),
+        self.assertEquals(str(pari.qfjacobi(pari.mathilbert(6), precision=128)),
                           '[[1.0827994845655497685388772372251778091 E-7, 1.2570757122625194922982397996498755378 E' +
                           '-5, 0.00061574835418265769764919938428527140434, 0.0163215213198758221243450795641915058' +
                           '90, 0.24236087057520955213572841585070114077, 1.6188998589243390969705881471257800713]~,' +

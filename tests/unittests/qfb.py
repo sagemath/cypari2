@@ -73,7 +73,7 @@ class TestQfb(unittest.TestCase):
         self.assertEquals(pari.qfbred(q), 'Qfb(1, 1, 6)')
         self.assertEquals(pari.qfbredsl2(q), '[Qfb(1, 1, 6), [22479, 76177; -39508, -133885]]')
 
-        q = pari.Qfb('1099511627776', '1879224363605', '802966544317', precision=127);
+        q = pari.Qfb('1099511627776', '1879224363605', '802966544317', precision=128);
         U = pari.qfbredsl2(q)[1]
         self.assertEquals(U, '[127327, -416128; -148995, 486943]')
         self.assertEquals(pari.qfeval(q, U), 'Qfb(4, 3, -3, 0.E-38)')

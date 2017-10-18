@@ -244,20 +244,20 @@ class TestNumber(unittest.TestCase):
 
     def test_qfbred(self):
         self.assertEqual(str(pari.qfbred(pari.Qfb(3, 10, 12), 0, -1)), 'Qfb(3, -2, 4)')
-        self.assertEqual(str(pari.qfbred(pari.Qfb(3, 10, -20, 1.5, precision=127))),
+        self.assertEqual(str(pari.qfbred(pari.Qfb(3, 10, -20, 1.5, precision=128))),
                          'Qfb(3, 16, -7, 1.5000000000000000000000000000000000000)')
-        self.assertEqual(str(pari.qfbred(pari.Qfb(3, 10, -20, 1.5, precision=127), 2, None, 18)),
+        self.assertEqual(str(pari.qfbred(pari.Qfb(3, 10, -20, 1.5, precision=128), 2, None, 18)),
                          'Qfb(3, 16, -7, 1.5000000000000000000000000000000000000)')
-        self.assertEqual(str(pari.qfbred(pari.Qfb(3, 10, -20, 1.5, precision=127), 1)),
+        self.assertEqual(str(pari.qfbred(pari.Qfb(3, 10, -20, 1.5, precision=128), 1)),
                          'Qfb(-20, -10, 3, 2.1074451073987839947135880252731470616)')
-        self.assertEqual(str(pari.qfbred(pari.Qfb(3, 10, -20, 1.5, precision=127), 3, None, 18)),
+        self.assertEqual(str(pari.qfbred(pari.Qfb(3, 10, -20, 1.5, precision=128), 3, None, 18)),
                          'Qfb(-20, -10, 3, 1.5000000000000000000000000000000000000)')
 
     def test_quadfct(self):
         self.assertEqual(str(pari.quaddisc(-252)), '-7')
         self.assertEqual(str(pari.quadgen(-11)), 'w')
         self.assertEqual(str(pari.quadpoly(-11)), 'x^2 - x + 3')
-        self.assertEqual(str(pari.quadregulator(17, precision=127)), '2.0947125472611012942448228460655286535')
+        self.assertEqual(str(pari.quadregulator(17, precision=128)), '2.0947125472611012942448228460655286535')
         self.assertEqual(str(pari.quadunit(17)), '3 + 2*w')
 
     def test_sigma(self):

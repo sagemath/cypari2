@@ -54,8 +54,8 @@ class TestEllanal(unittest.TestCase):
         pari.set_real_precision(38)
 
         def rk(x):
-            x = pari.ellinit(x, precision=127)
-            return pari.ellanalyticrank(x, precision=127)
+            x = pari.ellinit(x, precision=128)
+            return pari.ellanalyticrank(x, precision=128)
 
         self.assertEquals(str(rk([0, -1, 1, -10, -20])), '[0, 0.25384186085591068433775892335090946105]')
         self.assertEquals(str(rk([0, 0, 1, -1, 0])), '[1, 0.30599977383405230182048368332167647445]')
@@ -67,7 +67,7 @@ class TestEllanal(unittest.TestCase):
         pari.set_real_precision(38)
 
         def he(x):
-            x = pari.ellinit(x, precision=127)
+            x = pari.ellinit(x, precision=128)
             return pari.ellheegner(x)
 
         self.assertEquals(str(he([1, 1, 0, -1297, -18530])), '[-339/16, 691/64]')
@@ -84,11 +84,11 @@ class TestEllanal(unittest.TestCase):
 
     def test_ellL1(self):
         pari.set_real_precision(38)
-        L = pari.ellinit([0, 0, 1, 7, 6], precision=127);
-        self.assertEquals(str(pari.ellL1(L, precision=127)), '0')
-        self.assertEquals(str(pari.ellL1(L, 1, precision=127)), '2.8053554406276820682921020105298729343')
-        self.assertEquals(str(pari.ellL1(L, 3, precision=127)), '98.900778292211279593460469548777701093')
-        self.assertEquals(str(pari.ellL1(pari.ellinit([0, 1, 1, -2, 0], precision=127), 2, precision=127)),
+        L = pari.ellinit([0, 0, 1, 7, 6], precision=128);
+        self.assertEquals(str(pari.ellL1(L, precision=128)), '0')
+        self.assertEquals(str(pari.ellL1(L, 1, precision=128)), '2.8053554406276820682921020105298729343')
+        self.assertEquals(str(pari.ellL1(L, 3, precision=128)), '98.900778292211279593460469548777701093')
+        self.assertEquals(str(pari.ellL1(pari.ellinit([0, 1, 1, -2, 0], precision=128), 2, precision=128)),
                           '1.5186330005768535404603852157894440381')
         pari.set_real_precision(115)
         self.assertEquals(pari.ellL1(L, precision=383), '0')

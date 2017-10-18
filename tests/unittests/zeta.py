@@ -33,30 +33,30 @@ class TestZeta(unittest.TestCase):
         pari.set_real_precision(38)
         pari.allocatemem(2e7);
         self.assertEquals(pari.zeta('3+O(5^10)'), '2*5^-1 + 2*5 + 3*5^2 + 3*5^4 + 3*5^5 + 2*5^6 + 5^7 + 4*5^8 + O(5^9)')
-        self.assertEquals(pari.zeta('1 + I/100', precision=127),
+        self.assertEquals(pari.zeta('1 + I/100', precision=128),
                           '0.57721614942066140874800424251188396262 - 99.999271841202858157138397118797159155*I')
-        self.assertEquals(pari.zeta('1000.5', precision=127), '1.0000000000000000000000000000000000000')
-        self.assertEquals(pari.zeta(1000, precision=127), '1.0000000000000000000000000000000000000')
-        self.assertEquals(str(pari.zeta(100, precision=127)), '1.0000000000000000000000000000007888609')
-        self.assertEquals(str(pari.zeta(31, precision=127)), '1.0000000004656629065033784072989233251')
-        self.assertEquals(str(pari.zeta('100+100*I', precision=127)),
+        self.assertEquals(pari.zeta('1000.5', precision=128), '1.0000000000000000000000000000000000000')
+        self.assertEquals(pari.zeta(1000, precision=128), '1.0000000000000000000000000000000000000')
+        self.assertEquals(str(pari.zeta(100, precision=128)), '1.0000000000000000000000000000007888609')
+        self.assertEquals(str(pari.zeta(31, precision=128)), '1.0000000004656629065033784072989233251')
+        self.assertEquals(str(pari.zeta('100+100*I', precision=128)),
                           '1.0000000000000000000000000000007731864 - 1.5647480679975229240431199238639049803 E-31*I')
-        self.assertEquals(str(pari.zeta('60+I', precision=127)),
+        self.assertEquals(str(pari.zeta('60+I', precision=128)),
                           '1.0000000000000000006672083904260744090 - 5.5421056315169138713580539141777567374 E-19*I')
-        self.assertEquals(str(pari.zeta('-1000+I', precision=127)), '-1.8236338315400224657144248914124703368 E1769 + '
+        self.assertEquals(str(pari.zeta('-1000+I', precision=128)), '-1.8236338315400224657144248914124703368 E1769 + '
                                                                     '6.8223788001755144705322033655798283436 E1768*I')
-        self.assertEquals(pari.zeta('2+O(2^10)', precision=127), '2^-1 + 1 + 2^2 + 2^3 + 2^5 + 2^6 + 2^7 + O(2^9)')
-        self.assertEquals(pari.zeta(pow(2, 64), precision=127), '1.0000000000000000000000000000000000000')
-        self.assertEquals(pari.zeta('-2^64', precision=127), '0.E-38')
+        self.assertEquals(pari.zeta('2+O(2^10)', precision=128), '2^-1 + 1 + 2^2 + 2^3 + 2^5 + 2^6 + 2^7 + O(2^9)')
+        self.assertEquals(pari.zeta(pow(2, 64), precision=128), '1.0000000000000000000000000000000000000')
+        self.assertEquals(pari.zeta('-2^64', precision=128), '0.E-38')
 
         with self.assertRaises(PariError) as context:
             pari.zeta('-1-2^64')
         self.assertTrue('overflow in zeta [large negative argument]' in str(context.exception))
 
-        self.assertEquals(str(pari.zeta('2+1e-101*I', precision=127)),
+        self.assertEquals(str(pari.zeta('2+1e-101*I', precision=128)),
                           '1.6449340668482264364724151666460251892 - 9.3754825431584375370257409456786497790 E-102*I')
-        self.assertEquals(str(pari.zeta('1.01', precision=127)), '100.57794333849687249028215428579024415')
-        self.assertEquals(str(pari.zeta('1e-32', precision=127)), '-0.50000000000000000000000000000000918939')
+        self.assertEquals(str(pari.zeta('1.01', precision=128)), '100.57794333849687249028215428579024415')
+        self.assertEquals(str(pari.zeta('1e-32', precision=128)), '-0.50000000000000000000000000000000918939')
         pari.set_real_precision(15)
 
 """**** Original expected results ****

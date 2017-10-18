@@ -35,19 +35,19 @@ class TestPolylog(unittest.TestCase):
                           '7621770489264556951963565*I')
         self.assertEquals(str(pari.polylog(3, '3.9')), '4.3226178452644705784020044544722613393 - 2.909518771772' +
                           '2594640746948896647103179*I')
-        self.assertEquals(str(pari.polylog(2, pari.Mod('x', 'x^2+1'), precision=127)), '[-0.20561675835602830455905189583075314' +
+        self.assertEquals(str(pari.polylog(2, pari.Mod('x', 'x^2+1'), precision=128)), '[-0.20561675835602830455905189583075314' +
                           '866 - 0.91596559417721901505460351493238411074*I, -0.20561675835602830455905189583075' +
                           '314866 + 0.91596559417721901505460351493238411074*I]~')
         self.assertEquals(str(pari.polylog(2, ['0.5', '0.6'])), '[0.58224052646501250590265632015968010874, 0.72' +
                           '758630771633338951353629684048110789]')
         self.assertEquals(str(pari.polylog(2, 'x+O(x^5)')), 'x + 1/4*x^2 + 1/9*x^3 + 1/16*x^4 + O(x^5)')
-        self.assertEquals(str(pari.polylog(2, '1/2 + x + O(x^5)', precision=127)), '0.58224052646501250590265632015968010874 + ' +
+        self.assertEquals(str(pari.polylog(2, '1/2 + x + O(x^5)', precision=128)), '0.58224052646501250590265632015968010874 + ' +
                           '1.3862943611198906188344642429163531362*x + 0.61370563888010938116553575708364686385*' +
                           'x^2 + 0.51505914815985415844595232388847084820*x^3 + 0.560744611093552095664404847500' +
                           '62706103*x^4 + O(x^5)')
-        self.assertEquals(str(pari.dilog(-4, precision=127)), '-2.3699397969983658319855374253503230488')
-        self.assertEquals(str(pari.polylog(2, '1+I', 1, precision=127)), '0.91596559417721901505460351493238411077')
-        self.assertEquals(str(pari.polylog(1, 2, 3, precision=127)), '0.34657359027997265470861606072908828404')
+        self.assertEquals(str(pari.dilog(-4, precision=128)), '-2.3699397969983658319855374253503230488')
+        self.assertEquals(str(pari.polylog(2, '1+I', 1, precision=128)), '0.91596559417721901505460351493238411077')
+        self.assertEquals(str(pari.polylog(1, 2, 3, precision=128)), '0.34657359027997265470861606072908828404')
         pari.set_real_precision_bits(320);
         self.assertEquals(pari.bitprecision(pari.dilog('2.0')), '320')
     def test_polylog_error_cases(self):
