@@ -187,7 +187,7 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(str(pari.centerlift(pari.lift(pari.factorff('x^3+x^2+x-1', 3, 't^3+t^2+t-1')))),
                          '[x - t, 1; x + (t^2 + t - 1), 1; x + (-t^2 - 1), 1]')
         self.assertEqual(str(pari('10!')), '3628800')
-        self.assertEqual(str(pari.factorial(10)), '3628800.0000000000000000000000000000000')
+        self.assertEqual(str(pari.factorial(10, 127)), '3628800.0000000000000000000000000000000')
 
     def test_factormod(self):
         self.assertEqual(str(pari.factormod('x^11+1', 7)),
