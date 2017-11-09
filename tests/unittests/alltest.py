@@ -1,4 +1,5 @@
 import unittest
+import sys
 
 testmodules = [
     'bern',
@@ -64,4 +65,6 @@ for t in testmodules:
         # else, just load all the test cases from the module.
         suite.addTest(unittest.defaultTestLoader.loadTestsFromName(t))
 
-unittest.TextTestRunner().run(suite)
+res = unittest.TextTestRunner().run(suite)
+retcode = 0 if res.wasSuccessful() else 1
+sys.exit(retcode)
