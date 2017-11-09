@@ -14,6 +14,7 @@ install:
 
 check:
 	$(PYTHON) tests/rundoctest.py
+	$(PYTHON) tests/unittests/alltest.py
 
 dist:
 	chmod go+rX-w -R .
