@@ -75,7 +75,7 @@ try:
     pari.galoisgetpol(8)
 except PariError as e:
     if "error opening galpol file" in str(e):
-        galpol_installed = True
+        galpol_installed = False
     else:
         raise e
 
