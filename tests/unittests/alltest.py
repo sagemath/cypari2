@@ -53,7 +53,14 @@ testmodules = [
     'charpoly'
     ]
 
+require_galpol = ["galpol"]
+require_seadata = ["ellmodulareqn"]
+
+galpol_installed = True
+seadata_installed = True
+
 suite = unittest.TestSuite()
+
 
 for t in testmodules:
     try:
