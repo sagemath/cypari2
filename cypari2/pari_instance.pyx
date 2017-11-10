@@ -1159,21 +1159,22 @@ cdef class Pari(Pari_auto):
         sig_on()
         return new_gen(polchebyshev1(n, get_var(v)))
 
-    def factorial(self, long n):
+    def factorial_int(self, long n):
         """
         Return the factorial of the integer n as a PARI gen.
+        Give result as an integer.
 
         Examples:
 
         >>> import cypari2
         >>> pari = cypari2.Pari()
-        >>> pari.factorial(0)
+        >>> pari.factorial_int(0)
         1
-        >>> pari.factorial(1)
+        >>> pari.factorial_int(1)
         1
-        >>> pari.factorial(5)
+        >>> pari.factorial_int(5)
         120
-        >>> pari.factorial(25)
+        >>> pari.factorial_int(25)
         15511210043330985984000000
         """
         sig_on()
