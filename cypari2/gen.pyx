@@ -1617,7 +1617,7 @@ cdef class Gen(Gen_auto):
         lx = lgefint(x) - 2  # number of words
         size = lx * 4 * sizeof(long)
         s = <char *>check_malloc(size+3) # 1 char for sign, 1 char for 0, 1 char for '\0'
-        sp = s + size + 3
+        sp = s + size + 3 - 1 # last character
         sp[0] = 0
         xp = int_LSW(x)
         for i from 0 <= i < lx:
@@ -1660,7 +1660,7 @@ cdef class Gen(Gen_auto):
         lx = lgefint(x) - 2  # number of words
         size = lx*2*sizeof(long)
         s = <char *>check_malloc(size+4) # 1 char for sign, 2 chars for 0x, 1 char for '\0'
-        sp = s + size + 4
+        sp = s + size + 4 - 1 # last character
         sp[0] = 0
         xp = int_LSW(x)
         for i from 0 <= i < lx:
