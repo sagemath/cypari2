@@ -35,16 +35,16 @@ class TestBern(unittest.TestCase):
 
         with self.assertRaises(PariError) as context:
             pari.bernfrac(-1)
-        self.assertTrue('domain error in bernfrac: index < 0' in context.exception)
+        self.assertTrue('domain error in bernfrac: index < 0' in str(context.exception))
 
         with self.assertRaises(PariError) as context:
             pari.bernreal(-1)
-        self.assertTrue('domain error in bernreal: index < 0' in context.exception)
+        self.assertTrue('domain error in bernreal: index < 0' in str(context.exception))
 
         with self.assertRaises(PariError) as context:
             pari.bernpol(-1)
 
-        self.assertTrue('domain error in bernpol: index < 0' in context.exception)
+        self.assertTrue('domain error in bernpol: index < 0' in str(context.exception))
 
     def test_bernvec(self):
         self.assertEquals(pari.bernvec(30), '[1, 1/6, -1/30, 1/42, -1/30, 5/66, -691/2730, 7/6, -3617/510, 43867/798,' +
