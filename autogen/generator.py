@@ -61,35 +61,8 @@ function_blacklist = {"O",  # O(p^e) needs special parser support
         "uninline",         # idem
         "local",            # idem
         "my",               # idem
-        "plot",             # Graphical function undeclared in pari public headers
-        "plotbox",          # idem
-        "plotclip",         # idem
-        "plotcursor",       # idem
-        "plotcolor",        # idem
-        "plotcopy",         # idem
-        "plotdraw",         # idem
-        "plothsizes",       # idem
-        "plotinit",         # idem
-        "plotkill",         # idem
-        "plotlines",        # idem
-        "plotlinetype",     # idem
-        "plotmove",         # idem
-        "plotpoints",       # idem
-        "plotpointsize",    # idem
-        "plotpointtype",    # idem
-        "plotrbox",         # idem
-        "plotrecth",        # idem
-        "plotrecthraw",     # idem
-        "plotrline",        # idem
-        "plotrmove",        # idem
-        "plotrpoint",       # idem
-        "plotscale",        # idem
-        "plotstring",       # idem
-        "ploth",            # idem
-        "plothraw",         # idem
-        "psdraw",           # idem
-        "psplothraw",       # idem
         }
+
 
 class PariFunctionGenerator(object):
     """
@@ -127,9 +100,9 @@ class PariFunctionGenerator(object):
             return False
         cls = kwds.get("class", "unknown")
         sec = kwds.get("section", "unknown")
-        if cls not in ("basic", "highlevel"):
+        if cls != "basic":
             # Different class: probably something technical or
-            # gp2c-specific
+            # specific to gp or gp2c
             return False
         if sec == "programming/control":
             # Skip if, return, break, ...
