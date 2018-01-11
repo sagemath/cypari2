@@ -65,6 +65,15 @@ cdef extern from "pari/pari.h":
     long    evalexpo(long x)
     long    evallgefint(long x)
 
+    ctypedef struct PARI_plot:
+        long width
+        long height
+        long hunit
+        long vunit
+        long fwidth
+        long fheight
+        void (*draw)(PARI_plot *T, GEN w, GEN x, GEN y)
+
     # Various structures that we don't interface but which need to be
     # declared, such that Cython understands the declarations of
     # functions using these types.
