@@ -13,7 +13,7 @@ python:
 env:
   - PARI_VERSION=pari-2.8.1.beta
     URLDIR=unstable
-  - PARI_VERSION=pari-2.9.3
+  - PARI_VERSION=pari-2.9.4
     URLDIR=unix
   - PARI_VERSION=snapshot
     URLDIR=snapshots
