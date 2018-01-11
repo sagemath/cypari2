@@ -579,6 +579,11 @@ cdef class Pari(Pari_auto):
         self.PARI_TWO = new_gen_noclear(gen_2)
         sig_off()
 
+        IF HAVE_PLOT_SVG:
+            # If we are running under IPython, setup for displaying SVG plots.
+            if "IPython" in sys.modules:
+                pari_set_plot_engine(get_plot_ipython)
+
     def _close(self):
         """
         Deallocate the PARI library.
@@ -1427,3 +1432,24 @@ cdef long get_var(v) except -2:
     varno = fetch_user_var(s)
     sig_off()
     return varno
+
+
+IF HAVE_PLOT_SVG:
+    cdef void get_plot_ipython(PARI_plot* T):
+        # Values copied from src/graph/plotsvg.c in PARI sources
+        T.width = 480
+        T.height = 320
+        T.hunit = 3
+        T.vunit = 3
+        T.fwidth = 9
+        T.fheight = 12
+
+        T.draw = draw_ipython
+
+    cdef void draw_ipython(PARI_plot *T, GEN w, GEN x, GEN y):
+        global avma
+        cdef pari_sp av = avma
+        cdef char* svg = rect2svg(w, x, y, T)
+        from IPython.core.display import SVG, display
+        display(SVG(svg))
+        avma = av

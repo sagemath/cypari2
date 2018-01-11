@@ -18,7 +18,7 @@ from PARI's include files.
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
-cdef extern from "pari/pari.h":
+cdef extern from "pari/pari.h" nogil:
     ctypedef unsigned long ulong "pari_ulong"
 
     ctypedef long* GEN
@@ -64,6 +64,15 @@ cdef extern from "pari/pari.h":
     long    evalvalp(long x)
     long    evalexpo(long x)
     long    evallgefint(long x)
+
+    ctypedef struct PARI_plot:
+        long width
+        long height
+        long hunit
+        long vunit
+        long fwidth
+        long fheight
+        void (*draw)(PARI_plot *T, GEN w, GEN x, GEN y)
 
     # Various structures that we don't interface but which need to be
     # declared, such that Cython understands the declarations of

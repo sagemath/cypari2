@@ -302,14 +302,23 @@ class PariFunctionGenerator(object):
         self.decl_file = io.open(self.decl_filename + '.tmp', 'w', encoding='utf-8')
         self.decl_file.write(decl_banner)
 
+        # Check for availability of hi-res SVG plotting. This requires
+        # PARI-2.10 or later.
+        have_plot_svg = False
+
         for v in D:
-            if not self.can_handle_function(**v):
-                sys.stdout.write(" (%s)" % v["function"])
-            else:
-                sys.stdout.write(" %s" % v["function"])
+            func = v["function"]
+            if self.can_handle_function(**v):
+                sys.stdout.write(" %s" % func)
                 sys.stdout.flush()
                 self.handle_pari_function(**v)
+                if func == "plothraw":
+                    have_plot_svg = True
+            else:
+                sys.stdout.write(" (%s)" % func)
         sys.stdout.write("\n")
+
+        self.instance_file.write("DEF HAVE_PLOT_SVG = {}".format(have_plot_svg))
 
         self.gen_file.close()
         self.instance_file.close()
