@@ -324,9 +324,7 @@ def get_rest_doc(function):
 
         >>> print(get_rest_doc("ellap"))
         Let :math:`E` be an :literal:`ell` structure as output by :literal:`ellinit`, defined over
-        a number field or a finite field :math:`\mathbb{F}_q`. The argument :math:`p` is best left
-        omitted if the curve is defined over a finite field, and must be a prime
-        number or a maximal ideal otherwise. This function computes the trace of
+        a number field...computes the trace of
         Frobenius :math:`t` for the elliptic curve :math:`E`, defined by the equation :math:`\#E(\mathbb{F}_q)
         = q+1 - t` (for primes of good reduction).
         <BLANKLINE>
@@ -339,7 +337,7 @@ def get_rest_doc(function):
         :math:`L(E,s) = \sum_n a_n n^{-s}`, whence the function name. The equation must be
         integral at :math:`p` but need not be minimal at :math:`p`; of course, a minimal model
         will be more efficient.
-        <BLANKLINE>
+        ...
         ::
         <BLANKLINE>
             ? E = ellinit([0,1]); \\ y^2 = x^3 + 0.x + 1, defined over Q
@@ -358,8 +356,7 @@ def get_rest_doc(function):
              *** ^-----------
              *** ellap: inconsistent moduli in Rg_to_Fp:
              11
-             13
-        <BLANKLINE>
+             13...
             ? Fq = ffgen(ffinit(11,3), 'a); \\ defines F_q := F_{11^3}
             ? E = ellinit([a+1,a], Fq); \\ y^2 = x^3 + (a+1)x + a, defined over F_q
             ? ellap(E)
@@ -367,9 +364,7 @@ def get_rest_doc(function):
         <BLANKLINE>
         If the curve is defined over a more general number field than :math:`\mathbb{Q}`,
         the maximal ideal :math:`p` must be explicitly given in :literal:`idealprimedec`
-        format. If :math:`p` is above :math:`2` or :math:`3`, the function currently assumes (without
-        checking) that the given model is locally minimal at :math:`p`. There is no
-        restriction at other primes.
+        format...
         <BLANKLINE>
         ::
         <BLANKLINE>

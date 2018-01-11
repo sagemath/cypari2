@@ -3810,7 +3810,7 @@ cdef class Gen(Gen_auto):
         [x, x^2 + 972, x^3 + 54, x^3 + 864, x^3 - 54, x^6 + 108]
         >>> G = pari('x^4 + 1').galoisinit()
         >>> G.galoissubfields(flag=2, v='z')[3]
-        [x^2 + 2, Mod(x^3 + x, x^4 + 1), [x^2 - z*x - 1, x^2 + z*x - 1]]
+        [...^2 + 2, Mod(x^3 + x, x^4 + 1), [x^2 - z*x - 1, x^2 + z*x - 1]]
 
         .. _galoissubfields: http://pari.math.u-bordeaux.fr/dochtml/html.stable/Functions_related_to_general_number_fields.html#galoissubfields
         """
