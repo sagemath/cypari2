@@ -18,7 +18,7 @@ from PARI's include files.
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
-cdef extern from "pari/pari.h":
+cdef extern from "pari/pari.h" nogil:
     ctypedef unsigned long ulong "pari_ulong"
 
     ctypedef long* GEN
