@@ -41,16 +41,17 @@ cdef extern from *:     # PARI headers already included by types.pxd
     char* PARIVERSION
 
     # parierr.h
-    int e_SYNTAX, e_BUG, \
-        e_ALARM, e_FILE, \
-        e_MISC, e_FLAG, e_IMPL, e_ARCH, e_PACKAGE, e_NOTFUNC, \
-        e_PREC, e_TYPE, e_DIM, e_VAR, e_PRIORITY, e_USER, \
-        e_STACK, e_OVERFLOW, e_DOMAIN, e_COMPONENT, \
-        e_MAXPRIME, \
-        e_CONSTPOL, e_IRREDPOL, e_COPRIME, e_PRIME, e_MODULUS, e_ROOTS0, \
-        e_OP, e_TYPE2, e_INV, \
-        e_MEM, \
-        e_SQRTN, \
+    enum err_list:
+        e_SYNTAX, e_BUG
+        e_ALARM, e_FILE
+        e_MISC, e_FLAG, e_IMPL, e_ARCH, e_PACKAGE, e_NOTFUNC
+        e_PREC, e_TYPE, e_DIM, e_VAR, e_PRIORITY, e_USER
+        e_STACK, e_OVERFLOW, e_DOMAIN, e_COMPONENT
+        e_MAXPRIME
+        e_CONSTPOL, e_IRREDPOL, e_COPRIME, e_PRIME, e_MODULUS, e_ROOTS0
+        e_OP, e_TYPE2, e_INV
+        e_MEM
+        e_SQRTN
         e_NONE
 
     int warner, warnprec, warnfile, warnmem, warnuser
