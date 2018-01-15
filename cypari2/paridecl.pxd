@@ -36,6 +36,7 @@ from cpython.getargs cimport va_list
 
 from .types cimport *
 
+
 cdef extern from *:     # PARI headers already included by types.pxd
     char* PARIVERSION
 
@@ -4540,3 +4541,5 @@ cdef extern from *:     # PARI headers already included by types.pxd
 
 # Inline functions in separate file
 include 'declinl.pxi'
+
+from .auto_paridecl cimport *
