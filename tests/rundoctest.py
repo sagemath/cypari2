@@ -14,6 +14,12 @@ import doctest
 # The doctests assume utf-8 encoding
 cypari2.string_utils.encoding = "utf-8"
 
+# For doctests, we want exceptions to look the same,
+# regardless of the Python version. Python 3 will put the
+# module name in the traceback, which we avoid by faking
+# the module to be __main__.
+cypari2.handle_error.PariError.__module__ = "__main__"
+
 failed = 0
 attempted = 0
 for mod in [cypari2.closure, cypari2.convert, cypari2.gen,
