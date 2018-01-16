@@ -25,7 +25,14 @@ before_install:
 install:
   - bash -x .travis-install-pari.sh
   - pip install --build=/tmp/pip --verbose -r requirements.txt
-  - pip install --verbose .
+  # CFLAGS:
+  # -O1 to speed up compilation (compared to -O2 or -O3)
+  # -fno-strict-aliasing because that is the default in Python
+  # -fno-tree-copyrename works around http://gcc.gnu.org/bugzilla/show_bug.cgi?id=56982
+  # -Wall -Werror to check for potential bugs
+  # -Wno-unused to remove false positive errors
+  # -Wno-strict-prototypes works around https://github.com/cython/cython/pull/2076
+  - env CFLAGS="-O1 -fno-strict-aliasing -fno-tree-copyrename -Wall -Wno-unused -Wno-strict-prototypes -Werror" pip install --verbose .
 # command to run tests
 script:
   - make check
