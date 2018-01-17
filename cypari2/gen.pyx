@@ -82,7 +82,6 @@ from .stack cimport new_gen, new_gen_noclear, clear_stack
 from .closure cimport objtoclosure
 
 from .paridecl cimport *
-from .auto_paridecl cimport *
 
 include 'auto_gen.pxi'
 

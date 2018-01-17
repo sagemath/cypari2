@@ -25,11 +25,30 @@ cdef extern from "pari/pari.h":
     ctypedef char* byteptr
     ctypedef unsigned long pari_sp
 
-    # PARI types: these are actually an enum type, but that doesn't
-    # matter for Cython.
-    int t_INT, t_REAL, t_INTMOD, t_FRAC, t_FFELT, t_COMPLEX, t_PADIC, \
-        t_QUAD, t_POLMOD, t_POL, t_SER, t_RFRAC, t_QFR, t_QFI, t_VEC, \
-        t_COL, t_MAT, t_LIST, t_STR, t_VECSMALL, t_CLOSURE, t_ERROR, \
+    # PARI types
+    enum:
+        t_INT
+        t_REAL
+        t_INTMOD
+        t_FRAC
+        t_FFELT
+        t_COMPLEX
+        t_PADIC
+        t_QUAD
+        t_POLMOD
+        t_POL
+        t_SER
+        t_RFRAC
+        t_QFR
+        t_QFI
+        t_VEC
+        t_COL
+        t_MAT
+        t_LIST
+        t_STR
+        t_VECSMALL
+        t_CLOSURE
+        t_ERROR
         t_INFINITY
 
     int BITS_IN_LONG
