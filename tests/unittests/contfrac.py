@@ -20,7 +20,6 @@ contfracpnqn(v)
 contfracpnqn(v,0)
 contfracpnqn(v,1)
 contfracpnqn(v,2)
-
 s=exp(x);
 contfracinit(s,0)
 contfracinit(s,1)
@@ -94,75 +93,38 @@ class TestContfrac(unittest.TestCase):
         self.assertTrue('incorrect type in contfracinit (t_INT)' in str(context.exception))
 
 """**** Original expected results ****
-
   ***   at top-level: contfrac(1,[],-1)
   ***                 ^-----------------
   *** contfrac: domain error in contfrac: nmax < 0
   ***   at top-level: contfracpnqn(Vecsmal
   ***                 ^--------------------
   *** contfracpnqn: incorrect type in pnqn (t_VECSMALL).
-
 [1 0]
-
 [0 1]
-
 [;]
 [;]
-
 [2 1]
-
 [1 0]
-
-
 [2]
-
 [1]
-
-
 [2]
-
 [1]
-
-
 [10 3]
-
 [ 7 2]
-
-
 [1]
-
 [1]
-
-
 [1 3]
-
 [1 2]
-
-
 [1 3 10]
-
 [1 2  7]
-
-
 [144 22]
-
 [ 33  5]
-
-
 [4]
-
 [1]
-
-
 [4 22]
-
 [1  5]
-
-
 [4 22 144]
-
 [1  5  33]
-
 [[], []]
 [[-1], []]
 [[-1], [1/2]]
@@ -181,5 +143,4 @@ class TestContfrac(unittest.TestCase):
   ***   at top-level: contfracinit(1)
   ***                 ^---------------
   *** contfracinit: incorrect type in contfracinit (t_INT).
-
 """

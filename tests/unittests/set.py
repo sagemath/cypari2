@@ -21,7 +21,6 @@ setsearch(b,3)
 setsearch(L,3)
 setsearch(1,3)
 setunion(a,b)
-
 X = [1,2,3]; Y = [2,3,4];
 setbinop((x,y)->x+y, X,Y)
 setbinop((x,y)->x+y, X)
@@ -69,7 +68,6 @@ class TestSet(unittest.TestCase):
                         str(context.exception))
 
 """**** Original expected results ****
-
 [1, 2, 3]
 []
 [1, 2, 3]
@@ -94,5 +92,4 @@ List([1, 2, 3])
   ***   at top-level: setbinop(x->x,X)
   ***                 ^----------------
   *** setbinop: incorrect type in setbinop [function needs exactly 2 arguments] (t_CLOSURE).
-
 """
