@@ -1,3 +1,8 @@
+"""
+    alltest.py : Launch unittests modules in ``testmodules`` list. 
+
+    Each test module corresponds to a PARI-GP test file that was ported into a gmpy2 unittest.
+"""
 import unittest
 import sys
 from cypari2 import Pari, PariError
@@ -6,7 +11,6 @@ pari = Pari()
 
 testmodules = [
     'bern',
-    'set',
     'bit',
     'characteristic',
     'charpoly',
@@ -39,6 +43,7 @@ testmodules = [
     'qfb',
     'qfbclassno',
     'qfsolve',
+    'set',
     'subcyclo',
     'sumdedekind',
     'sumformal',
@@ -72,15 +77,9 @@ suite = unittest.TestSuite()
 
 
 for t in testmodules:
-    if not ((t in require_galpol and not galpol_installed) or (t in require_seadata and not seadata_installed)):
-        try:
-            # If the module defines a suite() function, call it to get the suite.
-            mod = __import__(t, globals(), locals(), ['suite'])
-            suitefn = getattr(mod, 'suite')
-            suite.addTest(suitefn())
-        except (ImportError, AttributeError):
-            # else, just load all the test cases from the module.
-            suite.addTest(unittest.defaultTestLoader.loadTestsFromName(t))
+    if (galpol_installed or t not in require_galpol) and (seadata_installed or t not in require_seadata):
+        # Load all the test cases from the module.
+        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(t))
 
 res = unittest.TextTestRunner().run(suite)
 retcode = 0 if res.wasSuccessful() else 1
