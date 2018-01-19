@@ -770,9 +770,18 @@ cdef class Pari(Pari_auto):
         >>> s.type()
         't_STR'
 
-        See :func:`pari` for more examples.
+        Some commands are just executed without returning a value:
+
+        >>> pari("dummy = 0; kill(dummy)")
+        >>> print(pari("dummy = 0; kill(dummy)"))
+        None
+
+        See :func:`objtogen` for more examples.
         """
-        return objtogen(s)
+        cdef Gen g = objtogen(s)
+        if g.g is gnil:
+            return None
+        return g
 
     cpdef Gen zero(self):
         """

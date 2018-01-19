@@ -23,7 +23,7 @@ cdef extern from *:
 from cysignals.signals cimport sig_off
 from cysignals.memory cimport check_malloc
 
-from .paridecl cimport pari_mainstack, avma, paristack_setsize, gsizebyte, gcopy_avma, gnil
+from .paridecl cimport *
 
 
 cdef inline void clear_stack():
@@ -62,5 +62,9 @@ cdef inline Gen new_gen_noclear(GEN x):
     call sig_off().
     """
     cdef Gen y = Gen.__new__(Gen)
-    y.g = deepcopy_to_python_heap(x, &y.chunk)
+    if is_universal_constant(x):
+        # No need to copy universal constants
+        y.g = x
+    else:
+        y.g = deepcopy_to_python_heap(x, &y.chunk)
     return y

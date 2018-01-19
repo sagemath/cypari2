@@ -43,8 +43,9 @@ from __future__ import absolute_import, division, print_function
 
 from cysignals.signals cimport sig_on, sig_off, sig_error
 
+from cpython.version cimport PY_MAJOR_VERSION
 from cpython.object cimport Py_SIZE
-from cpython.int cimport PyInt_AS_LONG
+from cpython.int cimport PyInt_AS_LONG, PyInt_FromLong
 from cpython.longintrepr cimport (_PyLong_New,
         digit, PyLong_SHIFT, PyLong_MASK)
 from libc.limits cimport LONG_MIN, LONG_MAX
@@ -52,7 +53,7 @@ from libc.math cimport INFINITY
 
 from .paridecl cimport *
 from .stack cimport new_gen
-from .string_utils cimport to_string
+from .string_utils cimport to_string, to_bytes
 
 cdef extern from *:
     ctypedef struct PyLongObject:
@@ -61,374 +62,9 @@ cdef extern from *:
     Py_ssize_t* Py_SIZE_PTR "&Py_SIZE"(object)
 
 
-####################################
-# Integers
-####################################
-
-cpdef integer_to_gen(x):
-    """
-    Convert a Python ``int`` or ``long`` to a PARI ``gen`` of type
-    ``t_INT``.
-
-    Examples:
-
-    >>> from cypari2.convert import integer_to_gen
-    >>> from cypari2 import Pari
-    >>> pari = Pari()
-    >>> a = integer_to_gen(int(12345)); a; type(a)
-    12345
-    <... 'cypari2.gen.Gen'>
-    >>> integer_to_gen(float(12345))
-    Traceback (most recent call last):
-    ...
-    TypeError: integer_to_gen() needs an int or long argument, not float
-    >>> integer_to_gen(2**100)
-    1267650600228229401496703205376
-
-    Tests:
-
-    >>> import sys
-    >>> if sys.version_info.major == 3:
-    ...     long = int
-    >>> assert integer_to_gen(long(12345)) == 12345
-    >>> for i in range(10000):
-    ...     x = 3**i
-    ...     if pari(long(x)) != pari(x) or pari(int(x)) != pari(x):
-    ...         print(x)
-    """
-    if isinstance(x, long):
-        sig_on()
-        return new_gen(PyLong_AsGEN(x))
-    elif isinstance(x, int):
-        sig_on()
-        return new_gen(stoi(PyInt_AS_LONG(x)))
-    else:
-        raise TypeError("integer_to_gen() needs an int or long argument, not {}".format(type(x).__name__))
-
-cpdef gen_to_integer(Gen x):
-    """
-    Convert a PARI ``gen`` to a Python ``int`` or ``long``.
-
-    INPUT:
-
-    - ``x`` -- a PARI ``t_INT``, ``t_FRAC``, ``t_REAL``, a purely
-      real ``t_COMPLEX``, a ``t_INTMOD`` or ``t_PADIC`` (which are
-      lifted).
-
-    Examples:
-
-    >>> from cypari2.convert import gen_to_integer
-    >>> from cypari2 import Pari
-    >>> pari = Pari()
-    >>> a = gen_to_integer(pari("12345")); a; type(a)
-    12345
-    <... 'int'>
-    >>> gen_to_integer(pari("10^30")) == 10**30
-    True
-    >>> gen_to_integer(pari("19/5"))
-    3
-    >>> gen_to_integer(pari("1 + 0.0*I"))
-    1
-    >>> gen_to_integer(pari("3/2 + 0.0*I"))
-    1
-    >>> gen_to_integer(pari("Mod(-1, 11)"))
-    10
-    >>> gen_to_integer(pari("5 + O(5^10)"))
-    5
-    >>> gen_to_integer(pari("Pol(42)"))
-    42
-    >>> gen_to_integer(pari("u"))
-    Traceback (most recent call last):
-    ...
-    TypeError: unable to convert PARI object u of type t_POL to an integer
-    >>> s = pari("x + O(x^2)")
-    >>> s
-    x + O(x^2)
-    >>> gen_to_integer(s)
-    Traceback (most recent call last):
-    ...
-    TypeError: unable to convert PARI object x + O(x^2) of type t_SER to an integer
-    >>> gen_to_integer(pari("1 + I"))
-    Traceback (most recent call last):
-    ...
-    TypeError: unable to convert PARI object 1 + I of type t_COMPLEX to an integer
-
-    Tests:
-
-    >>> gen_to_integer(pari("1.0 - 2^64")) == -18446744073709551615
-    True
-    >>> gen_to_integer(pari("1 - 2^64")) == -18446744073709551615
-    True
-    >>> import sys
-    >>> if sys.version_info.major == 3:
-    ...     long = int
-    >>> for i in range(10000):
-    ...     x = 3**i
-    ...     if long(pari(x)) != long(x) or int(pari(x)) != x:
-    ...         print(x)
-
-    Check some corner cases:
-
-    >>> for s in [1, -1]:
-    ...     for a in [1, 2**31, 2**32, 2**63, 2**64]:
-    ...         for b in [-1, 0, 1]:
-    ...             Nstr = str(s * (a + b))
-    ...             N1 = gen_to_integer(pari(Nstr))  # Convert via PARI
-    ...             N2 = int(Nstr)                   # Convert via Python
-    ...             if N1 != N2:
-    ...                 print(Nstr, N1, N2)
-    ...             if type(N1) is not type(N2):
-    ...                 print(N1, type(N1), N2, type(N2))
-    """
-    # First convert the input to a t_INT
-    cdef GEN g = gtoi(x.g)
-
-    if not signe(g):
-        return 0
-
-    # Try converting to a C long first. Note that we cannot use itos()
-    # from PARI since that does not deal with LONG_MIN correctly.
-    cdef ulong u
-    if lgefint(g) == 3:  # abs(x) fits in a ulong
-        u = g[2]         # u = abs(x)
-        # Check that <long>(u) or <long>(-u) does not overflow
-        if signe(g) >= 0:
-            if u <= <ulong>LONG_MAX:
-                return <long>(u)
-        else:
-            if u <= -<ulong>LONG_MIN:
-                return <long>(-u)
-
-    # Result does not fit in a C long
-    return PyLong_FromGEN(g)
-
-
-cdef GEN gtoi(GEN g0) except NULL:
-    """
-    Convert a PARI object to a PARI integer.
-
-    This function is shallow and not stack-clean.
-    """
-    if typ(g0) == t_INT:
-        return g0
-    cdef GEN g
-    try:
-        sig_on()
-        g = simplify_shallow(g0)
-        if typ(g) == t_COMPLEX:
-            if gequal0(gel(g,2)):
-                g = gel(g,1)
-        if typ(g) == t_INTMOD:
-            g = gel(g,2)
-        g = trunc_safe(g)
-        if typ(g) != t_INT:
-            sig_error()
-        sig_off()
-    except RuntimeError:
-        s = to_string(stack_sprintf(
-            "unable to convert PARI object %Ps of type %s to an integer",
-            g0, type_name(typ(g0))))
-        raise TypeError(s)
-    return g
-
-
-cdef GEN PyLong_AsGEN(x):
-    cdef const digit* D = (<PyLongObject*>x).ob_digit
-
-    # Size of the input
-    cdef size_t sizedigits
-    cdef long sgn
-    if Py_SIZE(x) == 0:
-        return gen_0
-    elif Py_SIZE(x) > 0:
-        sizedigits = Py_SIZE(x)
-        sgn = evalsigne(1)
-    else:
-        sizedigits = -Py_SIZE(x)
-        sgn = evalsigne(-1)
-
-    # Size of the output, in bits and in words
-    cdef size_t sizebits = sizedigits * PyLong_SHIFT
-    cdef size_t sizewords = (sizebits + BITS_IN_LONG - 1) // BITS_IN_LONG
-
-    # Compute the most significant word of the output.
-    # This is a special case because we need to be careful not to
-    # overflow the ob_digit array. We also need to check for zero,
-    # in which case we need to decrease sizewords.
-    # See the loop below for an explanation of this code.
-    cdef size_t bit = (sizewords - 1) * BITS_IN_LONG
-    cdef size_t dgt = bit // PyLong_SHIFT
-    bit = bit % PyLong_SHIFT
-
-    cdef ulong w = <ulong>(D[dgt]) >> bit
-    if 1*PyLong_SHIFT - bit < BITS_IN_LONG and dgt+1 < sizedigits:
-        w += <ulong>(D[dgt+1]) << (1*PyLong_SHIFT - bit)
-    if 2*PyLong_SHIFT - bit < BITS_IN_LONG and dgt+2 < sizedigits:
-        w += <ulong>(D[dgt+2]) << (2*PyLong_SHIFT - bit)
-    if 3*PyLong_SHIFT - bit < BITS_IN_LONG and dgt+3 < sizedigits:
-        w += <ulong>(D[dgt+3]) << (3*PyLong_SHIFT - bit)
-    if 4*PyLong_SHIFT - bit < BITS_IN_LONG and dgt+4 < sizedigits:
-        w += <ulong>(D[dgt+4]) << (4*PyLong_SHIFT - bit)
-    if 5*PyLong_SHIFT - bit < BITS_IN_LONG and dgt+5 < sizedigits:
-        w += <ulong>(D[dgt+5]) << (5*PyLong_SHIFT - bit)
-
-    # Effective size in words plus 2 special codewords
-    cdef pariwords = sizewords+2 if w else sizewords+1
-    cdef GEN g = cgeti(pariwords)
-    g[1] = sgn + evallgefint(pariwords)
-
-    if w:
-        int_MSW(g)[0] = w
-
-    # Fill all words
-    cdef GEN ptr = int_LSW(g)
-    cdef size_t i
-    for i in range(sizewords - 1):
-        # The least significant bit of word number i of the output
-        # integer is bit number "bit" of Python digit "dgt".
-        bit = i * BITS_IN_LONG
-        dgt = bit // PyLong_SHIFT
-        bit = bit % PyLong_SHIFT
-
-        # Now construct the output word from the Python digits:
-        # 6 digits are enough assuming that PyLong_SHIFT >= 15 and
-        # BITS_IN_LONG <= 76.  The compiler should optimize away all
-        # but one of the "if" statements below.
-        w = <ulong>(D[dgt]) >> bit
-        if 1*PyLong_SHIFT - bit < BITS_IN_LONG:
-            w += <ulong>(D[dgt+1]) << (1*PyLong_SHIFT - bit)
-        if 2*PyLong_SHIFT - bit < BITS_IN_LONG:
-            w += <ulong>(D[dgt+2]) << (2*PyLong_SHIFT - bit)
-        if 3*PyLong_SHIFT - bit < BITS_IN_LONG:
-            w += <ulong>(D[dgt+3]) << (3*PyLong_SHIFT - bit)
-        if 4*PyLong_SHIFT - bit < BITS_IN_LONG:
-            w += <ulong>(D[dgt+4]) << (4*PyLong_SHIFT - bit)
-        if 5*PyLong_SHIFT - bit < BITS_IN_LONG:
-            w += <ulong>(D[dgt+5]) << (5*PyLong_SHIFT - bit)
-
-        ptr[0] = w
-        ptr = int_nextW(ptr)
-
-    return g
-
-
-cdef PyLong_FromGEN(GEN g):
-    # Size of input in words, bits and Python digits. The size in
-    # digits might be a small over-estimation, but that is not a
-    # problem.
-    cdef size_t sizewords = (lgefint(g) - 2)
-    cdef size_t sizebits = sizewords * BITS_IN_LONG
-    cdef size_t sizedigits = (sizebits + PyLong_SHIFT - 1) // PyLong_SHIFT
-
-    # Actual correct computed size
-    cdef Py_ssize_t sizedigits_final = 0
-
-    x = _PyLong_New(sizedigits)
-    cdef digit* D = (<PyLongObject*>x).ob_digit
-
-    cdef digit d
-    cdef ulong w
-    cdef size_t i, j, bit
-    for i in range(sizedigits):
-        # The least significant bit of digit number i of the output
-        # integer is bit number "bit" of word "j".
-        bit = i * PyLong_SHIFT
-        j = bit // BITS_IN_LONG
-        bit = bit % BITS_IN_LONG
-
-        w = int_W(g, j)[0]
-        d = w >> bit
-
-        # Do we need bits from the next word too?
-        if BITS_IN_LONG - bit < PyLong_SHIFT and j+1 < sizewords:
-            w = int_W(g, j+1)[0]
-            d += w << (BITS_IN_LONG - bit)
-
-        d = d & PyLong_MASK
-        D[i] = d
-
-        # Keep track of last non-zero digit
-        if d:
-            sizedigits_final = i+1
-
-    # Set correct size (use a pointer to hack around Cython's
-    # non-support for lvalues).
-    cdef Py_ssize_t* sizeptr = Py_SIZE_PTR(x)
-    if signe(g) > 0:
-        sizeptr[0] = sizedigits_final
-    else:
-        sizeptr[0] = -sizedigits_final
-
-    return x
-
-
-####################################
-# Other basic types
-####################################
-
-cdef Gen new_t_POL_from_int_star(int* vals, unsigned long length, long varnum):
-    """
-    Note that degree + 1 = length, so that recognizing 0 is easier.
-
-    varnum = 0 is the general choice (creates a variable in x).
-    """
-    cdef GEN z
-    cdef unsigned long i
-
-    sig_on()
-    z = cgetg(length + 2, t_POL)
-    if length == 0:
-        # Polynomial is zero
-        z[1] = evalvarn(varnum) + evalsigne(0)
-    else:
-        z[1] = evalvarn(varnum) + evalsigne(1)
-        for i in range(length):
-            set_gel(z, i+2, stoi(vals[i]))
-
-    return new_gen(z)
-
-
-cdef Gen new_gen_from_double(double x):
-    # Pari has an odd concept where it attempts to track the accuracy
-    # of floating-point 0; a floating-point zero might be 0.0e-20
-    # (meaning roughly that it might represent any number in the
-    # range -1e-20 <= x <= 1e20).
-
-    # Pari's dbltor converts a floating-point 0 into the Pari real
-    # 0.0e-307; Pari treats this as an extremely precise 0.  This
-    # can cause problems; for instance, the Pari incgam() function can
-    # be very slow if the first argument is very precise.
-
-    # So we translate 0 into a floating-point 0 with 53 bits
-    # of precision (that's the number of mantissa bits in an IEEE
-    # double).
-    cdef GEN g
-
-    sig_on()
-    if x == 0:
-        g = real_0_bit(-53)
-    else:
-        g = dbltor(x)
-    return new_gen(g)
-
-
-cdef Gen new_t_COMPLEX_from_double(double re, double im):
-    sig_on()
-    cdef GEN g = cgetg(3, t_COMPLEX)
-    if re == 0:
-        set_gel(g, 1, gen_0)
-    else:
-        set_gel(g, 1, dbltor(re))
-    if im == 0:
-        set_gel(g, 2, gen_0)
-    else:
-        set_gel(g, 2, dbltor(im))
-    return new_gen(g)
-
-
-####################################
-# Conversion of Gen to Python type #
-####################################
+########################################################################
+# Conversion PARI -> Python
+########################################################################
 
 cpdef gen_to_python(Gen z):
     r"""
@@ -593,29 +229,115 @@ cpdef gen_to_python(Gen z):
     ...
     NotImplementedError: conversion not implemented for t_PADIC
     """
-    cdef GEN g = z.g
+    return PyObject_FromGEN(z.g)
+
+
+cpdef gen_to_integer(Gen x):
+    """
+    Convert a PARI ``gen`` to a Python ``int`` or ``long``.
+
+    INPUT:
+
+    - ``x`` -- a PARI ``t_INT``, ``t_FRAC``, ``t_REAL``, a purely
+      real ``t_COMPLEX``, a ``t_INTMOD`` or ``t_PADIC`` (which are
+      lifted).
+
+    Examples:
+
+    >>> from cypari2.convert import gen_to_integer
+    >>> from cypari2 import Pari
+    >>> pari = Pari()
+    >>> a = gen_to_integer(pari("12345")); a; type(a)
+    12345
+    <... 'int'>
+    >>> gen_to_integer(pari("10^30")) == 10**30
+    True
+    >>> gen_to_integer(pari("19/5"))
+    3
+    >>> gen_to_integer(pari("1 + 0.0*I"))
+    1
+    >>> gen_to_integer(pari("3/2 + 0.0*I"))
+    1
+    >>> gen_to_integer(pari("Mod(-1, 11)"))
+    10
+    >>> gen_to_integer(pari("5 + O(5^10)"))
+    5
+    >>> gen_to_integer(pari("Pol(42)"))
+    42
+    >>> gen_to_integer(pari("u"))
+    Traceback (most recent call last):
+    ...
+    TypeError: unable to convert PARI object u of type t_POL to an integer
+    >>> s = pari("x + O(x^2)")
+    >>> s
+    x + O(x^2)
+    >>> gen_to_integer(s)
+    Traceback (most recent call last):
+    ...
+    TypeError: unable to convert PARI object x + O(x^2) of type t_SER to an integer
+    >>> gen_to_integer(pari("1 + I"))
+    Traceback (most recent call last):
+    ...
+    TypeError: unable to convert PARI object 1 + I of type t_COMPLEX to an integer
+
+    Tests:
+
+    >>> gen_to_integer(pari("1.0 - 2^64")) == -18446744073709551615
+    True
+    >>> gen_to_integer(pari("1 - 2^64")) == -18446744073709551615
+    True
+    >>> import sys
+    >>> if sys.version_info.major == 3:
+    ...     long = int
+    >>> for i in range(10000):
+    ...     x = 3**i
+    ...     if long(pari(x)) != long(x) or int(pari(x)) != x:
+    ...         print(x)
+
+    Check some corner cases:
+
+    >>> for s in [1, -1]:
+    ...     for a in [1, 2**31, 2**32, 2**63, 2**64]:
+    ...         for b in [-1, 0, 1]:
+    ...             Nstr = str(s * (a + b))
+    ...             N1 = gen_to_integer(pari(Nstr))  # Convert via PARI
+    ...             N2 = int(Nstr)                   # Convert via Python
+    ...             if N1 != N2:
+    ...                 print(Nstr, N1, N2)
+    ...             if type(N1) is not type(N2):
+    ...                 print(N1, type(N1), N2, type(N2))
+    """
+    return PyInt_FromGEN(x.g)
+
+
+cdef PyObject_FromGEN(GEN g):
     cdef long t = typ(g)
-    cdef Py_ssize_t i, j, nr, nc
+    cdef Py_ssize_t i, j
+    cdef Py_ssize_t lr, lc
 
     if t == t_INT:
-        return gen_to_integer(z)
+        return PyInt_FromGEN(g)
     elif t == t_FRAC:
         from fractions import Fraction
-        num = gen_to_integer(z.numerator())
-        den = gen_to_integer(z.denominator())
+        num = PyInt_FromGEN(gel(g, 1))
+        den = PyInt_FromGEN(gel(g, 2))
         return Fraction(num, den)
     elif t == t_REAL:
         return rtodbl(g)
     elif t == t_COMPLEX:
-        return complex(gen_to_python(z.real()), gen_to_python(z.imag()))
+        re = PyObject_FromGEN(gel(g, 1))
+        im = PyObject_FromGEN(gel(g, 2))
+        return complex(re, im)
     elif t == t_VEC or t == t_COL:
-        return [gen_to_python(x) for x in z.python_list()]
+        return [PyObject_FromGEN(gel(g, i)) for i in range(1, lg(g))]
     elif t == t_VECSMALL:
-        return z.python_list_small()
+        return [g[i] for i in range(1, lg(g))]
     elif t == t_MAT:
-        nc = lg(g)-1
-        nr = 0 if nc == 0 else lg(gel(g,1))-1
-        return [[gen_to_python(z[i,j]) for j in range(nc)] for i in range(nr)]
+        lc = lg(g)
+        if lc <= 1:
+            return [[]]
+        lr = lg(gel(g,1))
+        return [[PyObject_FromGEN(gcoeff(g, i, j)) for j in range(1, lc)] for i in range(1, lr)]
     elif t == t_INFINITY:
         if inf_get_sign(g) >= 0:
             return INFINITY
@@ -624,4 +346,288 @@ cpdef gen_to_python(Gen z):
     elif t == t_STR:
         return to_string(GSTR(g))
     else:
-        raise NotImplementedError("conversion not implemented for {}".format(z.type()))
+        tname = to_string(type_name(t))
+        raise NotImplementedError(f"conversion not implemented for {tname}")
+
+
+cdef PyInt_FromGEN(GEN g):
+    global avma
+    av = avma
+
+    # First convert the input to a t_INT
+    g = gtoi(g)
+
+    # Reset avma now. This is OK as long as we are not calling further
+    # PARI functions before this function returns.
+    avma = av
+
+    if not signe(g):
+        return PyInt_FromLong(0)
+
+    cdef ulong u
+    if PY_MAJOR_VERSION == 2:
+        # Try converting to a Python 2 "int" first. Note that we cannot
+        # use itos() from PARI since that does not deal with LONG_MIN
+        # correctly.
+        if lgefint(g) == 3:  # abs(x) fits in a ulong
+            u = g[2]         # u = abs(x)
+            # Check that <long>(u) or <long>(-u) does not overflow
+            if signe(g) >= 0:
+                if u <= <ulong>LONG_MAX:
+                    return PyInt_FromLong(u)
+            else:
+                if u <= -<ulong>LONG_MIN:
+                    return PyInt_FromLong(-u)
+
+    # Result does not fit in a C long
+    res = PyLong_FromINT(g)
+    return res
+
+
+cdef GEN gtoi(GEN g0) except NULL:
+    """
+    Convert a PARI object to a PARI integer.
+
+    This function is shallow and not stack-clean.
+    """
+    if typ(g0) == t_INT:
+        return g0
+    cdef GEN g
+    try:
+        sig_on()
+        g = simplify_shallow(g0)
+        if typ(g) == t_COMPLEX:
+            if gequal0(gel(g,2)):
+                g = gel(g,1)
+        if typ(g) == t_INTMOD:
+            g = gel(g,2)
+        g = trunc_safe(g)
+        if typ(g) != t_INT:
+            sig_error()
+        sig_off()
+    except RuntimeError:
+        s = to_string(stack_sprintf(
+            "unable to convert PARI object %Ps of type %s to an integer",
+            g0, type_name(typ(g0))))
+        raise TypeError(s)
+    return g
+
+
+cdef PyLong_FromINT(GEN g):
+    # Size of input in words, bits and Python digits. The size in
+    # digits might be a small over-estimation, but that is not a
+    # problem.
+    cdef size_t sizewords = (lgefint(g) - 2)
+    cdef size_t sizebits = sizewords * BITS_IN_LONG
+    cdef size_t sizedigits = (sizebits + PyLong_SHIFT - 1) // PyLong_SHIFT
+
+    # Actual correct computed size
+    cdef Py_ssize_t sizedigits_final = 0
+
+    x = _PyLong_New(sizedigits)
+    cdef digit* D = (<PyLongObject*>x).ob_digit
+
+    cdef digit d
+    cdef ulong w
+    cdef size_t i, j, bit
+    for i in range(sizedigits):
+        # The least significant bit of digit number i of the output
+        # integer is bit number "bit" of word "j".
+        bit = i * PyLong_SHIFT
+        j = bit // BITS_IN_LONG
+        bit = bit % BITS_IN_LONG
+
+        w = int_W(g, j)[0]
+        d = w >> bit
+
+        # Do we need bits from the next word too?
+        if BITS_IN_LONG - bit < PyLong_SHIFT and j+1 < sizewords:
+            w = int_W(g, j+1)[0]
+            d += w << (BITS_IN_LONG - bit)
+
+        d = d & PyLong_MASK
+        D[i] = d
+
+        # Keep track of last non-zero digit
+        if d:
+            sizedigits_final = i+1
+
+    # Set correct size (use a pointer to hack around Cython's
+    # non-support for lvalues).
+    cdef Py_ssize_t* sizeptr = Py_SIZE_PTR(x)
+    if signe(g) > 0:
+        sizeptr[0] = sizedigits_final
+    else:
+        sizeptr[0] = -sizedigits_final
+
+    return x
+
+
+########################################################################
+# Conversion Python -> PARI
+########################################################################
+
+cdef GEN PyLong_AS_GEN(x):
+    cdef const digit* D = (<PyLongObject*>x).ob_digit
+
+    # Size of the input
+    cdef size_t sizedigits
+    cdef long sgn
+    if Py_SIZE(x) == 0:
+        return gen_0
+    elif Py_SIZE(x) > 0:
+        sizedigits = Py_SIZE(x)
+        sgn = evalsigne(1)
+    else:
+        sizedigits = -Py_SIZE(x)
+        sgn = evalsigne(-1)
+
+    # Size of the output, in bits and in words
+    cdef size_t sizebits = sizedigits * PyLong_SHIFT
+    cdef size_t sizewords = (sizebits + BITS_IN_LONG - 1) // BITS_IN_LONG
+
+    # Compute the most significant word of the output.
+    # This is a special case because we need to be careful not to
+    # overflow the ob_digit array. We also need to check for zero,
+    # in which case we need to decrease sizewords.
+    # See the loop below for an explanation of this code.
+    cdef size_t bit = (sizewords - 1) * BITS_IN_LONG
+    cdef size_t dgt = bit // PyLong_SHIFT
+    bit = bit % PyLong_SHIFT
+
+    cdef ulong w = <ulong>(D[dgt]) >> bit
+    if 1*PyLong_SHIFT - bit < BITS_IN_LONG and dgt+1 < sizedigits:
+        w += <ulong>(D[dgt+1]) << (1*PyLong_SHIFT - bit)
+    if 2*PyLong_SHIFT - bit < BITS_IN_LONG and dgt+2 < sizedigits:
+        w += <ulong>(D[dgt+2]) << (2*PyLong_SHIFT - bit)
+    if 3*PyLong_SHIFT - bit < BITS_IN_LONG and dgt+3 < sizedigits:
+        w += <ulong>(D[dgt+3]) << (3*PyLong_SHIFT - bit)
+    if 4*PyLong_SHIFT - bit < BITS_IN_LONG and dgt+4 < sizedigits:
+        w += <ulong>(D[dgt+4]) << (4*PyLong_SHIFT - bit)
+    if 5*PyLong_SHIFT - bit < BITS_IN_LONG and dgt+5 < sizedigits:
+        w += <ulong>(D[dgt+5]) << (5*PyLong_SHIFT - bit)
+
+    # Effective size in words plus 2 special codewords
+    cdef pariwords = sizewords+2 if w else sizewords+1
+    cdef GEN g = cgeti(pariwords)
+    g[1] = sgn + evallgefint(pariwords)
+
+    if w:
+        int_MSW(g)[0] = w
+
+    # Fill all words
+    cdef GEN ptr = int_LSW(g)
+    cdef size_t i
+    for i in range(sizewords - 1):
+        # The least significant bit of word number i of the output
+        # integer is bit number "bit" of Python digit "dgt".
+        bit = i * BITS_IN_LONG
+        dgt = bit // PyLong_SHIFT
+        bit = bit % PyLong_SHIFT
+
+        # Now construct the output word from the Python digits: we need
+        # to check that we shift less than the number of bits in the
+        # type. 6 digits are enough assuming that PyLong_SHIFT >= 15 and
+        # BITS_IN_LONG <= 76. A clever compiler should optimize away all
+        # but one of the "if" statements below.
+        w = <ulong>(D[dgt]) >> bit
+        if 1*PyLong_SHIFT - bit < BITS_IN_LONG:
+            w += <ulong>(D[dgt+1]) << (1*PyLong_SHIFT - bit)
+        if 2*PyLong_SHIFT - bit < BITS_IN_LONG:
+            w += <ulong>(D[dgt+2]) << (2*PyLong_SHIFT - bit)
+        if 3*PyLong_SHIFT - bit < BITS_IN_LONG:
+            w += <ulong>(D[dgt+3]) << (3*PyLong_SHIFT - bit)
+        if 4*PyLong_SHIFT - bit < BITS_IN_LONG:
+            w += <ulong>(D[dgt+4]) << (4*PyLong_SHIFT - bit)
+        if 5*PyLong_SHIFT - bit < BITS_IN_LONG:
+            w += <ulong>(D[dgt+5]) << (5*PyLong_SHIFT - bit)
+
+        ptr[0] = w
+        ptr = int_nextW(ptr)
+
+    return g
+
+
+cdef GEN PyObject_AsGEN(x) except? NULL:
+    """
+    Convert basic Python types to a PARI GEN.
+    """
+    cdef GEN g = NULL
+    if isinstance(x, unicode):
+        x = to_bytes(x)
+    if isinstance(x, bytes):
+        sig_on()
+        g = gp_read_str(<bytes>x)
+        sig_off()
+    elif isinstance(x, long):
+        sig_on()
+        g = PyLong_AS_GEN(x)
+        sig_off()
+    elif isinstance(x, int):
+        sig_on()
+        g = PyInt_AS_GEN(x)
+        sig_off()
+    elif isinstance(x, float):
+        sig_on()
+        g = PyFloat_AS_GEN(x)
+        sig_off()
+    elif isinstance(x, complex):
+        sig_on()
+        g = PyComplex_AS_GEN(x)
+        sig_off()
+    return g
+
+
+####################################
+# Deprecated functions
+####################################
+
+cdef Gen new_gen_from_double(double x):
+    sig_on()
+    return new_gen(double_to_REAL(x))
+
+
+cdef Gen new_t_COMPLEX_from_double(double re, double im):
+    sig_on()
+    return new_gen(doubles_to_COMPLEX(re, im))
+
+
+def integer_to_gen(x):
+    """
+    Convert a Python ``int`` or ``long`` to a PARI ``gen`` of type
+    ``t_INT``.
+
+    Examples:
+
+    >>> from cypari2.convert import integer_to_gen
+    >>> from cypari2 import Pari
+    >>> pari = Pari()
+    >>> a = integer_to_gen(int(12345)); a; type(a)
+    12345
+    <... 'cypari2.gen.Gen'>
+    >>> integer_to_gen(float(12345))
+    Traceback (most recent call last):
+    ...
+    TypeError: integer_to_gen() needs an int or long argument, not float
+    >>> integer_to_gen(2**100)
+    1267650600228229401496703205376
+
+    Tests:
+
+    >>> import sys
+    >>> if sys.version_info.major == 3:
+    ...     long = int
+    >>> assert integer_to_gen(long(12345)) == 12345
+    >>> for i in range(10000):
+    ...     x = 3**i
+    ...     if pari(long(x)) != pari(x) or pari(int(x)) != pari(x):
+    ...         print(x)
+    """
+    if isinstance(x, long):
+        sig_on()
+        return new_gen(PyLong_AS_GEN(x))
+    elif isinstance(x, int):
+        sig_on()
+        return new_gen(stoi(PyInt_AS_LONG(x)))
+    else:
+        raise TypeError("integer_to_gen() needs an int or long argument, not {}".format(type(x).__name__))

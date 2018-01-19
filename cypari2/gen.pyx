@@ -45,7 +45,7 @@ AUTHORS:
 #       Copyright (C) ???? Justin Walker
 #       Copyright (C) ???? Gonzalo Tornaria
 #       Copyright (C) 2010 Robert Bradshaw <robertwb@math.washington.edu>
-#       Copyright (C) 2010-2016 Jeroen Demeyer <jdemeyer@cage.ugent.be>
+#       Copyright (C) 2010-2018 Jeroen Demeyer <J.Demeyer@UGent.be>
 #       Copyright (C) 2016 Luca De Feo <luca.defeo@polytechnique.edu>
 #       Copyright (C) 2017 Vincent Delecroix <vincent.delecroix@labri.fr>
 #
@@ -74,8 +74,7 @@ from cysignals.signals cimport sig_check, sig_on, sig_off, sig_block, sig_unbloc
 from .types cimport *
 from .string_utils cimport to_string, to_bytes
 from .paripriv cimport *
-from .convert cimport (integer_to_gen, gen_to_integer,
-                       new_gen_from_double, new_t_COMPLEX_from_double)
+from .convert cimport PyObject_AsGEN, gen_to_integer
 from .pari_instance cimport (prec_bits_to_words, prec_words_to_bits,
                              default_bitprec, get_var)
 from .stack cimport new_gen, new_gen_noclear, clear_stack
@@ -4903,11 +4902,14 @@ cpdef Gen objtogen(s):
     >>> pari(True)
     1
 
-    Some commands are just executed without returning a value:
+    The following looks strange, but it is what PARI does:
 
-    >>> pari("dummy = 0; kill(dummy)")
-    >>> type(pari("dummy = 0; kill(dummy)"))
-    <... 'NoneType'>
+    >>> pari(["print(x)"])
+    x
+    [0]
+    >>> pari("[print(x)]")
+    x
+    [0]
 
     Tests:
 
@@ -4916,22 +4918,10 @@ cpdef Gen objtogen(s):
     ...
     ValueError: Cannot convert None to pari
 
-    >>> class OldStylePari:
-    ...     def _pari_(self):
-    ...         return pari(42)
-    >>> import warnings
-    >>> with warnings.catch_warnings(record=True) as w:
-    ...     warnings.simplefilter('always')
-    ...     pari(OldStylePari())
-    ...     assert len(w) == 1
-    ...     assert issubclass(w[0].category, DeprecationWarning)
-    42
     """
-    cdef GEN g
-    cdef list L
-
     if isinstance(s, Gen):
         return s
+
     try:
         m = s.__pari__
     except AttributeError:
@@ -4939,37 +4929,21 @@ cpdef Gen objtogen(s):
     else:
         return m()
 
-    try:
-        m = s._pari_
-    except AttributeError:
-        pass
-    else:
-        from warnings import warn
-        warn("the _pari_ method is deprecated, use __pari__ instead", DeprecationWarning)
-        return m()
+    global avma
+    cdef pari_sp av = avma
+    cdef GEN g = PyObject_AsGEN(s)
+    if g is not NULL:
+        avma = av
+        return new_gen_noclear(g)
 
-    # Check basic Python types. Start with strings, which are a very
-    # common case.
-    # This generates slightly more efficient code than
-    # isinstance(s, (unicode, bytes))
-    if PyUnicode_Check(s) | PyBytes_Check(s):
-        sig_on()
-        g = gp_read_str(to_bytes(s))
-        if g == gnil:
-            clear_stack()
-            return None
-        return new_gen(g)
-    if PyInt_Check(s) | PyLong_Check(s):
-        return integer_to_gen(s)
-    if isinstance(s, float):
-        return new_gen_from_double(PyFloat_AS_DOUBLE(s))
-    if isinstance(s, complex):
-        return new_t_COMPLEX_from_double(PyComplex_RealAsDouble(s), PyComplex_ImagAsDouble(s))
-
-    # A list is iterable, but we handle the common case of a list
+    # Check for iterables. Handle the common cases of lists and tuples
     # separately as an optimization
+    cdef list L
     if isinstance(s, list):
         L = [objtogen(x) for x in <list>s]
+        return list_of_Gens_to_Gen(L)
+    if isinstance(s, tuple):
+        L = [objtogen(x) for x in <tuple>s]
         return list_of_Gens_to_Gen(L)
     # Check for iterable object s
     try:
@@ -4987,6 +4961,7 @@ cpdef Gen objtogen(s):
 
     # Simply use the string representation
     return objtogen(str(s))
+
 
 cdef GEN _Vec_append(GEN v, GEN a, long n):
     """
