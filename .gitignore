@@ -4,8 +4,8 @@ cypari2/auto_gen.pxi.tmp
 cypari2/auto_gen.pxi
 cypari2/auto_instance.pxi.tmp
 cypari2/auto_instance.pxi
-cypari2/auto_paridecl.pxd.tmp
-cypari2/auto_paridecl.pxd
+cypari2/paridecl.pxd.tmp
+cypari2/paridecl.pxd
 cypari2/closure.c
 cypari2/convert.c
 cypari2/gen.c
