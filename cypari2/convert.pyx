@@ -6,7 +6,7 @@ Convert PARI objects to/from Python/C native types
 This modules contains the following conversion routines:
 
 - integers, long integers <-> PARI integers
-- list of integegers -> PARI polynomials
+- list of integers -> PARI polynomials
 - doubles -> PARI reals
 - pairs of doubles -> PARI complex numbers
 
