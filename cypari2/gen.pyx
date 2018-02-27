@@ -1341,6 +1341,11 @@ cdef class Gen(Gen_auto):
         >>> from cypari2 import Pari
         >>> pari = Pari()
 
+        >>> l = pari.List([1,2,3])
+        >>> l[0] = 3
+        >>> l
+        List([3, 2, 3])
+
         >>> v = pari(range(10))
         >>> v
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -1446,13 +1451,14 @@ cdef class Gen(Gen_auto):
         # collecting x.
         self.cache(i, x)
 
-        # Correct indexing for t_POLs
-        if typ(self.g) == t_POL:
-            i += 1
-
-        # Actually set the value
-        set_gel(self.g, i+1, x.g)
-        return
+        if typ(self.g) == t_LIST:
+            listput(self.g, x.g, i+1)
+        else:
+            # Correct indexing for t_POLs
+            if typ(self.g) == t_POL:
+                i += 1
+            # Actually set the value
+            set_gel(self.g, i+1, x.g)
 
     def __len__(self):
         return glength(self.g)
