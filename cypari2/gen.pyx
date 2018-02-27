@@ -1341,6 +1341,11 @@ cdef class Gen(Gen_auto):
         >>> from cypari2 import Pari
         >>> pari = Pari()
 
+        >>> l = pari.List([1,2,3])
+        >>> l[0] = 3
+        >>> l
+        List([3, 2, 3])
+
         >>> v = pari(range(10))
         >>> v
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -1449,6 +1454,10 @@ cdef class Gen(Gen_auto):
         # Correct indexing for t_POLs
         if typ(self.g) == t_POL:
             i += 1
+
+        if typ(self.g) == t_LIST:
+            listput(self.g, x.g, i+1)
+            return
 
         # Actually set the value
         set_gel(self.g, i+1, x.g)
