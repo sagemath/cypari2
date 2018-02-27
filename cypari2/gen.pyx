@@ -1451,17 +1451,14 @@ cdef class Gen(Gen_auto):
         # collecting x.
         self.cache(i, x)
 
-        # Correct indexing for t_POLs
-        if typ(self.g) == t_POL:
-            i += 1
-
         if typ(self.g) == t_LIST:
             listput(self.g, x.g, i+1)
-            return
-
-        # Actually set the value
-        set_gel(self.g, i+1, x.g)
-        return
+        else:
+            # Correct indexing for t_POLs
+            if typ(self.g) == t_POL:
+                i += 1
+            # Actually set the value
+            set_gel(self.g, i+1, x.g)
 
     def __len__(self):
         return glength(self.g)
