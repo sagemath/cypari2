@@ -4872,7 +4872,6 @@ cdef Gen list_of_Gens_to_Gen(list s):
 
     Tests:
 
-    >>> from six.moves import range
     >>> from cypari2.gen import objtogen
     >>> from cypari2 import Pari
     >>> pari = Pari()
