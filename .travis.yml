@@ -11,10 +11,12 @@ python:
   - "3.5"
   - "3.6"
 env:
-  - PARI_VERSION=pari-2.8.1.beta
-    URLDIR=unstable
-  - PARI_VERSION=pari-2.9.4
+  - PARI_VERSION=pari-2.9.0
     URLDIR=unix
+  - PARI_VERSION=pari-2.9.5
+    URLDIR=unix
+  - PARI_VERSION=pari-2.10.1.beta
+    URLDIR=unstable
   - PARI_VERSION=snapshot
     URLDIR=snapshots
 

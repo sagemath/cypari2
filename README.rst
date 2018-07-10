@@ -21,10 +21,11 @@ Using pip
 
 Requirements:
 
-- PARI/GP >= 2.8.1 (header files and library)
-- python >= 2.7
+- PARI/GP >= 2.9.0 (header files and library)
+- Python >= 2.7
 - pip
 - `cysignals <https://pypi.python.org/pypi/cysignals/>`_
+- Cython >= 0.28
 
 Install cypari2 via the Python Package Index (PyPI) via
 
