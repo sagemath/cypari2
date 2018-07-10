@@ -2082,8 +2082,6 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN     eltreltoabs(GEN rnfeq, GEN x)
     GEN     eltabstorel(GEN eq, GEN P)
     GEN     eltabstorel_lift(GEN rnfeq, GEN P)
-    void    nf_nfzk(GEN nf, GEN rnfeq, GEN *zknf, GEN *czknf)
-    GEN     nfeltup(GEN nf, GEN x, GEN zknf, GEN czknf)
     GEN     rnfeltabstorel(GEN rnf, GEN x)
     GEN     rnfeltdown(GEN rnf, GEN x)
     GEN     rnfeltdown0(GEN rnf, GEN x, long flag)

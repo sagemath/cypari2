@@ -116,6 +116,32 @@ cdef inline bint have_ellwp_flag1_bug():
     return ellwp_flag1_bug
 
 
+# Compatibility wrapper for nf_nfzk and nfeltup
+cdef extern from *:
+    """
+    #if PARI_VERSION_CODE >= PARI_VERSION(2, 10, 1)
+    #define new_nf_nfzk nf_nfzk
+    #define new_nfeltup nfeltup
+    #else
+    static GEN new_nf_nfzk(GEN nf, GEN rnfeq)
+    {
+        GEN zknf, czknf;
+        nf_nfzk(nf, rnfeq, &zknf, &czknf);
+        return mkvec2(zknf, czknf);
+    }
+
+    static GEN new_nfeltup(GEN nf, GEN x, GEN arg)
+    {
+        GEN zknf = gel(arg, 1);
+        GEN czknf = gel(arg, 2);
+        return nfeltup(nf, x, zknf, czknf);
+    }
+    #endif
+    """
+    GEN new_nf_nfzk(GEN nf, GEN rnfeq)
+    GEN new_nfeltup(GEN nf, GEN x, GEN zknf)
+
+
 @cython.final
 cdef class Gen(Gen_auto):
     """
@@ -4015,26 +4041,12 @@ cdef class Gen(Gen_auto):
 
             The output of this method is suitable for the method
             :meth:`_nfeltup`.
-
-        Tests:
-
-        >>> from cypari2 import Pari
-        >>> pari = Pari()
-
-        >>> nf = pari('y^2 - 2').nfinit()
-        >>> nf._nf_nfzk(nf._nf_rnfeq('x^2 - 3'))
-        ([2, -x^3 + 9*x], 1/2)
         """
-        cdef GEN zknf, czknf
         cdef Gen t0 = objtogen(rnfeq)
-        cdef Gen zk, czk
         sig_on()
-        nf_nfzk(self.g, t0.g, &zknf, &czknf)
-        zk = new_gen_noclear(zknf)
-        czk = new_gen(czknf)
-        return zk, czk
+        return new_gen(new_nf_nfzk(self.g, t0.g))
 
-    def _nfeltup(self, x, zk, czk):
+    def _nfeltup(self, x, nfzk):
         """
         Construct a relative number field element from an element of
         the base field.
@@ -4043,7 +4055,7 @@ cdef class Gen(Gen_auto):
 
         - ``x`` -- element of the base field
 
-        - ``zk``, ``czk`` -- relative number field data as returned by
+        - ``nfzk`` -- relative number field data as returned by
           :meth:`_nf_nfzk`
 
         .. WARNING::
@@ -4059,15 +4071,14 @@ cdef class Gen(Gen_auto):
         >>> pari = Pari()
 
         >>> nf = pari('nfinit(y^2 - 2)')
-        >>> zk, czk = nf._nf_nfzk(nf._nf_rnfeq('x^2 - 3'))
-        >>> nf._nfeltup('y', zk, czk)
+        >>> nfzk = nf._nf_nfzk(nf._nf_rnfeq('x^2 - 3'))
+        >>> nf._nfeltup('y', nfzk)
         -1/2*x^3 + 9/2*x
         """
         cdef Gen t0 = objtogen(x)
-        cdef Gen t1 = objtogen(zk)
-        cdef Gen t2 = objtogen(czk)
+        cdef Gen t1 = objtogen(nfzk)
         sig_on()
-        return new_gen(nfeltup(self.g, t0.g, t1.g, t2.g))
+        return new_gen(new_nfeltup(self.g, t0.g, t1.g))
 
     def eval(self, *args, **kwds):
         """
