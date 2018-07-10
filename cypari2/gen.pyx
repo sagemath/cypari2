@@ -2064,22 +2064,16 @@ cdef class Gen(Gen_auto):
 
     def isprime(self, long flag=0):
         """
-        isprime(x, flag=0): Returns True if x is a PROVEN prime number, and
-        False otherwise.
+        Return True if x is a PROVEN prime number, and False otherwise.
 
         INPUT:
 
+        - ``flag`` -- If flag is 0 or omitted, use a combination of
+          algorithms. If flag is 1, the primality is  certified by the
+          Pocklington-Lehmer Test. If flag is 2, the primality is
+          certified using the APRCL test. If flag is 3, use ECPP.
 
-        -  ``flag`` - int 0 (default): use a combination of
-           algorithms. 1: certify primality using the Pocklington-Lehmer Test.
-           2: certify primality using the APRCL test.
-
-
-        OUTPUT:
-
-
-        -  ``bool`` - True or False
-
+        OUTPUT: bool
 
         Examples:
 
@@ -2098,17 +2092,15 @@ cdef class Gen(Gen_auto):
         False
         >>> n = pari(2**31-1)
         >>> n.isprime(1)
-        (True, [2, 3, 1; 3, 5, 1; 7, 3, 1; 11, 3, 1; 31, 2, 1; 151, 3, 1; 331, 3, 1])
+        True
         """
-        cdef GEN x
         sig_on()
         x = gisprime(self.g, flag)
-        if typ(x) != t_INT:
-            # case flag=1 with prime input: x is the certificate
-            return True, new_gen(x)
-        else:
-            sig_off()
-            return signe(x) != 0
+        # PARI-2.9 may return a primality certificate if flag==1.
+        # So a non-INT is interpreted as True
+        cdef bint ret = (typ(x) != t_INT) or (signe(x) != 0)
+        clear_stack()
+        return ret
 
     def ispseudoprime(self, long flag=0):
         """
