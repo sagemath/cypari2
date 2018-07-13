@@ -1285,13 +1285,15 @@ cdef class Gen(Gen_auto):
         ## for a polynomial or power series, so these go before
         ## bounds testing
         if pari_type == t_POL:
-            return self.polcoeff(i)
+            sig_on()
+            return new_gen(polcoeff0(self.g, i, -1))
 
         elif pari_type == t_SER:
             bound = valp(self.g) + lg(self.g) - 2
             if i >= bound:
                 raise IndexError("index out of range")
-            return self.polcoeff(i)
+            sig_on()
+            return new_gen(polcoeff0(self.g, i, -1))
 
         elif pari_type in (t_INT, t_REAL, t_PADIC, t_QUAD, t_FFELT, t_INTMOD, t_POLMOD):
             # these are definitely scalar!
