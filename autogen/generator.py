@@ -184,20 +184,33 @@ class PariFunctionGenerator(object):
                     setrand(_n)
                     clear_stack()
             <BLANKLINE>
-            >>> G.handle_pari_function("bernvec",
-            ...     cname="bernvec", prototype="L",
-            ...     help="bernvec(x): this routine is obsolete, use bernfrac repeatedly.",
-            ...     obsolete="2007-03-30",
-            ...     **{"class":"basic", "section":"transcendental"})
-                GEN bernvec(long)
-                def bernvec(self, long x):
+            >>> G.handle_pari_function("polredord",
+            ...     cname="polredord", prototype="G",
+            ...     help="polredord(x): this function is obsolete, use polredbest.",
+            ...     obsolete="2008-07-20",
+            ...     **{"class":"basic", "section":"number_fields"})
+                GEN polredord(GEN)
+                def polredord(x):
                     r'''
-                    This routine is obsolete, kept for backward compatibility only.
+                    This function is obsolete, use polredbest.
                     '''
                     from warnings import warn
-                    warn('the PARI/GP function bernvec is obsolete (2007-03-30)', DeprecationWarning)
+                    warn('the PARI/GP function polredord is obsolete (2008-07-20)', DeprecationWarning)
+                    cdef GEN _x = x.g
                     sig_on()
-                    cdef GEN _ret = bernvec(x)
+                    cdef GEN _ret = polredord(_x)
+                    return new_gen(_ret)
+            <BLANKLINE>
+                def polredord(self, x):
+                    r'''
+                    This function is obsolete, use polredbest.
+                    '''
+                    from warnings import warn
+                    warn('the PARI/GP function polredord is obsolete (2008-07-20)', DeprecationWarning)
+                    x = objtogen(x)
+                    cdef GEN _x = (<Gen>x).g
+                    sig_on()
+                    cdef GEN _ret = polredord(_x)
                     return new_gen(_ret)
             <BLANKLINE>
         """

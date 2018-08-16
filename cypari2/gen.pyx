@@ -4819,37 +4819,6 @@ cdef class Gen(Gen_auto):
         sig_off()
         return
 
-    def bernvec(x):
-        r"""
-        Creates a vector containing, as rational numbers, the Bernoulli
-        numbers `B_0, B_2,\ldots, B_{2x}`. This routine is
-        obsolete. Use bernfrac instead each time you need a Bernoulli
-        number in exact form.
-
-        Note: this routine is implemented using repeated independent calls
-        to bernfrac, which is faster than the standard recursion in exact
-        arithmetic.
-
-        Examples:
-
-        >>> from cypari2 import Pari
-        >>> pari = Pari()
-
-        >>> import warnings
-        >>> with warnings.catch_warnings(record=True) as w:
-        ...     warnings.simplefilter('always')
-        ...     pari(8).bernvec()
-        ...     assert len(w) == 1
-        ...     assert issubclass(w[0].category, DeprecationWarning)
-        [1, 1/6, -1/30, 1/42, -1/30, 5/66, -691/2730, 7/6, -3617/510]
-        >>> [pari(2*n).bernfrac() for n in range(9)]
-        [1, 1/6, -1/30, 1/42, -1/30, 5/66, -691/2730, 7/6, -3617/510]
-        """
-        from warnings import warn
-        warn('the PARI/GP function bernvec() is obsolete: use repeated calls to bernfrac() instead', DeprecationWarning)
-        sig_on()
-        return new_gen(bernvec(x))
-
     def allocatemem(self, *args):
         """
         Do not use this. Use ``pari.allocatemem()`` instead.
