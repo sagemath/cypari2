@@ -40,22 +40,10 @@ def pari_share():
         >>> os.path.isfile(os.path.join(pari_share(), "pari.desc"))
         True
     """
-    from subprocess import Popen, PIPE
-    if not gppath:
-        raise EnvironmentError("cannot find an installation of PARI/GP: make sure that the 'gp' program is in your $PATH")
-    gp = Popen([gppath, "-f", "-q"], stdin=PIPE, stdout=PIPE)
-    out = gp.communicate(b"print(default(datadir))")[0]
-    # Convert out to str if needed
-    if not isinstance(out, str):
-        from sys import getfilesystemencoding
-        out = out.decode(getfilesystemencoding(), "surrogateescape")
-    datadir = out.strip()
-    if not os.path.isdir(datadir):
-        # As a fallback, try a path relative to the prefix
-        datadir = os.path.join(prefix, "share", "pari")
-        if not os.path.isdir(datadir):
-            raise EnvironmentError("PARI data directory {!r} does not exist".format(datadir))
-    return datadir
+    sharedir = os.path.join(prefix, "share", "pari")
+    if not os.path.isdir(sharedir):
+        raise EnvironmentError("PARI share directory {!r} does not exist".format(sharedir))
+    return sharedir
 
 
 def include_dirs():
