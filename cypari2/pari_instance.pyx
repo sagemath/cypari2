@@ -600,6 +600,10 @@ cdef class Pari(Pari_auto):
         >>> pari.stacksize()
         1000000
 
+        Disable stack size warnings again:
+
+        >>> pari.default("debugmem", 0)
+
         .. WARNING::
 
             Calling this method is dangerous since any further use of
@@ -636,7 +640,7 @@ cdef class Pari(Pari_auto):
         return "Interface to the PARI C library"
 
     def __hash__(self):
-        return 907629390   # hash('pari')
+        return 907629390
 
     def set_debug_level(self, level):
         """

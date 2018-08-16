@@ -20,6 +20,11 @@ cypari2.string_utils.encoding = "utf-8"
 # the module to be __main__.
 cypari2.handle_error.PariError.__module__ = "__main__"
 
+# Disable stack size warning messages
+pari = cypari2.Pari()
+pari.default("debugmem", 0)
+
+
 failed = 0
 attempted = 0
 for mod in [cypari2.closure, cypari2.convert, cypari2.gen,
@@ -39,4 +44,4 @@ print("Summary result for cypari2:")
 print("   attempted = {}".format(attempted))
 print("   failed = {}".format(failed))
 
-sys.exit(failed)
+sys.exit(1 if failed else 0)
