@@ -19,6 +19,6 @@ wget --no-verbose "$PARI_URL/$PARI_VERSION.tar.gz"
 # Install
 tar xzf "$PARI_VERSION.tar.gz"
 cd "$PARI_VERSION"
-./Configure --prefix=/usr
+./Configure --prefix=/usr --datadir=/usr/paridata
 make gp
 sudo make install

@@ -35,8 +35,9 @@ def pari_share():
 
     EXAMPLES::
 
+        >>> import os
         >>> from autogen.parser import pari_share
-        >>> pari_share().endswith('/share/pari')
+        >>> os.path.isfile(os.path.join(pari_share(), "pari.desc"))
         True
     """
     from subprocess import Popen, PIPE
