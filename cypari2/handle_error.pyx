@@ -29,7 +29,7 @@ from cysignals.signals cimport sig_block, sig_unblock, sig_error
 
 from .paridecl cimport *
 from .paripriv cimport *
-from .stack cimport new_gen_noclear
+from .stack cimport new_gen_noclear, reset_avma
 
 
 # We derive PariError from RuntimeError, for backward compatibility with
@@ -202,6 +202,8 @@ cdef void _pari_err_recover(long errnum):
     retry the code (in case of no error) or to make the already-raised
     exception known to Python.
     """
+    reset_avma()
+
     # An exception was raised.  Jump to the signal-handling code
     # which will cause sig_on() to see the exception.
     sig_error()

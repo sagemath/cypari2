@@ -34,9 +34,9 @@ cdef class Gen_base:
     on the PARI stack and the PARI stack has been garbage collected.
 
     You almost certainly want to use one of the derived class
-    :class:`Gen` or :class:`Gen_managed` instead. That being said,
-    :class:`Gen_base` can be used by itself to pass around a temporary
-    ``GEN`` within Python where we cannot use C calls.
+    :class:`Gen`  instead. That being said, :class:`Gen_base` can be
+    used by itself to pass around a temporary ``GEN`` within Python
+    where we cannot use C calls.
     """
 '''
 
@@ -62,7 +62,7 @@ function_blacklist = {"O",  # O(p^e) needs special parser support
         "alias",            # Not needed and difficult documentation
         "listcreate",       # "redundant and obsolete" according to PARI
         "print",            # Conflicts with Python builtin
-        "allocatemem",      # Better hand-written support in Pari class
+        "allocatemem",      # Dangerous; overridden in PariInstance
         "global",           # Invalid in Python (and obsolete)
         "inline",           # Total confusion
         "uninline",         # idem
@@ -138,13 +138,15 @@ class PariFunctionGenerator(object):
                 GEN bnfinit0(GEN, long, GEN, long)
                 def bnfinit(P, long flag=0, tech=None, long precision=0):
                     ...
-                    cdef GEN _P = P.g
-                    cdef GEN _tech = NULL
-                    if tech is not None:
+                    cdef bint _have_tech = (tech is not None)
+                    if _have_tech:
                         tech = objtogen(tech)
+                    sig_on()
+                    cdef GEN _P = (<Gen>P).g
+                    cdef GEN _tech = NULL
+                    if _have_tech:
                         _tech = (<Gen>tech).g
                     precision = prec_bits_to_words(precision)
-                    sig_on()
                     cdef GEN _ret = bnfinit0(_P, flag, _tech, precision)
                     return new_gen(_ret)
             <BLANKLINE>
@@ -176,8 +178,8 @@ class PariFunctionGenerator(object):
                     r'''
                     Reseeds the random number generator...
                     '''
-                    cdef GEN _n = n.g
                     sig_on()
+                    cdef GEN _n = (<Gen>n).g
                     setrand(_n)
                     clear_stack()
             <BLANKLINE>
@@ -186,8 +188,8 @@ class PariFunctionGenerator(object):
                     Reseeds the random number generator...
                     '''
                     n = objtogen(n)
-                    cdef GEN _n = (<Gen>n).g
                     sig_on()
+                    cdef GEN _n = (<Gen>n).g
                     setrand(_n)
                     clear_stack()
             <BLANKLINE>
@@ -203,8 +205,8 @@ class PariFunctionGenerator(object):
                     '''
                     from warnings import warn
                     warn('the PARI/GP function polredord is obsolete (2008-07-20)', DeprecationWarning)
-                    cdef GEN _x = x.g
                     sig_on()
+                    cdef GEN _x = (<Gen>x).g
                     cdef GEN _ret = polredord(_x)
                     return new_gen(_ret)
             <BLANKLINE>
@@ -215,8 +217,8 @@ class PariFunctionGenerator(object):
                     from warnings import warn
                     warn('the PARI/GP function polredord is obsolete (2008-07-20)', DeprecationWarning)
                     x = objtogen(x)
-                    cdef GEN _x = (<Gen>x).g
                     sig_on()
+                    cdef GEN _x = (<Gen>x).g
                     cdef GEN _ret = polredord(_x)
                     return new_gen(_ret)
             <BLANKLINE>
@@ -301,6 +303,8 @@ class PariFunctionGenerator(object):
         for a in args:
             s += a.convert_code()
         s += "        sig_on()\n"
+        for a in args:
+            s += a.c_convert_code()
         s += ret.assign_code("{cname}({callargs})")
         s += ret.return_code()
 

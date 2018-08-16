@@ -52,9 +52,11 @@ cdef extern from "pari/pari.h":
         t_INFINITY
 
     int BITS_IN_LONG
-    int DEFAULTPREC       #  64 bits precision
-    int MEDDEFAULTPREC    # 128 bits precision
-    int BIGDEFAULTPREC    # 192 bits precision
+    long DEFAULTPREC       #  64 bits precision
+    long MEDDEFAULTPREC    # 128 bits precision
+    long BIGDEFAULTPREC    # 192 bits precision
+
+    ulong CLONEBIT
 
     long    typ(GEN x)
     long    settyp(GEN x, long s)

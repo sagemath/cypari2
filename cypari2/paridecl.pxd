@@ -5176,3 +5176,15 @@ cdef inline int is_universal_constant(GEN x):
 # on the system, so they more up-to-date than the above. In case of
 # conflicting declarations, auto_paridecl should have priority.
 from .auto_paridecl cimport *
+
+
+cdef inline int is_on_stack(GEN x) except -1:
+    """
+    Is the GEN ``x`` stored on the PARI stack?
+    """
+    s = <pari_sp>x
+    if avma <= s:
+        return s < pari_mainstack.top
+    if pari_mainstack.vbot <= s:
+        raise SystemError("PARI object in unused part of PARI stack")
+    return 0

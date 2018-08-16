@@ -12,6 +12,7 @@ Welcome to CyPari2's documentation!
 
    pari_instance
    gen
+   stack
    closure
    handle_error
    convert

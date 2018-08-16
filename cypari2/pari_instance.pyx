@@ -264,7 +264,8 @@ from .string_utils cimport to_string, to_bytes
 from .paridecl cimport *
 from .paripriv cimport *
 from .gen cimport Gen, objtogen
-from .stack cimport new_gen, new_gen_noclear, clear_stack
+from .stack cimport (new_gen, new_gen_noclear,
+                     clear_stack, move_gens_to_heap)
 from .handle_error cimport _pari_init_error_handling
 from .closure cimport _pari_init_closure
 
@@ -442,6 +443,16 @@ cdef void python_flush():
 include 'auto_instance.pxi'
 
 
+cdef int set_pari_stack_size(size_t size, size_t sizemax) except -1:
+    """
+    Safely set the PARI stack size
+    """
+    move_gens_to_heap(-1)
+    sig_on()
+    paristack_setsize(size, sizemax)
+    sig_off()
+
+
 cdef class Pari(Pari_auto):
     def __cinit__(self):
         r"""
@@ -551,24 +562,17 @@ cdef class Pari(Pari_auto):
 
         .. NOTE::
 
-           In CyPari2, the PARI stack is different than in GP or the
-           PARI C library. In CyPari2, instead of the PARI stack
-           holding the results of all computations, it *only* holds
-           the results of an individual computation. Each time a new
-           Python/PARI object is computed, it it copied to its own
-           space in the Python heap, and the memory it occupied on the
-           PARI stack is freed. Thus it is not necessary to make the
-           stack very large.
-
-           This design obviously involves some performance penalties
-           over the way PARI works, but it scales much better and is
-           far more robust for large projects.
+           Normally, all results from PARI computations end up on the
+           PARI stack. CyPari2 tries to keep everything on the PARI
+           stack. However, if over half of the PARI stack space is used,
+           all live objects on the PARI stack are copied to the PARI
+           heap (they become so-called clones).
         """
         # Increase (but don't decrease) size and sizemax to the
         # requested value
         size = max(size, pari_mainstack.rsize)
         sizemax = max(max(size, pari_mainstack.vsize), sizemax)
-        paristack_setsize(size, sizemax)
+        set_pari_stack_size(size, sizemax)
 
         # Increase the table of primes if needed
         self.init_primes(maxprime)
@@ -644,7 +648,7 @@ cdef class Pari(Pari_auto):
         cdef bytes strn = to_bytes(n)
         sig_on()
         sd_realbitprecision(strn, d_SILENT)
-        sig_off()
+        clear_stack()
 
     def get_real_precision_bits(self):
         """
@@ -668,10 +672,9 @@ cdef class Pari(Pari_auto):
         >>> pari.get_real_precision_bits()
         53
         """
-        cdef long r
         sig_on()
         r = itos(sd_realbitprecision(NULL, d_RETURN))
-        sig_off()
+        clear_stack()
         return r
 
     def set_real_precision(self, long n):
@@ -827,8 +830,8 @@ cdef class Pari(Pari_auto):
     def stacksize(self):
         r"""
         Return the current size of the PARI stack, which is `10^6`
-        by default.  However, the stack size is automatically doubled
-        when needed up to some maximum.
+        by default.  However, the stack size is automatically
+        increased when needed up to the given maximum stack size.
 
         .. SEEALSO::
 
@@ -889,7 +892,7 @@ cdef class Pari(Pari_auto):
         after every computation.
 
         It does no real harm to set this to a small value as the PARI
-        stack will be automatically doubled when we run out of memory.
+        stack will be automatically enlarged when we run out of memory.
 
         INPUT:
 
@@ -970,9 +973,7 @@ cdef class Pari(Pari_auto):
                 sizemax = s
         elif sizemax < s:
             raise ValueError("the maximum size ({}) should be at least the stack size ({})".format(s, sizemax))
-        sig_on()
-        paristack_setsize(s, sizemax)
-        sig_off()
+        set_pari_stack_size(s, sizemax)
         if not silent:
             print("PARI stack size set to {} bytes, maximum size set to {}".
                 format(self.stacksize(), self.stacksizemax()))
@@ -1235,25 +1236,23 @@ cdef class Pari(Pari_auto):
 
         >>> import cypari2
         >>> pari = cypari2.Pari()
-        >>> pari.matrix(3,3,range(9))
+        >>> pari.matrix(3, 3, range(9))
         [0, 1, 2; 3, 4, 5; 6, 7, 8]
         """
         cdef long i, j, k
-        cdef Gen A
-        cdef Gen x
 
         sig_on()
         A = new_gen(zeromatcopy(m,n))
         if entries is not None:
-            if len(entries) != m*n:
+            if len(entries) != m * n:
                 raise IndexError("len of entries (=%s) must be %s*%s=%s"%(len(entries),m,n,m*n))
             k = 0
             for i in range(m):
                 for j in range(n):
                     sig_check()
-                    x = self(entries[k])
+                    x = <Gen?>self(entries[k])
+                    set_gcoeff(A.g, i+1, j+1, x.ref_target())
                     A.cache((i,j), x)
-                    set_gcoeff(A.g, i+1, j+1, x.g)
                     k += 1
         return A
 

@@ -40,7 +40,7 @@ from cpython.object cimport PyObject_Call
 from cpython.ref cimport Py_INCREF
 
 from .paridecl cimport *
-from .stack cimport new_gen, new_gen_noclear
+from .stack cimport new_gen, clone_gen_noclear, DetachGen
 from .gen cimport objtogen
 
 
@@ -61,7 +61,7 @@ cdef inline GEN call_python_func_impl "call_python_func"(GEN* args, object py_fu
     cdef tuple t = PyTuple_New(n)
     cdef Py_ssize_t i
     for i in range(n):
-        a = new_gen_noclear(args[i])
+        a = clone_gen_noclear(args[i])
         Py_INCREF(a)  # Need to increase refcount because the tuple steals it
         PyTuple_SET_ITEM(t, i, a)
 
@@ -72,7 +72,10 @@ cdef inline GEN call_python_func_impl "call_python_func"(GEN* args, object py_fu
     # (with a special case for None)
     if r is None:
         return gnil
-    return gcopy(objtogen(r).g)
+
+    d = DetachGen(objtogen(r))
+    del r
+    return d.detach()
 
 # We rename this function to be able to call it with a different
 # signature. In particular, we want manual exception handling and we
@@ -176,5 +179,5 @@ cpdef Gen objtoclosure(f):
     cdef GEN f_int = utoi(<ulong><PyObject*>f)
     # Create a t_CLOSURE which calls call_python() with py_func equal to f
     cdef Gen c = new_gen(snm_closure(ep_call_python, mkvec(f_int)))
-    c.cache(0, f)  # c needs to keep a reference to f
+    Py_INCREF(f)   # we need to keep a reference to f somewhere...
     return c

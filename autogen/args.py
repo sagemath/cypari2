@@ -133,7 +133,16 @@ class PariArgument(object):
         """
         Return code to appear in the function body to convert this
         argument to something that PARI understand. This code can also
-        contain extra checks.
+        contain extra checks. It will run outside of ``sig_on()``.
+        """
+        return ""
+
+    def c_convert_code(self):
+        """
+        Return additional conversion code which will be run after
+        ``convert_code`` and inside the ``sig_on()`` block. This must
+        not involve any Python code (in particular, it should not raise
+        exceptions).
         """
         return ""
 
@@ -195,34 +204,43 @@ class PariArgumentGEN(PariArgumentObject):
     def ctype(self):
         return "GEN"
     def convert_code(self):
+        """
+        Conversion to Gen
+        """
         if self.index == 0:
-            # "self" is always of type Gen, we skip the conversion
-            s  = "        cdef GEN {tmp} = {name}.g\n"
+            # self argument
+            s  = ""
         elif self.default is None:
             s  = "        {name} = objtogen({name})\n"
-            s += "        cdef GEN {tmp} = (<Gen>{name}).g\n"
         elif self.default is False:
             # This is actually a required argument
             # See parse_prototype() in parser.py why we need this
             s  = "        if {name} is None:\n"
             s += "            raise TypeError(\"missing required argument: '{name}'\")\n"
             s += "        {name} = objtogen({name})\n"
-            s += "        cdef GEN {tmp} = (<Gen>{name}).g\n"
-        elif self.default == "NULL":
-            s  = "        cdef GEN {tmp} = {default}\n"
-            s += "        if {name} is not None:\n"
+        else:
+            s  = "        cdef bint _have_{name} = ({name} is not None)\n"
+            s += "        if _have_{name}:\n"
             s += "            {name} = objtogen({name})\n"
+        return s.format(name=self.name)
+    def c_convert_code(self):
+        """
+        Conversion Gen -> GEN
+        """
+        if not self.default:
+            # required argument
+            s  = "        cdef GEN {tmp} = (<Gen>{name}).g\n"
+        elif self.default == "NULL":
+            s  = "        cdef GEN {tmp} = NULL\n"
+            s += "        if _have_{name}:\n"
             s += "            {tmp} = (<Gen>{name}).g\n"
         elif self.default == "0":
-            s  = "        cdef GEN {tmp}\n"
-            s += "        if {name} is None:\n"
-            s += "            {tmp} = gen_0\n"
-            s += "        else:\n"
-            s += "            {name} = objtogen({name})\n"
+            s  = "        cdef GEN {tmp} = gen_0\n"
+            s += "        if _have_{name}:\n"
             s += "            {tmp} = (<Gen>{name}).g\n"
         else:
             raise ValueError("default value %r for GEN argument %r is not supported" % (self.default, self.name))
-        return s.format(name=self.name, tmp=self.tmpname, default=self.default)
+        return s.format(name=self.name, tmp=self.tmpname)
     def call_code(self):
         return self.tmpname
 
@@ -234,14 +252,14 @@ class PariArgumentString(PariArgumentObject):
     def convert_code(self):
         if self.default is None:
             s  = "        {name} = to_bytes({name})\n"
-            s += "        cdef char* {tmp} = <bytes> {name}\n"
+            s += "        cdef char* {tmp} = <bytes>{name}\n"
         else:
             s  = "        cdef char* {tmp}\n"
             s += "        if {name} is None:\n"
             s += "            {tmp} = {default}\n"
             s += "        else:\n"
             s += "            {name} = to_bytes({name})\n"
-            s += "            {tmp} = <bytes> {name}\n"
+            s += "            {tmp} = <bytes>{name}\n"
         return s.format(name=self.name, tmp=self.tmpname, default=self.default)
     def call_code(self):
         return self.tmpname
@@ -289,7 +307,7 @@ class PariArgumentPrec(PariArgumentClass):
         return "0"
     def get_argument_name(self, namesiter):
         return "precision"
-    def convert_code(self):
+    def c_convert_code(self):
         s = "        {name} = prec_bits_to_words({name})\n"
         return s.format(name=self.name)
 
@@ -302,7 +320,7 @@ class PariArgumentBitprec(PariArgumentClass):
         return "0"
     def get_argument_name(self, namesiter):
         return "precision"
-    def convert_code(self):
+    def c_convert_code(self):
         s  = "        if not {name}:\n"
         s += "            {name} = default_bitprec()\n"
         return s.format(name=self.name)
@@ -316,7 +334,7 @@ class PariArgumentSeriesPrec(PariArgumentClass):
         return "-1"
     def get_argument_name(self, namesiter):
         return "serprec"
-    def convert_code(self):
+    def c_convert_code(self):
         s  = "        if {name} < 0:\n"
         s += "            {name} = precdl  # Global PARI series precision\n"
         return s.format(name=self.name)

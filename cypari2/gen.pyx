@@ -77,7 +77,10 @@ from .paripriv cimport *
 from .convert cimport PyObject_AsGEN, gen_to_integer
 from .pari_instance cimport (prec_bits_to_words, prec_words_to_bits,
                              default_bitprec, get_var)
-from .stack cimport new_gen, new_gen_noclear, clear_stack
+from .stack cimport (new_gen, new_gen_noclear,
+                     clone_gen, clone_gen_noclear,
+                     clear_stack, reset_avma,
+                     remove_from_pari_stack, move_gens_to_heap)
 from .closure cimport objtoclosure
 
 from .paridecl cimport *
@@ -142,13 +145,27 @@ cdef extern from *:
 
 
 cdef class Gen(Gen_base):
+    """
+    Wrapper for a PARI ``GEN`` with memory management.
+
+    This wraps PARI objects which live either on the PARI stack or on
+    the PARI heap. Results from PARI computations appear on the PARI
+    stack and we try to keep them there. However, when the stack fills
+    up, we copy ("clone" in PARI speak) all live objects from the stack
+    to the heap. This happens transparently for the user.
+    """
     def __init__(self):
         raise RuntimeError("PARI objects cannot be instantiated directly; use pari(x) to convert x to PARI")
 
     def __dealloc__(self):
-        sig_free(self.chunk)
+        if self.next is not NULL:
+            # stack
+            remove_from_pari_stack(self)
+        elif self.address is not NULL:
+            # clone
+            gunclone_deep(self.address)
 
-    cdef new_ref(self, GEN g):
+    cdef Gen new_ref(self, GEN g):
         """
         Create a new ``Gen`` pointing to ``g``, which is a component
         of ``self.g``.
@@ -167,7 +184,7 @@ cdef class Gen(Gen_base):
 
             For example, doing ``x = pari("[1, 2]")`` allocates a ``Gen``
             pointing to the list ``[1, 2]``.  To create a ``Gen`` pointing
-            to the first element, one can do ``x.new_ref(gel(x.g, 1))``.
+            to the first element, one can do ``x.new_ref(gel(x.fixGEN(), 1))``.
             See :meth:`Gen.__getitem__` for an example of usage.
 
         Examples:
@@ -177,10 +194,34 @@ cdef class Gen(Gen_base):
         >>> pari("[[1, 2], 3]")[0][1]  # indirect doctest
         2
         """
-        cdef Gen x = Gen.__new__(Gen)
-        x.g = g
-        x.parent = self
-        return x
+        if self.next is not NULL:
+            raise TypeError("cannot create reference to PARI stack (call fixGEN() first)")
+        if is_on_stack(g):
+            raise ValueError("new_ref() called with GEN which does not belong to parent")
+
+        if self.address is not NULL:
+            gclone_refc(self.address)
+        return Gen_new(g, self.address)
+
+    cdef GEN fixGEN(self) except NULL:
+        """
+        Return the PARI ``GEN`` corresponding to ``self`` which is
+        guaranteed not to change.
+        """
+        if self.next is not NULL:
+            move_gens_to_heap(self.sp())
+        return self.g
+
+    cdef GEN ref_target(self) except NULL:
+        """
+        Return a PARI ``GEN`` corresponding to ``self`` which is usable
+        as target for a reference in another ``GEN``.
+
+        This increases the PARI refcount of ``self``.
+        """
+        if is_universal_constant(self.g):
+            return self.g
+        return gcloneref(self.fixGEN())
 
     def __repr__(self):
         """
@@ -247,11 +288,19 @@ cdef class Gen(Gen_base):
         >>> pari = Pari()
         >>> type(pari('1 + 2.0*I').__hash__())
         <... 'int'>
+        >>> L = pari("[42, 2/3, 3.14]")
+        >>> hash(L) == hash(L.__copy__())
+        True
         """
-        cdef long h
-        sig_on()
+        # There is a bug in PARI/GP where the hash value depends on the
+        # CLONE bit. So we remove that bit before hashing. See
+        # https://pari.math.u-bordeaux.fr/cgi-bin/bugreport.cgi?bug=2091
+        cdef ulong* G = <ulong*>self.g
+        cdef ulong G0 = G[0]
+        G[0] &= ~<ulong>CLONEBIT
         h = hash_GEN(self.g)
-        sig_off()
+        # Restore CLONE bit
+        G[0] = G0
         return h
 
     def __iter__(self):
@@ -315,7 +364,7 @@ cdef class Gen(Gen_base):
         >>> iter(pari(42))
         Traceback (most recent call last):
         ...
-        TypeError: PARI object of type 't_INT' is not iterable
+        TypeError: PARI object of type t_INT is not iterable
         >>> iter(pari("x->x"))
         Traceback (most recent call last):
         ...
@@ -335,9 +384,12 @@ cdef class Gen(Gen_base):
         >>> list(v)
         ['h', 'e', 'l', 'l', 'o']
         """
+        # We return a generator expression instead of using "yield"
+        # because we want to raise an exception for non-iterable
+        # objects immediately when calling __iter__() and not while
+        # iterating.
         cdef long i
         cdef long t = typ(self.g)
-        cdef GEN x
 
         # First convert self to a vector type
         cdef Gen v
@@ -347,20 +399,18 @@ cdef class Gen(Gen_base):
         elif t == t_POL:
             v = self.Vecrev()
         elif is_scalar_t(t):
-            raise TypeError(f"PARI object of type {self.type()!r} is not iterable")
+            raise TypeError(f"PARI object of type {self.type()} is not iterable")
         elif t == t_VECSMALL:
             # Special case: items of type int
-            x = self.g
-            return (x[i] for i in range(1, lg(x)))
+            return (self.g[i] for i in range(1, lg(self.g)))
         elif t == t_STR:
             # Special case: convert to str
-            # CHANGED
             return iter(to_string(GSTR(self.g)))
         else:
             v = self.Vec()
 
         # Now iterate over the vector v
-        x = v.g
+        x = v.fixGEN()
         return (v.new_ref(gel(x, i)) for i in range(1, lg(x)))
 
     def list(self):
@@ -671,11 +721,10 @@ cdef class Gen(Gen_base):
         """
         if typ(self.g) != t_INTMOD and typ(self.g) != t_POLMOD:
             raise TypeError("Not an INTMOD or POLMOD in mod()")
-        sig_on()
         # The hardcoded 1 below refers to the position in the internal
         # representation of a INTMOD or POLDMOD where the modulus is
         # stored.
-        return new_gen(gel(self.g, 1))
+        return self.new_ref(gel(self.fixGEN(), 1))
 
     # Special case: SageMath uses polred(), so mark it as not
     # obsolete: https://trac.sagemath.org/ticket/22165
@@ -724,7 +773,7 @@ cdef class Gen(Gen_base):
         PariError: incorrect type in pol (t_VEC)
         """
         sig_on()
-        return new_gen(member_pol(self.g))
+        return clone_gen(member_pol(self.g))
 
     def nf_get_diff(self):
         """
@@ -746,7 +795,7 @@ cdef class Gen(Gen_base):
         [12, 0, 0, 0; 0, 12, 8, 0; 0, 0, 4, 0; 0, 0, 0, 4]
         """
         sig_on()
-        return new_gen(member_diff(self.g))
+        return clone_gen(member_diff(self.g))
 
     def nf_get_sign(self):
         """
@@ -805,7 +854,7 @@ cdef class Gen(Gen_base):
         [1, x, x^3 - 4*x, x^2 - 2]
         """
         sig_on()
-        return new_gen(member_zk(self.g))
+        return clone_gen(member_zk(self.g))
 
     def bnf_get_no(self):
         """
@@ -822,7 +871,7 @@ cdef class Gen(Gen_base):
         8
         """
         sig_on()
-        return new_gen(bnf_get_no(self.g))
+        return clone_gen(bnf_get_no(self.g))
 
     def bnf_get_cyc(self):
         """
@@ -842,7 +891,7 @@ cdef class Gen(Gen_base):
         [4, 2]
         """
         sig_on()
-        return new_gen(bnf_get_cyc(self.g))
+        return clone_gen(bnf_get_cyc(self.g))
 
     def bnf_get_gen(self):
         """
@@ -862,7 +911,7 @@ cdef class Gen(Gen_base):
         [[3, 2; 0, 1], [2, 1; 0, 1]]
         """
         sig_on()
-        return new_gen(bnf_get_gen(self.g))
+        return clone_gen(bnf_get_gen(self.g))
 
     def bnf_get_reg(self):
         """
@@ -881,11 +930,11 @@ cdef class Gen(Gen_base):
         2.66089858019037...
         """
         sig_on()
-        return new_gen(bnf_get_reg(self.g))
+        return clone_gen(bnf_get_reg(self.g))
 
     def bnfunit(self):
         sig_on()
-        return new_gen(bnf_get_fu(self.g))
+        return clone_gen(bnf_get_fu(self.g))
 
     def idealmoddivisor(self, Gen ideal):
         """
@@ -941,7 +990,7 @@ cdef class Gen(Gen_base):
         5
         """
         sig_on()
-        return new_gen(pr_get_p(self.g))
+        return clone_gen(pr_get_p(self.g))
 
     def pr_get_e(self):
         """
@@ -1020,7 +1069,7 @@ cdef class Gen(Gen_base):
         [-2, 1]~
         """
         sig_on()
-        return new_gen(pr_get_gen(self.g))
+        return clone_gen(pr_get_gen(self.g))
 
     def bid_get_cyc(self):
         """
@@ -1042,7 +1091,7 @@ cdef class Gen(Gen_base):
         [4, 2]
         """
         sig_on()
-        return new_gen(bid_get_cyc(self.g))
+        return clone_gen(bid_get_cyc(self.g))
 
     def bid_get_gen(self):
         """
@@ -1073,13 +1122,16 @@ cdef class Gen(Gen_base):
         PariError: missing bid generators. Use idealstar(,,2)
         """
         sig_on()
-        return new_gen(bid_get_gen(self.g))
+        return clone_gen(bid_get_gen(self.g))
 
     def __getitem__(self, n):
         """
-        Return the nth entry of self. The indexing is 0-based, like in
-        Python. Note that this is *different* than the default behavior
-        of the PARI/GP interpreter.
+        Return the n-th entry of self.
+
+        .. NOTE::
+
+            The indexing is 0-based, like everywhere else in Python,
+            but *unlike* in PARI/GP.
 
         Examples:
 
@@ -1134,8 +1186,6 @@ cdef class Gen(Gen_base):
         3
         >>> type(sv[2])
         <... 'int'>
-        >>> [pari('3/5')[i] for i in range(2)]
-        [3, 5]
         >>> [pari('1 + 5*I')[i] for i in range(2)]
         [1, 5]
         >>> [pari('Qfb(1, 2, 3)')[i] for i in range(3)]
@@ -1143,7 +1193,7 @@ cdef class Gen(Gen_base):
         >>> pari(57)[0]
         Traceback (most recent call last):
         ...
-        TypeError: PARI object of type 't_INT' cannot be indexed
+        TypeError: PARI object of type t_INT cannot be indexed
         >>> m = pari("[[1,2;3,4],5]") ; m[0][1,0]
         3
         >>> v = pari(range(20))
@@ -1178,7 +1228,7 @@ cdef class Gen(Gen_base):
 
         if isinstance(n, tuple):
             if pari_type != t_MAT:
-                raise TypeError("self must be of pari type t_MAT")
+                raise TypeError("tuple indices are only defined for matrices")
 
             i, j = n
 
@@ -1194,7 +1244,7 @@ cdef class Gen(Gen_base):
             else:
                 # Create a new Gen as child of self
                 # and store it in itemcache
-                val = self.new_ref(gmael(self.g, j+1, i+1))
+                val = self.new_ref(gmael(self.fixGEN(), j+1, i+1))
                 self.cache(ind, val)
                 return val
 
@@ -1233,9 +1283,9 @@ cdef class Gen(Gen_base):
             sig_on()
             return new_gen(polcoeff0(self.g, i, -1))
 
-        elif pari_type in (t_INT, t_REAL, t_PADIC, t_QUAD, t_FFELT, t_INTMOD, t_POLMOD):
+        elif pari_type in (t_INT, t_REAL, t_FRAC, t_RFRAC, t_PADIC, t_QUAD, t_FFELT, t_INTMOD, t_POLMOD):
             # these are definitely scalar!
-            raise TypeError("PARI object of type %r cannot be indexed" % self.type())
+            raise TypeError(f"PARI object of type {self.type()} cannot be indexed")
 
         elif i < 0 or i >= glength(self.g):
             raise IndexError("index out of range")
@@ -1249,7 +1299,7 @@ cdef class Gen(Gen_base):
             else:
                 # Create a new Gen as child of self
                 # and store it in itemcache
-                val = self.new_ref(gel(self.g, i+1))
+                val = self.new_ref(gel(self.fixGEN(), i+1))
                 self.cache(ind, val)
                 return val
 
@@ -1264,43 +1314,28 @@ cdef class Gen(Gen_base):
         elif pari_type == t_LIST:
             return self.component(i+1)
 
-        #elif pari_type in (t_FRAC, t_RFRAC):
-            # generic code gives us:
-            #   [0] = numerator
-            #   [1] = denominator
-
-        #elif pari_type == t_COMPLEX:
-            # generic code gives us
-            #   [0] = real part
-            #   [1] = imag part
-
-        #elif type(self.g) in (t_QFR, t_QFI):
-            # generic code works ok
-
         else:
-            ## generic code, which currently handles cases
-            ## as mentioned above
-            return self.new_ref(gel(self.g, i+1))
+            # generic code for other types
+            return self.new_ref(gel(self.fixGEN(), i+1))
 
     def __setitem__(self, n, y):
         r"""
-        Set the nth entry to a reference to y.
+        Set the n-th entry to a reference to y.
 
+        .. NOTE::
 
-            -  The indexing is 0-based, like everywhere else in Python, but
-               *unlike* in PARI/GP.
+            - The indexing is 0-based, like everywhere else in Python,
+              but *unlike* in PARI/GP.
 
-            -  Assignment sets the nth entry to a reference to y, assuming y is
-               an object of type gen. This is the same as in Python, but
-               *different* than what happens in the gp interpreter, where
-               assignment makes a copy of y.
+            - Assignment sets the nth entry to a reference to y. This is
+              the same as in Python, but *different* than what happens in
+              the GP interpreter, where assignment makes a copy of y.
 
-            -  Because setting creates references it is *possible* to make
-               circular references, unlike in GP. Do *not* do this (see the
-               example below). If you need circular references, work at the Python
-               level (where they work well), not the PARI object level.
-
-
+            - Because setting creates references it is *possible* to make
+              circular references, unlike in GP. Do *not* do this (see the
+              example below). If you need circular references, work at the
+              Python level (where they work well), not the PARI object
+              level.
 
         Examples:
 
@@ -1331,7 +1366,9 @@ cdef class Gen(Gen_base):
         [10, [54321, 10, -20], 2, 3, 4, 5, 6, 7, 8, 9]
         >>> w
         [54321, 10, -20]
-        >>> v = pari([[[[0,1],2],3],4]) ; v[0][0][0][1] = 12 ; v
+        >>> v = pari([[[[0,1],2],3],4])
+        >>> v[0][0][0][1] = 12
+        >>> v
         [[[[0, 12], 2], 3], 4]
         >>> m = pari.matrix(2,2,range(4)) ; l = pari([5,6]) ; n = pari.matrix(2,2,[7,8,9,0]) ; m[1,0] = l ; l[1] = n ; m[1,0][1][1,1] = 1111 ; m
         [0, 1; [5, [7, 8; 9, 1111]], 3]
@@ -1377,7 +1414,6 @@ cdef class Gen(Gen_base):
         """
         cdef Py_ssize_t i, j, step
         cdef Gen x = objtogen(y)
-        cdef long l
 
         if isinstance(n, tuple):
             if typ(self.g) != t_MAT:
@@ -1391,7 +1427,8 @@ cdef class Gen(Gen_base):
                 raise IndexError("column j(=%s) must be between 0 and %s" % (j, self.ncols()-1))
 
             self.cache((i,j), x)
-            set_gcoeff(self.g, i+1, j+1, x.g)
+            xt = x.ref_target()
+            set_gcoeff(self.g, i+1, j+1, xt)
             return
 
         elif isinstance(n, slice):
@@ -1413,18 +1450,16 @@ cdef class Gen(Gen_base):
         if i < 0 or i >= glength(self.g):
             raise IndexError("index (%s) must be between 0 and %s" % (i, glength(self.g)-1))
 
-        # Add a reference to x to prevent Python from garbage
-        # collecting x.
         self.cache(i, x)
-
+        xt = x.ref_target()
         if typ(self.g) == t_LIST:
-            listput(self.g, x.g, i+1)
+            listput(self.g, xt, i+1)
         else:
             # Correct indexing for t_POLs
             if typ(self.g) == t_POL:
                 i += 1
             # Actually set the value
-            set_gel(self.g, i+1, x.g)
+            set_gel(self.g, i+1, xt)
 
     def __len__(self):
         return glength(self.g)
@@ -1569,8 +1604,7 @@ cdef class Gen(Gen_base):
         return r
 
     def __copy__(self):
-        sig_on()
-        return new_gen(self.g)
+        return clone_gen_noclear(self.g)
 
     def __oct__(self):
         """
@@ -2779,7 +2813,7 @@ cdef class Gen(Gen_base):
         >>> y.padicprime().type()
         't_INT'
         """
-        return self.new_ref(gel(self.g, 2))
+        return self.new_ref(gel(self.fixGEN(), 2))
 
     def precision(x, long n=-1):
         """
@@ -3637,7 +3671,7 @@ cdef class Gen(Gen_base):
         [-1, 1; 11, 5]
         """
         sig_on()
-        return new_gen(member_disc(self.g))
+        return clone_gen(member_disc(self.g))
 
     def j(self):
         """
@@ -3655,7 +3689,7 @@ cdef class Gen(Gen_base):
         [-1, 1; 2, 12; 11, -5; 31, 3]
         """
         sig_on()
-        return new_gen(member_j(self.g))
+        return clone_gen(member_j(self.g))
 
     def _eltabstorel(self, x):
         """
@@ -4014,7 +4048,7 @@ cdef class Gen(Gen_base):
         cdef Gen t0 = objtogen(x)
         cdef Gen t1 = objtogen(nfzk)
         sig_on()
-        return new_gen(new_nfeltup(self.g, t0.g, t1.g))
+        return clone_gen(new_nfeltup(self.g, t0.g, t1.g))
 
     def eval(self, *args, **kwds):
         """
@@ -4570,7 +4604,7 @@ cdef class Gen(Gen_base):
         if typ(self.g) != t_POL and typ(self.g) != t_SER:
             raise TypeError("set_variable() only works for polynomials or power series")
         # Copy self and then change the variable in place
-        cdef Gen newg = new_gen_noclear(self.g)
+        newg = clone_gen_noclear(self.g)
         setvarn(newg.g, n)
         return newg
 
@@ -4812,7 +4846,7 @@ cdef Gen list_of_Gens_to_Gen(list s):
     cdef Py_ssize_t i
     for i in range(length):
         set_gel(g, i+1, (<Gen>s[i]).g)
-    return new_gen(g)
+    return clone_gen(g)
 
 
 cpdef Gen objtogen(s):
@@ -4929,12 +4963,11 @@ cpdef Gen objtogen(s):
     else:
         return m()
 
-    global avma
-    cdef pari_sp av = avma
     cdef GEN g = PyObject_AsGEN(s)
     if g is not NULL:
-        avma = av
-        return new_gen_noclear(g)
+        res = new_gen_noclear(g)
+        reset_avma()
+        return res
 
     # Check for iterables. Handle the common cases of lists and tuples
     # separately as an optimization
