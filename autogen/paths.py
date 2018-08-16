@@ -43,7 +43,10 @@ def pari_share():
     from subprocess import Popen, PIPE
     if not gppath:
         raise EnvironmentError("cannot find an installation of PARI/GP: make sure that the 'gp' program is in your $PATH")
-    gp = Popen([gppath, "-f", "-q"], stdin=PIPE, stdout=PIPE)
+    # Ignore GP_DATA_DIR environment variable
+    env = dict(os.environ)
+    env.pop("GP_DATA_DIR", None)
+    gp = Popen([gppath, "-f", "-q"], stdin=PIPE, stdout=PIPE, env=env)
     out = gp.communicate(b"print(default(datadir))")[0]
     # Convert out to str if needed
     if not isinstance(out, str):
