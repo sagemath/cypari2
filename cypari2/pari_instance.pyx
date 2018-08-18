@@ -265,7 +265,6 @@ from .paridecl cimport *
 from .paripriv cimport *
 from .gen cimport Gen, objtogen
 from .stack cimport new_gen, new_gen_noclear, clear_stack
-from .convert cimport new_gen_from_double
 from .handle_error cimport _pari_init_error_handling
 from .closure cimport _pari_init_closure
 
@@ -739,35 +738,6 @@ cdef class Pari(Pari_auto):
 
     def get_series_precision(self):
         return precdl
-
-    def double_to_gen(self, x):
-        """
-        Create a new Gen with the value of the double x, using Pari's
-        dbltor.
-
-        Examples:
-
-        >>> import cypari2
-        >>> pari = cypari2.Pari()
-        >>> import warnings
-        >>> import math
-        >>> with warnings.catch_warnings(record=True) as w:
-        ...     warnings.simplefilter('always')
-        ...     pari.double_to_gen(1)
-        ...     pari.double_to_gen(1e30)
-        ...     pari.double_to_gen(0)
-        ...     pari.double_to_gen(-math.sqrt(2))
-        ...     assert len(w) == 4
-        ...     assert all(issubclass(u.category, DeprecationWarning) for u in w)
-        1.00000000000000
-        1.00000000000000 E30
-        0.E-15
-        -1.41421356237310
-        """
-        # Deprecated in https://trac.sagemath.org/ticket/20241
-        from warnings import warn
-        warn("pari.double_to_gen(x) is deprecated, use pari(x) instead", DeprecationWarning)
-        return new_gen_from_double(x)
 
     def complex(self, re, im):
         """
@@ -1360,8 +1330,6 @@ cdef long get_var(v) except -2:
     2*x
     >>> pari("[Pi,0]").Pol('!@#$%^&')
     3.14159265358979*!@#$%^&
-    >>> pari("[1,0]").Pol(-1)  # Deprecated
-    x
 
     We can use ``varhigher()`` and ``varlower()`` to create
     temporary variables without a name. The ``"xx"`` below is just a
@@ -1390,10 +1358,6 @@ cdef long get_var(v) except -2:
             return -1
         else:
             return varno
-    if v == -1:
-        from warnings import warn
-        warn("using '-1' as variable name is deprecated, use 'None' to mean 'no variable'", DeprecationWarning)
-        return -1
     cdef bytes s = to_bytes(v)
     sig_on()
     varno = fetch_user_var(s)

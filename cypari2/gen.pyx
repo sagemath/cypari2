@@ -339,18 +339,6 @@ cdef class Gen(Gen_auto):
         >>> v = pari('"hello"')
         >>> list(v)
         ['h', 'e', 'l', 'l', 'o']
-
-        Test some deprecations:
-
-        >>> import warnings
-        >>> with warnings.catch_warnings(record=True) as w:
-        ...     warnings.simplefilter('always')
-        ...     tuple(pari('3/5'))
-        ...     tuple(pari('1 + 5*I'))
-        ...     assert len(w) == 2
-        ...     assert all(issubclass(u.category, DeprecationWarning) for u in w)
-        (3, 5)
-        (1, 5)
         """
         cdef long i
         cdef long t = typ(self.g)
@@ -363,12 +351,6 @@ cdef class Gen(Gen_auto):
             v = self
         elif t == t_POL:
             v = self.Vecrev()
-        elif t == t_FRAC or t == t_RFRAC or t == t_COMPLEX:
-            # Also treat as vector
-            # Deprecated, make this an error in the future
-            from warnings import warn
-            warn(f"iterating a PARI {self.type()!r} is deprecated", DeprecationWarning)
-            v = self
         elif is_scalar_t(t):
             raise TypeError(f"PARI object of type {self.type()!r} is not iterable")
         elif t == t_VECSMALL:
@@ -424,25 +406,7 @@ cdef class Gen(Gen_auto):
         [1, 4; 2, 5; 3, 6]
         >>> M.list()
         [[1, 2, 3]~, [4, 5, 6]~]
-
-        Tests:
-
-        For "scalar" types, this is deprecated. Currently, we get a
-        1-element list containing ``self``:
-
-        >>> import warnings
-        >>> with warnings.catch_warnings(record=True) as w:
-        ...     warnings.simplefilter('always')
-        ...     pari(42).list()
-        ...     assert len(w) == 1
-        ...     assert issubclass(w[0].category, DeprecationWarning)
-        [42]
         """
-        if is_scalar_t(typ(self.g)):
-            # Deprecated, make this an error in the future
-            from warnings import warn
-            warn("calling list() on scalar PARI types is deprecated", DeprecationWarning)
-            return [self]
         return [x for x in self]
 
     def __reduce__(self):
@@ -546,27 +510,6 @@ cdef class Gen(Gen_auto):
             return NotImplemented
         sig_on()
         return new_gen(gdiv(t0.g, t1.g))
-
-    def _add_one(self):
-        """
-        Return self + 1.
-
-        OUTPUT: pari gen
-
-        Examples:
-
-        >>> from cypari2 import Pari
-        >>> pari = Pari()
-
-        >>> n = pari(5)
-        >>> n._add_one()
-        6
-        >>> n = pari('x^3')
-        >>> n._add_one()
-        x^3 + 1
-        """
-        sig_on()
-        return new_gen(gaddsg(1, self.g))
 
     def __mod__(left, right):
         """
