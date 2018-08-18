@@ -2813,7 +2813,7 @@ cdef class Gen(Gen_auto):
 
     lift_centered = Gen_auto.centerlift
 
-    def padicprime(x):
+    def padicprime(self):
         """
         The uniformizer of the p-adic ring this element lies in, as a t_INT.
 
@@ -2836,8 +2836,7 @@ cdef class Gen(Gen_auto):
         >>> y.padicprime().type()
         't_INT'
         """
-        sig_on()
-        return new_gen(gel(x.g, 2))
+        return self.new_ref(gel(self.g, 2))
 
     def precision(x, long n=-1):
         """
