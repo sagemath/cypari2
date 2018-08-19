@@ -3405,7 +3405,7 @@ cdef class Gen(Gen_auto):
         cdef Gen t0 = objtogen(n)
         sig_on()
         cdef long t = Zn_issquare(self.g, t0.g)
-        sig_off()
+        clear_stack()
         return t != 0
 
     def Zn_sqrt(self, n):
