@@ -201,19 +201,6 @@ cdef void _pari_err_recover(long errnum):
     Reset the error string and jump back to ``sig_on()``, either to
     retry the code (in case of no error) or to make the already-raised
     exception known to Python.
-
-    TEST:
-
-    Perform a computation that requires doubling the default stack
-    several times:
-
-    >>> import cypari2
-    >>> pari = cypari2.Pari()
-    >>> pari.allocatemem(2**12, 2**26)
-    PARI stack size set to 4096 bytes, maximum size set to 67108864
-    >>> x = pari('2^(2^26)')
-    >>> x == 2**(2**26)
-    True
     """
     # An exception was raised.  Jump to the signal-handling code
     # which will cause sig_on() to see the exception.
