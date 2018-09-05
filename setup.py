@@ -52,6 +52,7 @@ class build_ext(_build_ext):
         self.directives = {
             "autotestdict.cdef": True,
             "binding": True,
+            "cdivision": True,
         }
 
         self.distribution.ext_modules[:] = cythonize(
