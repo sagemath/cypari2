@@ -1522,9 +1522,9 @@ cdef class Gen(Gen_auto):
         sig_off()
         return r
 
-    def __cmp__(self, Gen other):
+    def cmp(self, right):
         """
-        Compare ``left`` and ``right``.
+        Compare ``self`` and ``right``.
 
         This uses PARI's ``cmp_universal()`` routine, which defines
         a total ordering on the set of all PARI objects (up to the
@@ -1541,30 +1541,35 @@ cdef class Gen(Gen_auto):
 
         >>> from cypari2 import Pari
         >>> pari = Pari()
-        >>> import sys
-
-        >>> if sys.version_info.major == 2:
-        ...     assert cmp(pari(5), 5) == 0
-        ...     assert cmp(pari(5), 10) == -1
-        ...     assert cmp(pari(2.5), None) == 1
-        ...     assert cmp(pari(3), pari(3)) == 0
-        ...     assert cmp(pari('x^2 + 1'), pari('I-1')) == 1
-        ...     I = pari('I')
-        ...     assert cmp(I, I) == 0
-        ...     assert cmp(pari('2/3'), pari('2/5')) == -1
-        ...     two = pari('2.000000000000000000000000')
-        ...     assert cmp(two, pari(1.0)) == 1
-        ...     assert cmp(two, pari(2.0)) == 1
-        ...     assert cmp(two, pari(3.0)) == 1
-        ...     a = pari(0)
-        ...     b = pari("0*ffgen(ffinit(29, 10))")
-        ...     assert cmp(a, b) == -1
-        ...     x = pari("x")
-        ...     y = pari("ffgen(ffinit(3, 5))")
-        ...     assert cmp(x, y) == 1
+        >>> pari(5).cmp(pari(5))
+        0
+        >>> pari('x^2 + 1').cmp(pari('I-1'))
+        1
+        >>> I = pari('I')
+        >>> I.cmp(I)
+        0
+        >>> pari('2/3').cmp(pari('2/5'))
+        -1
+        >>> two = pari('2.000000000000000000000000')
+        >>> two.cmp(pari(1.0))
+        1
+        >>> two.cmp(pari(2.0))
+        1
+        >>> two.cmp(pari(3.0))
+        1
+        >>> f = pari("0*ffgen(ffinit(29, 10))")
+        >>> pari(0).cmp(f)
+        -1
+        >>> pari("'x").cmp(f)
+        1
+        >>> pari("'x").cmp(0)
+        Traceback (most recent call last):
+        ...
+        TypeError: Cannot convert int to cypari2.gen.Gen_base
         """
+        other = <Gen_base?>right
         sig_on()
-        cdef int r = cmp_universal(self.g, other.g)
+        r = cmp_universal(self.g, other.g)
         sig_off()
         return r
 
