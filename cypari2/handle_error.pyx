@@ -87,7 +87,7 @@ class PariError(RuntimeError):
         error("impossible inverse in Fp_inv: Mod(2, 6).")
         >>> E.component(2)
         Mod(2, 6)
-    """
+        """
         return self.args[2]
 
     def __repr__(self):
@@ -98,7 +98,7 @@ class PariError(RuntimeError):
         >>> pari = cypari2.Pari()
         >>> PariError(11)
         PariError(11)
-    """
+        """
         return "PariError(%d)"%self.errnum()
 
     def __str__(self):
@@ -118,7 +118,7 @@ class PariError(RuntimeError):
         ...     print(err)
         _/_: impossible inverse in gdiv: 0
 
-        A syntax error::
+        A syntax error:
 
         >>> pari('!@#$%^&*()')
         Traceback (most recent call last):
