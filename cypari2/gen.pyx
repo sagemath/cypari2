@@ -4694,7 +4694,10 @@ cdef class Gen(Gen_auto):
         >>> pari('oo').type()
         't_INFINITY'
         """
-        return to_string(type_name(typ(self.g)))
+        sig_on()
+        s = type_name(typ(self.g))
+        sig_off()
+        return to_string(s)
 
     def polinterpolate(self, ya, x):
         """
