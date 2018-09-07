@@ -24,11 +24,12 @@ cdef class Gen_auto:
     cdef dict itemcache
 
     cdef inline int cache(self, key, value) except -1:
-        """Add ``(key, value)`` to ``self.itemcache``."""
+        """
+        Add ``(key, value)`` to ``self.itemcache``.
+        """
         if self.itemcache is None:
-            self.itemcache = {key: value}
-        else:
-            self.itemcache[key] = value
+            self.itemcache = {}
+        self.itemcache[key] = value
 
 @cython.final
 cdef class Gen(Gen_auto):
