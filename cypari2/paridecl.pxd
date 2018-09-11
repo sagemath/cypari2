@@ -83,6 +83,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN     ghalf
     GEN     gen_0
     GEN     gnil
+    GEN     err_e_STACK
     int     PARI_SIGINT_block, PARI_SIGINT_pending
     void    NEXT_PRIME_VIADIFF(long, byteptr)
     void    PREC_PRIME_VIADIFF(long, byteptr)
@@ -4937,7 +4938,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     int    is_real_t(long t)
     int    is_recursive_t(long t)
     int    is_scalar_t(long t)
-    int    is_universal_constant(GEN x)
+    int    _is_universal_constant "is_universal_constant"(GEN x)
     int    is_vec_t(long t)
     int    isint1(GEN x)
     int    isintm1(GEN x)
@@ -5165,6 +5166,12 @@ cdef extern from *:     # PARI headers already included by types.pxd
     void   pari_err_TYPE2(const char *f, GEN x, GEN y)
     void   pari_err_VAR(const char *f, GEN x, GEN y)
     void   pari_err_ROOTS0(const char *f)
+
+
+# Work around a bug in PARI's is_universal_constant()
+cdef inline int is_universal_constant(GEN x):
+    return _is_universal_constant(x) or (x is err_e_STACK)
+
 
 # Auto-generated declarations. There are taken from the PARI version
 # on the system, so they more up-to-date than the above. In case of
