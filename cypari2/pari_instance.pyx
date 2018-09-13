@@ -239,6 +239,9 @@ non-default argument following a default argument) works:
 >>> pari.nfroots(pari.nfinit('t^2 + 1'), "x^4 - 1")
 [-1, 1, Mod(-t, t^2 + 1), Mod(t, t^2 + 1)]
 
+Reset default precision for the following tests:
+
+>>> pari.set_real_precision_bits(53)
 """
 
 #*****************************************************************************
@@ -580,43 +583,6 @@ cdef class Pari(Pari_auto):
             # If we are running under IPython, setup for displaying SVG plots.
             if "IPython" in sys.modules:
                 pari_set_plot_engine(get_plot_ipython)
-
-    def _close(self):
-        """
-        Deallocate the PARI library.
-
-        If you want to reallocate the PARI library again, construct
-        a new instance of :class:`Pari`.
-
-        Examples:
-
-        >>> from cypari2.pari_instance import Pari
-        >>> pari = Pari()
-        >>> pari2 = Pari(10**7)
-        >>> pari2._close()
-        >>> pari2 = Pari(10**6)
-        >>> pari.stacksize()
-        1000000
-
-        Disable stack size warnings again:
-
-        >>> pari.default("debugmem", 0)
-
-        .. WARNING::
-
-            Calling this method is dangerous since any further use of
-            PARI (by this :class:`Pari` or another
-            :class:`Pari` or even another non-Python library)
-            will result in a segmentation fault after calling
-            ``_close()``.
-
-            For this reason, the :class:`Pari` class never
-            deallocates PARI memory automatically.
-        """
-        global avma
-        if avma:
-            pari_close()
-            avma = 0
 
     def debugstack(self):
         r"""
