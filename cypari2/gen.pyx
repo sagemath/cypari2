@@ -4798,7 +4798,7 @@ cdef class Gen(Gen_auto):
             set_gel(r, 2, gmulgs(gel(r, 2), 2))
         return new_gen(r)
 
-    def debug(self, long depth = -1):
+    def debug(self, long depth=-1):
         r"""
         Show the internal structure of self (like the ``\x`` command in gp).
 
@@ -4818,7 +4818,7 @@ cdef class Gen(Gen_auto):
         """
         sig_on()
         dbgGEN(self.g, depth)
-        sig_off()
+        clear_stack()
         return
 
     def allocatemem(self, *args):
