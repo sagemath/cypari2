@@ -572,11 +572,9 @@ cdef class Pari(Pari_auto):
         self.init_primes(maxprime)
 
         # Initialize some constants
-        sig_on()
         self.PARI_ZERO = new_gen_noclear(gen_0)
         self.PARI_ONE = new_gen_noclear(gen_1)
         self.PARI_TWO = new_gen_noclear(gen_2)
-        sig_off()
 
         IF HAVE_PLOT_SVG:
             # If we are running under IPython, setup for displaying SVG plots.
