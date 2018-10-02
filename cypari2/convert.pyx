@@ -45,7 +45,7 @@ from cysignals.signals cimport sig_on, sig_off, sig_error
 
 from cpython.object cimport Py_SIZE
 from cpython.int cimport PyInt_AS_LONG
-from cpython.longintrepr cimport (_PyLong_New, PyLongObject,
+from cpython.longintrepr cimport (_PyLong_New,
         digit, PyLong_SHIFT, PyLong_MASK)
 from libc.limits cimport LONG_MIN, LONG_MAX
 from libc.math cimport INFINITY
@@ -55,7 +55,11 @@ from .stack cimport new_gen
 from .string_utils cimport to_string
 
 cdef extern from *:
+    ctypedef struct PyLongObject:
+        digit* ob_digit
+
     Py_ssize_t* Py_SIZE_PTR "&Py_SIZE"(object)
+
 
 ####################################
 # Integers
