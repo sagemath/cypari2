@@ -61,6 +61,9 @@ class PariArgument(object):
         else:
             self.default = default
 
+        # Name for a temporary variable. Only a few classes actually use this.
+        self.tmpname = "_" + self.name
+
     def __repr__(self):
         s = self._typerepr() + " " + self.name
         if self.default is not None:
@@ -145,10 +148,6 @@ class PariArgumentObject(PariArgument):
     """
     Class for arguments which are passed as generic Python ``object``.
     """
-    def __init__(self, *args, **kwds):
-        super(PariArgumentObject, self).__init__(*args, **kwds)
-        self.tmpname = "_" + self.name
-
     def prototype_code(self):
         """
         Return code to appear in the prototype of the Cython wrapper.
