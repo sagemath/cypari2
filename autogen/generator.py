@@ -55,6 +55,7 @@ function_re = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 function_blacklist = {"O",  # O(p^e) needs special parser support
         "alias",            # Not needed and difficult documentation
         "listcreate",       # "redundant and obsolete" according to PARI
+        "print",            # Conflicts with Python builtin
         "allocatemem",      # Better hand-written support in Pari class
         "global",           # Invalid in Python (and obsolete)
         "inline",           # Total confusion

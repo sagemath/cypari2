@@ -2716,7 +2716,6 @@ cdef extern from *:     # PARI headers already included by types.pxd
     void    out_term_color(PariOUT *out, long c)
     void    out_vprintf(PariOUT *out, const char *fmt, va_list ap)
     char*   pari_sprint0(const char *msg, GEN g, long flag)
-    void    print(GEN g)
     extern int f_RAW, f_PRETTYMAT, f_PRETTY, f_TEX
     void    print0(GEN g, long flag)
     void    print1(GEN g)
