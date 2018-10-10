@@ -99,7 +99,7 @@ It is possible to change the precision of a PARI object with the
 128
 
 Beware that these extra bits are just bogus. For example, this will not
-give a more precision approximation of ``math.pi``:
+magically give a more precise approximation of ``math.pi``:
 
 >>> import math
 >>> p = pari(math.pi)
@@ -162,11 +162,11 @@ three kinds of calls:
 
 1. Using the string interface, for example ``pari("sin(1)")``.
 
-2. Using the library interface with exact inputs, for example
-   ``pari(1).sin()``.
+2. Using the library interface with *exact* inputs, for example
+   ``pari.sin(1)``.
 
-3. Using the library interface with inexact inputs, for example
-   ``pari(1.0).sin()``.
+3. Using the library interface with *inexact* inputs, for example
+   ``pari.sin(1.0)``.
 
 In the first case, the relevant precision is the one set by the methods
 :meth:`Pari.set_real_precision_bits` or
@@ -187,17 +187,17 @@ The real precision set by
 (but it still affects printing).
 
 As explained before, the precision increases to a multiple of the
-wordsize. :
+wordsize (and you should not assume that the extra bits are meaningful):
 
->>> a = pari(1).sin(precision=180); a
+>>> a = pari.sin(1, precision=180); a
 0.841470984807897
 >>> a.bitprecision()
 192
->>> b = pari(1).sin(precision=40); b
+>>> b = pari.sin(1, precision=40); b
 0.841470984807897
 >>> b.bitprecision()
 64
->>> c = pari(1).sin(); c
+>>> c = pari.sin(1); c
 0.841470984807897
 >>> c.bitprecision()
 64
@@ -210,11 +210,11 @@ wordsize. :
 In the third case, the precision is determined only by the inexact
 inputs and the ``precision`` argument is ignored:
 
->>> pari(1.0).sin(precision=180).bitprecision()
+>>> pari.sin(1.0, precision=180).bitprecision()
 64
->>> pari(1.0).sin(precision=40).bitprecision()
+>>> pari.sin(1.0, precision=40).bitprecision()
 64
->>> pari("1.0000000000000000000000000000000000000").sin().bitprecision()
+>>> pari.sin("1.0000000000000000000000000000000000000").bitprecision()
 128
 
 Tests:
