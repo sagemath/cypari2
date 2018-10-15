@@ -90,7 +90,7 @@ cdef bint ellwp_flag1_bug = -1
 cdef inline bint have_ellwp_flag1_bug():
     """
     The PARI function ``ellwp(..., flag=1)`` has a bug in PARI versions
-    up to 2.9.3 where the derivative is a factor 2 too small.
+    2.9.x where the derivative is a factor 2 too small.
 
     This function does a cached check for this bug, returning 1 if
     the bug is there and 0 if not.

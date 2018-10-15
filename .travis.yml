@@ -11,7 +11,7 @@ python:
   - "3.5"
   - "3.6"
 env:
-  - PARI_VERSION=pari-2.9.0
+  - PARI_VERSION=pari-2.9.4
     URLDIR=unix
   - PARI_VERSION=pari-2.9.5
     URLDIR=unix
