@@ -3046,7 +3046,7 @@ cdef class Gen(Gen_base):
                 return False, None
         else:
             t = itos(gissquare(x.g))
-            sig_off()
+            clear_stack()
             return t != 0
 
     def issquarefree(self):
@@ -3153,7 +3153,7 @@ cdef class Gen(Gen_base):
         sig_on()
         s = Zn_sqrt(self.g, t0.g)
         if s == NULL:
-            sig_off()
+            clear_stack()
             raise ValueError("%s is not a square modulo %s" % (self, n))
         return new_gen(s)
 

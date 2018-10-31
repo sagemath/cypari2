@@ -52,7 +52,7 @@ from libc.limits cimport LONG_MIN, LONG_MAX
 from libc.math cimport INFINITY
 
 from .paridecl cimport *
-from .stack cimport new_gen
+from .stack cimport new_gen, reset_avma
 from .string_utils cimport to_string, to_bytes
 
 cdef extern from *:
@@ -351,15 +351,13 @@ cdef PyObject_FromGEN(GEN g):
 
 
 cdef PyInt_FromGEN(GEN g):
-    global avma
-    av = avma
-
     # First convert the input to a t_INT
-    g = gtoi(g)
-
-    # Reset avma now. This is OK as long as we are not calling further
-    # PARI functions before this function returns.
-    avma = av
+    try:
+        g = gtoi(g)
+    finally:
+        # Reset avma now. This is OK as long as we are not calling further
+        # PARI functions before this function returns.
+        reset_avma()
 
     if not signe(g):
         return PyInt_FromLong(0)
