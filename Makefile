@@ -10,7 +10,7 @@ build:
 	$(PYTHON) setup.py build
 
 install:
-	$(PIP) install --no-index --ignore-installed .
+	$(PIP) install --no-index --upgrade .
 
 check:
 	$(PYTHON) tests/rundoctest.py
