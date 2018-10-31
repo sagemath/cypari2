@@ -13,7 +13,7 @@ install:
 	$(PIP) install --no-index --upgrade .
 
 check:
-	$(PYTHON) tests/rundoctest.py
+	$(PYTHON) -u tests/rundoctest.py
 
 dist:
 	chmod go+rX-w -R .
