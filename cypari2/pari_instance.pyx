@@ -242,6 +242,18 @@ non-default argument following a default argument) works:
 Reset default precision for the following tests:
 
 >>> pari.set_real_precision_bits(53)
+
+Test that interrupts work properly:
+
+>>> pari.allocatemem(8000000, 2**29)
+PARI stack size set to 8000000 bytes, maximum size set to ...
+>>> from cysignals.alarm import alarm, AlarmInterrupt
+>>> for i in range(1, 11):
+...     try:
+...         alarm(i/11.0)
+...         pari.binomial(2**100, 2**22)
+...     except AlarmInterrupt:
+...         pass
 """
 
 #*****************************************************************************

@@ -27,6 +27,8 @@ from .paridecl cimport (avma, pari_mainstack, gnil, gcopy,
                         is_universal_constant, is_on_stack,
                         isclone, gclone, gclone_refc)
 
+from warnings import warn
+
 
 cdef extern from *:
     int sig_on_count "cysigs.sig_on_count"
@@ -50,9 +52,13 @@ cdef void remove_from_pari_stack(Gen self):
         print(f"Expected: {<object>stackbottom}")
         print(f"Actual:   {self}")
     if self.sp() != avma:
-        print("ERROR: inconsistent avma when removing Gen from PARI stack")
-        print(f"Expected: 0x{self.sp():x}")
-        print(f"Actual:   0x{avma:x}")
+        if avma > self.sp():
+            print("ERROR: inconsistent avma when removing Gen from PARI stack")
+            print(f"Expected: 0x{self.sp():x}")
+            print(f"Actual:   0x{avma:x}")
+        else:
+            warn(f"cypari2 leaked {self.sp() - avma} bytes on the PARI stack",
+                 RuntimeWarning, stacklevel=2)
     stackbottom = n = self.next
     self.next = NULL
     reset_avma()
@@ -73,8 +79,10 @@ cdef inline Gen Gen_stack_new(GEN x):
     z.next = stackbottom
     stackbottom = <PyObject*>z
     if z.next is not <PyObject*>top_of_stack:
-        if z.sp() > (<Gen>z.next).sp():
-            raise SystemError("objects on PARI stack in invalid order")
+        s0 = z.sp()
+        s1 = (<Gen>z.next).sp()
+        if s0 > s1:
+            raise SystemError(f"objects on PARI stack in invalid order (first: 0x{s0:x}; next: 0x{s1:x})")
     return z
 
 
