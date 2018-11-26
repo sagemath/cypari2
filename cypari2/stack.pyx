@@ -19,7 +19,7 @@ cimport cython
 
 from cpython.ref cimport PyObject, Py_XINCREF, Py_XDECREF
 
-from cysignals.signals cimport sig_off
+from cysignals.signals cimport sig_on, sig_off
 from cysignals.memory cimport check_malloc, sig_free
 
 from .gen cimport Gen, Gen_new
@@ -118,8 +118,10 @@ cdef int move_gens_to_heap(pari_sp lim) except -1:
     avma <= lim.
     """
     while avma <= lim and stackbottom is not <PyObject*>top_of_stack:
+        sig_on()
         current = <Gen>stackbottom
         h = gclone(current.g)
+        sig_off()
         remove_from_pari_stack(current)
         current.g = current.address = h
 
