@@ -99,6 +99,9 @@ class PariFunctionGenerator(object):
             >>> G.can_handle_function("bnfinit", "bnfinit0", **{"class":"hard"})
             False
         """
+        if not cname:
+            # No corresponding C function => must be specific to GP or GP2C
+            return False
         if function in function_blacklist:
             # Blacklist specific troublesome functions
             return False
