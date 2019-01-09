@@ -118,12 +118,20 @@ cdef int move_gens_to_heap(pari_sp lim) except -1:
     avma <= lim.
     """
     while avma <= lim and stackbottom is not <PyObject*>top_of_stack:
-        sig_on()
         current = <Gen>stackbottom
-        h = gclone(current.g)
+        sig_on()
+        current.g = gclone(current.g)
         sig_off()
         remove_from_pari_stack(current)
-        current.g = current.address = h
+        # The .address attribute can only be updated now because it is
+        # needed in remove_from_pari_stack(). This means that the object
+        # is temporarily in an inconsistent state but this does not
+        # matter since .address is normally not used.
+        #
+        # The more important .g attribute is updated correctly before
+        # remove_from_pari_stack(). Therefore, the object can be used
+        # normally regardless of what happens to the PARI stack.
+        current.address = current.g
 
 
 cdef Gen new_gen(GEN x):
