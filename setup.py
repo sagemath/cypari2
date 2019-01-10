@@ -72,9 +72,13 @@ class no_egg(_bdist_egg):
 with open('README.rst') as f:
     README = f.read()
 
+with open('VERSION') as f:
+    VERSION = f.read().strip()
+
+
 setup(
     name='cypari2',
-    version=open("VERSION").read().strip(),
+    version=VERSION,
     description='An interface to the number theory library libpari',
     long_description=README,
     url='https://github.com/defeo/cypari2',
