@@ -29,7 +29,7 @@ from cysignals.signals cimport sig_block, sig_unblock, sig_error
 
 from .paridecl cimport *
 from .paripriv cimport *
-from .stack cimport new_gen_noclear, reset_avma
+from .stack cimport clone_gen_noclear, reset_avma
 
 
 # We derive PariError from RuntimeError, for backward compatibility with
@@ -170,6 +170,23 @@ cdef int _pari_err_handle(GEN E) except 0:
     Traceback (most recent call last):
     ...
     PariError: impossible inverse in gdiv: 0
+
+    Test exceptions with a pointer to a PARI object:
+
+    >>> from cypari2 import Pari
+    >>> def exc():
+    ...     K = Pari().nfinit("x^2 + 1")
+    ...     I = K.idealhnf(2)
+    ...     I[0]
+    ...     try:
+    ...         K.idealaddtoone(I, I)
+    ...     except RuntimeError as e:
+    ...         return e
+    >>> L = [exc(), exc()]
+    >>> print(L[0])
+    elements not coprime in idealaddtoone:
+        [2, 0; 0, 2]
+        [2, 0; 0, 2]
     """
     cdef long errnum = E[1]
     cdef char* errstr
@@ -193,7 +210,7 @@ cdef int _pari_err_handle(GEN E) except 0:
     if s is not NULL:
         pari_error_string = s.decode('ascii') + ": " + pari_error_string
 
-    raise PariError(errnum, pari_error_string, new_gen_noclear(E))
+    raise PariError(errnum, pari_error_string, clone_gen_noclear(E))
 
 
 cdef void _pari_err_recover(long errnum):
