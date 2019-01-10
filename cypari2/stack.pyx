@@ -27,6 +27,9 @@ from .paridecl cimport (avma, pari_mainstack, gnil, gcopy,
                         is_universal_constant, is_on_stack,
                         isclone, gclone, gclone_refc)
 
+from libc.stdio cimport stderr
+from .paridecl cimport pari_fprintf
+
 from warnings import warn
 
 
@@ -74,6 +77,10 @@ cdef inline Gen Gen_stack_new(GEN x):
     # n = <Gen>stackbottom must be done BEFORE calling Gen_new()
     # since Gen_new may invoke gc.collect() which would mess up
     # the PARI stack.
+    pari_fprintf(stderr, "Allocating Gen (stack):\n")
+    pari_fprintf(stderr, "          GEN   = 0x%lx\n", x)
+    pari_fprintf(stderr, "          avma  = 0x%lx\n", avma)
+    pari_fprintf(stderr, "          value = %Ps\n", x)
     n = <Gen>stackbottom
     z = Gen_new(x, <GEN>avma)
     z.next = n
@@ -81,6 +88,8 @@ cdef inline Gen Gen_stack_new(GEN x):
     if n is not top_of_stack:
         sz = z.sp()
         sn = n.sp()
+        pari_fprintf(stderr, "      next GEN  = 0x%lx\n", n.g)
+        pari_fprintf(stderr, "      next avma = 0x%lx\n", n.address)
         if sz > sn:
             raise SystemError(f"objects on PARI stack in invalid order (first: 0x{sz:x}; next: 0x{sn:x})")
     return z
@@ -117,11 +126,16 @@ cdef int move_gens_to_heap(pari_sp lim) except -1:
     If lim == -1, move everything. Otherwise, keep moving as long as
     avma <= lim.
     """
+    pari_fprintf(stderr, "move_gens_to_heap(0x%lx) BEGIN\n", lim)
     while avma <= lim and stackbottom is not <PyObject*>top_of_stack:
+        pari_fprintf(stderr, "avma =            0x{avma:x}\n", avma)
         current = <Gen>stackbottom
+        pari_fprintf(stderr, "current.g =       0x%lx\n", current.g)
+        pari_fprintf(stderr, "current.address = 0x%lx\n", current.address)
         sig_on()
         current.g = gclone(current.g)
         sig_off()
+        pari_fprintf(stderr, "current cloned at 0x%lx\n", current.g)
         remove_from_pari_stack(current)
         # The .address attribute can only be updated now because it is
         # needed in remove_from_pari_stack(). This means that the object
@@ -132,6 +146,7 @@ cdef int move_gens_to_heap(pari_sp lim) except -1:
         # remove_from_pari_stack(). Therefore, the object can be used
         # normally regardless of what happens to the PARI stack.
         current.address = current.g
+    pari_fprintf(stderr, "move_gens_to_heap(0x%lx) END\n", lim)
 
 
 cdef Gen new_gen(GEN x):

@@ -62,6 +62,7 @@ cimport cython
 from cpython.object cimport (Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, Py_GT,
         PyTypeObject)
 
+from libc.stdio cimport stderr
 from cysignals.memory cimport sig_free, check_malloc
 from cysignals.signals cimport sig_check, sig_on, sig_off, sig_block, sig_unblock
 
@@ -154,9 +155,16 @@ cdef class Gen(Gen_base):
     def __dealloc__(self):
         if self.next is not None:
             # stack
+            pari_fprintf(stderr, "Deallocating Gen (stack):\n")
+            pari_fprintf(stderr, "          GEN   = 0x%lx\n", self.g)
+            pari_fprintf(stderr, "          addr  = 0x%lx\n", self.address)
+            pari_fprintf(stderr, "          avma  = 0x%lx\n", avma)
             remove_from_pari_stack(self)
+            pari_fprintf(stderr, "      new avma  = 0x%lx\n", avma)
         elif self.address is not NULL:
             # clone
+            pari_fprintf(stderr, "Deallocating Gen (clone):\n")
+            pari_fprintf(stderr, "          GEN   = 0x%lx\n", self.g)
             gunclone_deep(self.address)
 
     cdef Gen new_ref(self, GEN g):
