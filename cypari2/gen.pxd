@@ -29,14 +29,12 @@ cdef class Gen(Gen_base):
 
     # The Gen objects on the PARI stack form a linked list, from the
     # bottom to the top of the stack. This makes sense since we can only
-    # deallocate a Gen which is on the bottom of the PARI stack.
+    # deallocate a Gen which is on the bottom of the PARI stack. If this
+    # is the last object on the stack, then next = top_of_stack
+    # (a singleton object).
     #
-    # Link to the next (up the PARI stack) Gen object. This is manually
-    # refcounted (not by Cython) because we need complete control over
-    # it. If this is the last object on the stack, then
-    # next = top_of_stack (a singleton object). In the clone and constant
-    # cases, this is NULL.
-    cdef PyObject* next
+    # In the clone and constant cases, this is None.
+    cdef Gen next
 
     # A cache for __getitem__. Initially, this is None but it will be
     # turned into a dict when needed.

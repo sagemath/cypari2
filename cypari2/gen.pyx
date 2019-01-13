@@ -57,16 +57,10 @@ AUTHORS:
 
 from __future__ import absolute_import, division, print_function
 
-import types
 cimport cython
 
-from cpython.int cimport PyInt_Check
-from cpython.long cimport PyLong_Check
-from cpython.bytes cimport PyBytes_Check
-from cpython.unicode cimport PyUnicode_Check
-from cpython.float cimport PyFloat_AS_DOUBLE
-from cpython.complex cimport PyComplex_RealAsDouble, PyComplex_ImagAsDouble
-from cpython.object cimport Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, Py_GT
+from cpython.object cimport (Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, Py_GT,
+        PyTypeObject)
 
 from cysignals.memory cimport sig_free, check_malloc
 from cysignals.signals cimport sig_check, sig_on, sig_off, sig_block, sig_unblock
@@ -158,7 +152,7 @@ cdef class Gen(Gen_base):
         raise RuntimeError("PARI objects cannot be instantiated directly; use pari(x) to convert x to PARI")
 
     def __dealloc__(self):
-        if self.next is not NULL:
+        if self.next is not None:
             # stack
             remove_from_pari_stack(self)
         elif self.address is not NULL:
@@ -194,7 +188,7 @@ cdef class Gen(Gen_base):
         >>> pari("[[1, 2], 3]")[0][1]  # indirect doctest
         2
         """
-        if self.next is not NULL:
+        if self.next is not None:
             raise TypeError("cannot create reference to PARI stack (call fixGEN() first)")
         if is_on_stack(g):
             raise ValueError("new_ref() called with GEN which does not belong to parent")
@@ -208,7 +202,7 @@ cdef class Gen(Gen_base):
         Return the PARI ``GEN`` corresponding to ``self`` which is
         guaranteed not to change.
         """
-        if self.next is not NULL:
+        if self.next is not None:
             move_gens_to_heap(self.sp())
         return self.g
 
@@ -4552,6 +4546,20 @@ cdef class Gen(Gen_base):
         NotImplementedError: the method allocatemem() should not be used; use pari.allocatemem() instead
         """
         raise NotImplementedError("the method allocatemem() should not be used; use pari.allocatemem() instead")
+
+
+cdef int Gen_clear(self) except -1:
+    """
+    Implementation of tp_clear() for Gen. We need to override Cython's
+    default since we do not want self.next to be cleared: it is crucial
+    that the next Gen stays alive until remove_from_pari_stack(self) is
+    called by __dealloc__.
+    """
+    # Only itemcache needs to be cleared
+    (<Gen>self).itemcache = None
+
+
+(<PyTypeObject*>Gen).tp_clear = Gen_clear
 
 
 @cython.boundscheck(False)

@@ -59,10 +59,10 @@ cdef void remove_from_pari_stack(Gen self):
         else:
             warn(f"cypari2 leaked {self.sp() - avma} bytes on the PARI stack",
                  RuntimeWarning, stacklevel=2)
-    stackbottom = n = self.next
-    self.next = NULL
+    n = self.next
+    stackbottom = <PyObject*>n
+    self.next = None
     reset_avma()
-    Py_XDECREF(n)
 
 
 cdef inline Gen Gen_stack_new(GEN x):
@@ -70,19 +70,19 @@ cdef inline Gen Gen_stack_new(GEN x):
     Allocate and initialize a new instance of ``Gen`` wrapping
     a GEN on the PARI stack.
     """
-    # INCREF(stackbottom) must be done BEFORE calling Gen_new
+    global stackbottom
+    # n = <Gen>stackbottom must be done BEFORE calling Gen_new()
     # since Gen_new may invoke gc.collect() which would mess up
     # the PARI stack.
-    global stackbottom
-    Py_XINCREF(stackbottom)
+    n = <Gen>stackbottom
     z = Gen_new(x, <GEN>avma)
-    z.next = stackbottom
+    z.next = n
     stackbottom = <PyObject*>z
-    if z.next is not <PyObject*>top_of_stack:
-        s0 = z.sp()
-        s1 = (<Gen>z.next).sp()
-        if s0 > s1:
-            raise SystemError(f"objects on PARI stack in invalid order (first: 0x{s0:x}; next: 0x{s1:x})")
+    if n is not top_of_stack:
+        sz = z.sp()
+        sn = n.sp()
+        if sz > sn:
+            raise SystemError(f"objects on PARI stack in invalid order (first: 0x{sz:x}; next: 0x{sn:x})")
     return z
 
 
