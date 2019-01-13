@@ -285,16 +285,23 @@ cdef class Gen(Gen_base):
         >>> L = pari("[42, 2/3, 3.14]")
         >>> hash(L) == hash(L.__copy__())
         True
+        >>> hash(pari.isprime(4)) == hash(pari(0))
+        True
         """
         # There is a bug in PARI/GP where the hash value depends on the
         # CLONE bit. So we remove that bit before hashing. See
         # https://pari.math.u-bordeaux.fr/cgi-bin/bugreport.cgi?bug=2091
         cdef ulong* G = <ulong*>self.g
         cdef ulong G0 = G[0]
-        G[0] &= ~<ulong>CLONEBIT
+        cdef ulong G0clean = G0 & ~<ulong>CLONEBIT
+        if G0 != G0clean:
+            # Only write if we actually need to change something, as
+            # G may point to read-only memory
+            G[0] = G0clean
         h = hash_GEN(self.g)
-        # Restore CLONE bit
-        G[0] = G0
+        if G0 != G0clean:
+            # Restore CLONE bit
+            G[0] = G0
         return h
 
     def __iter__(self):
