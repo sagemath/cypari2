@@ -95,6 +95,18 @@ cdef extern from "pari/pari.h":
         long fheight
         void (*draw)(PARI_plot *T, GEN w, GEN x, GEN y)
 
+    ctypedef struct entree:
+        const char *name
+        ulong valence
+        void *value
+        long menu
+        const char *code
+        const char *help
+        void *pvalue
+        long arity
+        ulong hash
+        entree *next
+
     # Various structures that we don't interface but which need to be
     # declared, such that Cython understands the declarations of
     # functions using these types.
@@ -108,7 +120,6 @@ cdef extern from "pari/pari.h":
     struct forpart_t
     struct forprime_t
     struct forvec_t
-    struct entree
     struct gp_context
     struct nfbasic_t
     struct pariFILE

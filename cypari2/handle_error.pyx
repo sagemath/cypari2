@@ -221,6 +221,12 @@ cdef void _pari_err_recover(long errnum):
     """
     reset_avma()
 
+    # Special case errnum == -1 corresponds to a reallocation of the
+    # PARI stack. This is not an error, so just proceed as if nothing
+    # happened.
+    if errnum < 0:
+        return
+
     # An exception was raised.  Jump to the signal-handling code
     # which will cause sig_on() to see the exception.
     sig_error()

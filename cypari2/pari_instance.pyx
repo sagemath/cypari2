@@ -254,6 +254,17 @@ PARI stack size set to 8000000 bytes, maximum size set to ...
 ...         pari.binomial(2**100, 2**22)
 ...     except AlarmInterrupt:
 ...         pass
+
+Test that changing the stack size using ``default`` works properly:
+
+>>> pari.default("parisizemax", 2**23)
+>>> pari = cypari2.Pari()  # clear stack
+>>> a = pari(1)
+>>> pari.default("parisizemax", 2**29)
+>>> a + a
+2
+>>> pari.default("parisizemax")
+536870912
 """
 
 #*****************************************************************************
@@ -270,7 +281,7 @@ import sys
 from libc.stdio cimport *
 cimport cython
 
-from cysignals.signals cimport sig_check, sig_on, sig_off
+from cysignals.signals cimport sig_check, sig_on, sig_off, sig_error
 
 from .string_utils cimport to_string, to_bytes
 from .paridecl cimport *
@@ -521,6 +532,14 @@ cdef class Pari(Pari_auto):
         # also many functions indirectly using factoring.
         global factor_proven
         factor_proven = 1
+
+        # Monkey-patch default(parisize) and default(parisizemax)
+        ep = pari_is_default("parisize")
+        if ep:
+            ep.value = <void*>patched_parisize
+        ep = pari_is_default("parisizemax")
+        if ep:
+            ep.value = <void*>patched_parisizemax
 
     def __init__(self, size_t size=8000000, size_t sizemax=0, unsigned long maxprime=500000):
         """
@@ -1383,6 +1402,25 @@ cdef long get_var(v) except -2:
     varno = fetch_user_var(s)
     sig_off()
     return varno
+
+
+# Monkey-patched versions of default(parisize) and default(parisizemax).
+# We need to call move_gens_to_heap(-1) before reallocating the PARI
+# stack. The monkey-patching is set up in PariInstance.__cinit__
+cdef GEN patched_parisize(const char* v, long flag):
+    try:
+        move_gens_to_heap(-1)
+    except:
+        sig_error()
+    return sd_parisize(v, flag)
+
+
+cdef GEN patched_parisizemax(const char* v, long flag):
+    try:
+        move_gens_to_heap(-1)
+    except:
+        sig_error()
+    return sd_parisizemax(v, flag)
 
 
 IF HAVE_PLOT_SVG:
