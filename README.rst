@@ -3,7 +3,7 @@ CyPari 2
 
 .. image:: https://travis-ci.org/defeo/cypari2.svg?branch=master
 
-A Python interface to the number theory library `libpari <http://pari.math.u-bordeaux.fr/>`_.
+A Python interface to the number theory library `PARI/GP <http://pari.math.u-bordeaux.fr/>`_.
 
 This library supports both Python 2 and Python 3.
 
