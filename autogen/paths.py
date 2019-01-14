@@ -63,7 +63,7 @@ def pari_share():
 
 def include_dirs():
     """
-    Return the directory containing PARI include files.
+    Return a list of directories containing PARI include files.
     """
     dirs = [os.path.join(prefix, "include")]
     return [d for d in dirs if os.path.isdir(os.path.join(d, "pari"))]
@@ -71,7 +71,7 @@ def include_dirs():
 
 def library_dirs():
     """
-    Return the directory containing PARI library files.
+    Return a list of directories containing PARI library files.
     """
     dirs = [os.path.join(prefix, s) for s in ("lib", "lib32", "lib64")]
     return [d for d in dirs if glob(os.path.join(d, "libpari*"))]
