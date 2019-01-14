@@ -72,8 +72,7 @@ from .convert cimport PyObject_AsGEN, gen_to_integer
 from .pari_instance cimport (prec_bits_to_words, prec_words_to_bits,
                              default_bitprec, get_var)
 from .stack cimport (new_gen, new_gen_noclear,
-                     clone_gen, clone_gen_noclear,
-                     clear_stack, reset_avma,
+                     clone_gen, clear_stack, reset_avma,
                      remove_from_pari_stack, move_gens_to_heap)
 from .closure cimport objtoclosure
 
@@ -1465,9 +1464,9 @@ cdef class Gen(Gen_base):
     def __len__(self):
         return glength(self.g)
 
-    def __richcmp__(left, right, int op):
+    def __richcmp__(self, right, int op):
         """
-        Compare ``left`` and ``right`` using ``op``.
+        Compare ``self`` and ``right`` using ``op``.
 
         Examples:
 
@@ -1528,14 +1527,13 @@ cdef class Gen(Gen_base):
         >>> pari('O(2)') == 0
         True
         """
-        cdef Gen t0, t1
+        cdef Gen t1
         try:
-            t0 = objtogen(left)
             t1 = objtogen(right)
         except Exception:
             return NotImplemented
         cdef bint r
-        cdef GEN x = t0.g
+        cdef GEN x = self.g
         cdef GEN y = t1.g
         sig_on()
         if op == Py_EQ:
@@ -1605,7 +1603,8 @@ cdef class Gen(Gen_base):
         return r
 
     def __copy__(self):
-        return clone_gen_noclear(self.g)
+        sig_on()
+        return clone_gen(self.g)
 
     def __oct__(self):
         """
@@ -1821,6 +1820,7 @@ cdef class Gen(Gen_base):
         >>> pari("[1,2,3]~").python_list()
         [1, 2, 3]
         """
+        # TODO: deprecate
         cdef long n
         cdef Gen t
 
@@ -2574,7 +2574,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(precision0(x.g, n))
 
-    def round(x, estimate=False):
+    def round(x, bint estimate=False):
         """
         round(x,estimate=False): If x is a real number, returns x rounded
         to the nearest integer (rounding up). If the optional argument
@@ -2695,7 +2695,7 @@ cdef class Gen(Gen_base):
         """
         return gsizebyte(x.g)
 
-    def truncate(x, estimate=False):
+    def truncate(x, bint estimate=False):
         """
         truncate(x,estimate=False): Return the truncation of x. If estimate
         is True, also return the number of error bits.
@@ -3192,13 +3192,10 @@ cdef class Gen(Gen_base):
         <... 'int'>
         """
         sig_on()
-        cdef GEN g = ellan(self.g, n)
-        if python_ints:
-            v = [gtolong(gel(g, i+1)) for i in range(glength(g))]
-            clear_stack()
-            return v
-        else:
-            return new_gen(g)
+        cdef Gen g = new_gen(ellan(self.g, n))
+        if not python_ints:
+            return g
+        return [gtolong(gel(g.g, i+1)) for i in range(glength(g.g))]
 
     def ellaplist(self, long n, python_ints=False):
         r"""
@@ -3932,56 +3929,7 @@ cdef class Gen(Gen_base):
         >>> nf(x='y')
         [y^2 + 1, [0, 1], -4, 1, [Mat([1, 0.E-38 + 1.00000000000000*I]), [1, 1.00000000000000; 1, -1.00000000000000], [1, 1; 1, -1], [2, 0; 0, -2], [2, 0; 0, 2], [1, 0; 0, -1], [1, [0, -1; 1, 0]], [2]], [0.E-38 + 1.00000000000000*I], [1, y], [1, 0; 0, 1], [1, 0, 0, -1; 0, 1, 1, 0]]
         """
-        cdef long t = typ(self.g)
-        cdef Gen t0
-        cdef GEN result
-        cdef long arity
-        cdef long nargs = len(args)
-        cdef long nkwds = len(kwds)
-
-        # Closure must be evaluated using *args
-        if t == t_CLOSURE:
-            if nkwds > 0:
-                raise TypeError("cannot evaluate a PARI closure using keyword arguments")
-            if closure_is_variadic(self.g):
-                arity = closure_arity(self.g) - 1
-                args = list(args[:arity]) + [0]*(arity-nargs) + [args[arity:]]
-            t0 = objtogen(args)
-            sig_on()
-            result = closure_callgenvec(self.g, t0.g)
-            if result == gnil:
-                clear_stack()
-                return None
-            return new_gen(result)
-
-        # Evaluate univariate polynomials, rational functions and
-        # series using *args
-        if nargs > 0:
-            if nkwds > 0:
-                raise TypeError("mixing unnamed and keyword arguments not allowed when evaluating a PARI object")
-            if not (t == t_POL or t == t_RFRAC or t == t_SER):
-                raise TypeError("cannot evaluate PARI %s using unnamed arguments" % self.type())
-            if nargs != 1:
-                raise TypeError("evaluating PARI %s takes exactly 1 argument (%d given)"
-                                % (self.type(), nargs))
-
-            t0 = objtogen(args[0])
-            sig_on()
-            if t == t_POL or t == t_RFRAC:
-                return new_gen(poleval(self.g, t0.g))
-            else:  # t == t_SER
-                return new_gen(gsubst(self.g, varn(self.g), t0.g))
-
-        # Call substvec() using **kwds
-        vstr = iter(kwds.iterkeys())        # Variables as Python strings
-        t0 = objtogen(kwds.values())        # Replacements
-
-        sig_on()
-        cdef GEN v = cgetg(nkwds+1, t_VEC)  # Variables as PARI polynomials
-        cdef long i
-        for i in range(nkwds):
-            set_gel(v, i+1, pol_x(get_var(next(vstr))))
-        return new_gen(gsubstvec(self.g, v, t0.g))
+        return self(*args, **kwds)
 
     def __call__(self, *args, **kwds):
         """
@@ -4026,7 +3974,57 @@ cdef class Gen(Gen_base):
         ...
         TypeError: cannot evaluate PARI t_INT using unnamed arguments
         """
-        return self.eval(*args, **kwds)
+        cdef long t = typ(self.g)
+        cdef Gen t0
+        cdef GEN result
+        cdef long arity
+        cdef long nargs = len(args)
+        cdef long nkwds = len(kwds)
+
+        # Closure must be evaluated using *args
+        if t == t_CLOSURE:
+            if nkwds:
+                raise TypeError("cannot evaluate a PARI closure using keyword arguments")
+            if closure_is_variadic(self.g):
+                arity = closure_arity(self.g) - 1
+                args = list(args[:arity]) + [0]*(arity-nargs) + [args[arity:]]
+            t0 = objtogen(args)
+            sig_on()
+            result = closure_callgenvec(self.g, t0.g)
+            if result is gnil:
+                clear_stack()
+                return None
+            return new_gen(result)
+
+        # Evaluate univariate polynomials, rational functions and
+        # series using *args
+        if nargs:
+            if nkwds:
+                raise TypeError("mixing unnamed and keyword arguments not allowed when evaluating a PARI object")
+            if not (t == t_POL or t == t_RFRAC or t == t_SER):
+                raise TypeError("cannot evaluate PARI %s using unnamed arguments" % self.type())
+            if nargs != 1:
+                raise TypeError("evaluating PARI %s takes exactly 1 argument (%d given)"
+                                % (self.type(), nargs))
+
+            t0 = objtogen(args[0])
+            sig_on()
+            if t == t_POL or t == t_RFRAC:
+                return new_gen(poleval(self.g, t0.g))
+            else:  # t == t_SER
+                return new_gen(gsubst(self.g, varn(self.g), t0.g))
+
+        # Call substvec() using **kwds
+        cdef list V = [to_bytes(k) for k in kwds]  # Variables as Python byte strings
+        t0 = objtogen(kwds.values())               # Replacements
+
+        sig_on()
+        cdef GEN v = cgetg(nkwds+1, t_VEC)  # Variables as PARI polynomials
+        cdef long i
+        for i in range(nkwds):
+            varname = <bytes>V[i]
+            set_gel(v, i+1, pol_x(fetch_user_var(varname)))
+        return new_gen(gsubstvec(self.g, v, t0.g))
 
     def factorpadic(self, p, long r=20):
         """
@@ -4275,7 +4273,7 @@ cdef class Gen(Gen_base):
     def __abs__(self):
         return self.abs()
 
-    def nextprime(self, bint add_one=0):
+    def nextprime(self, bint add_one=False):
         """
         nextprime(x): smallest pseudoprime greater than or equal to `x`.
         If ``add_one`` is non-zero, return the smallest pseudoprime
@@ -4345,7 +4343,8 @@ cdef class Gen(Gen_base):
         if typ(self.g) != t_POL and typ(self.g) != t_SER:
             raise TypeError("set_variable() only works for polynomials or power series")
         # Copy self and then change the variable in place
-        newg = clone_gen_noclear(self.g)
+        sig_on()
+        newg = clone_gen(self.g)
         setvarn(newg.g, n)
         return newg
 

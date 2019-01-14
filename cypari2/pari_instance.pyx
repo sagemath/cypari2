@@ -315,6 +315,7 @@ def prec_bits_to_dec(long prec_in_bits):
     """
     return nbits2ndec(prec_in_bits)
 
+
 def prec_dec_to_bits(long prec_in_dec):
     r"""
     Convert from precision expressed in decimal to precision expressed
@@ -330,6 +331,7 @@ def prec_dec_to_bits(long prec_in_dec):
     """
     cdef double log_10 = 3.32192809488736
     return int(prec_in_dec*log_10 + 1.0)  # Add one to round up
+
 
 cpdef long prec_bits_to_words(unsigned long prec_in_bits):
     r"""
@@ -358,6 +360,7 @@ cpdef long prec_bits_to_words(unsigned long prec_in_bits):
     # This equals ceil(prec_in_bits/wordsize) + 2
     return (prec_in_bits - 1)//wordsize + 3
 
+
 cpdef long prec_words_to_bits(long prec_in_words):
     r"""
     Convert from pari real precision expressed in words to precision
@@ -380,6 +383,7 @@ cpdef long prec_words_to_bits(long prec_in_words):
     # see user's guide to the pari library, page 10
     return (prec_in_words - 2) * BITS_IN_LONG
 
+
 cpdef long default_bitprec():
     r"""
     Return the default precision in bits.
@@ -391,6 +395,7 @@ cpdef long default_bitprec():
     64
     """
     return (prec - 2) * BITS_IN_LONG
+
 
 def prec_dec_to_words(long prec_in_dec):
     r"""
@@ -412,6 +417,7 @@ def prec_dec_to_words(long prec_in_dec):
     True
     """
     return prec_bits_to_words(prec_dec_to_bits(prec_in_dec))
+
 
 def prec_words_to_dec(long prec_in_words):
     r"""
@@ -844,6 +850,7 @@ cdef class Pari(Pari_auto):
         pari.new_with_bits_prec(self, s, precision) creates s as a PARI
         Gen with (at most) precision *bits* of precision.
         """
+        # TODO: deprecate
         cdef unsigned long old_prec
         old_prec = GP_DATA.fmt.sigd
         precision = prec_bits_to_dec(precision)
@@ -1243,7 +1250,8 @@ cdef class Pari(Pari_auto):
         ...
         IndexError: length of entries (=3) must equal n (=2)
         """
-        cdef Gen v = self._empty_vector(n)
+        # TODO: deprecate
+        v = self._empty_vector(n)
         if entries is not None:
             if len(entries) != n:
                 raise IndexError("length of entries (=%s) must equal n (=%s)"%\

@@ -19,7 +19,7 @@ cimport cython
 
 from cpython.ref cimport PyObject, Py_XINCREF, Py_XDECREF
 
-from cysignals.signals cimport sig_on, sig_off
+from cysignals.signals cimport sig_on, sig_off, sig_block, sig_unblock
 from cysignals.memory cimport check_malloc, sig_free
 
 from .gen cimport Gen, Gen_new
@@ -32,6 +32,7 @@ from warnings import warn
 
 cdef extern from *:
     int sig_on_count "cysigs.sig_on_count"
+    int block_sigint "cysigs.block_sigint"
 
 
 # Singleton object to denote the top of the PARI stack
@@ -59,6 +60,8 @@ cdef void remove_from_pari_stack(Gen self):
         else:
             warn(f"cypari2 leaked {self.sp() - avma} bytes on the PARI stack",
                  RuntimeWarning, stacklevel=2)
+    if sig_on_count and not block_sigint:
+        print(f"ERROR: sig_on_count = {sig_on_count} during remove_from_pari_stack()")
     n = self.next
     stackbottom = <PyObject*>n
     self.next = None
@@ -121,8 +124,10 @@ cdef int move_gens_to_heap(pari_sp lim) except -1:
         current = <Gen>stackbottom
         sig_on()
         current.g = gclone(current.g)
-        sig_off()
+        sig_block()
         remove_from_pari_stack(current)
+        sig_unblock()
+        sig_off()
         # The .address attribute can only be updated now because it is
         # needed in remove_from_pari_stack(). This means that the object
         # is temporarily in an inconsistent state but this does not
@@ -159,7 +164,7 @@ cdef Gen new_gen_noclear(GEN x):
         elif isclone(x):
             gclone_refc(x)
             return Gen_new(x, x)
-        raise RuntimeError("new_gen() argument not on PARI stack, not on PARI heap and not a universal constant")
+        raise SystemError("new_gen() argument not on PARI stack, not on PARI heap and not a universal constant")
 
     z = Gen_stack_new(x)
 
