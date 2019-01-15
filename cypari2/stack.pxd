@@ -3,6 +3,7 @@ from .gen cimport Gen_base, Gen
 
 
 cdef Gen new_gen(GEN x)
+cdef new_gens2(GEN x, GEN y)
 cdef Gen new_gen_noclear(GEN x)
 cdef Gen clone_gen(GEN x)
 cdef Gen clone_gen_noclear(GEN x)

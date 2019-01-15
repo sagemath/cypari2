@@ -71,7 +71,7 @@ from .paripriv cimport *
 from .convert cimport PyObject_AsGEN, gen_to_integer
 from .pari_instance cimport (prec_bits_to_words, prec_words_to_bits,
                              default_bitprec, get_var)
-from .stack cimport (new_gen, new_gen_noclear,
+from .stack cimport (new_gen, new_gens2, new_gen_noclear,
                      clone_gen, clear_stack, reset_avma,
                      remove_from_pari_stack, move_gens_to_heap)
 from .closure cimport objtoclosure
@@ -2980,11 +2980,11 @@ cdef class Gen(Gen_base):
         >>> s == ('1.00000000000000 - 2.710505431 E-20*I' if bitness == '32' else '1.00000000000000 - 2.71050543121376 E-20*I')
         True
         """
-        cdef GEN zetan
+        cdef GEN ans, zetan
         cdef Gen t0 = objtogen(n)
         sig_on()
-        ans = new_gen_noclear(gsqrtn(x.g, t0.g, &zetan, prec_bits_to_words(precision)))
-        return ans, new_gen(zetan)
+        ans = gsqrtn(x.g, t0.g, &zetan, prec_bits_to_words(precision))
+        return new_gens2(ans, zetan)
 
     def ffprimroot(self):
         r"""
@@ -3334,13 +3334,9 @@ cdef class Gen(Gen_base):
         [1, -1, 0, 4, 3]
         """
         cdef GEN x, y
-        cdef Gen model, change
-        cdef pari_sp t
         sig_on()
         x = ellminimalmodel(self.g, &y)
-        change = new_gen_noclear(y)
-        model = new_gen(x)
-        return model, change
+        return new_gens2(x, y)
 
     def elltors(self):
         """
@@ -3659,7 +3655,7 @@ cdef class Gen(Gen_base):
         """
         cdef Gen t0
         cdef GEN g0
-        cdef GEN disc
+        cdef GEN ans, disc
         if fa is not None:
             t0 = objtogen(fa)
             g0 = t0.g
@@ -3668,9 +3664,8 @@ cdef class Gen(Gen_base):
         else:
             g0 = NULL
         sig_on()
-        B = new_gen_noclear(nfbasis(self.g, &disc, g0))
-        D = new_gen(disc)
-        return B, D
+        ans = nfbasis(self.g, &disc, g0)
+        return new_gens2(ans, disc)
 
     def nfbasistoalg_lift(nf, x):
         r"""
@@ -4428,8 +4423,7 @@ cdef class Gen(Gen_base):
         cdef GEN dy, g
         sig_on()
         g = polint(self.g, t0.g, t1.g, &dy)
-        dif = new_gen_noclear(dy)
-        return new_gen(g), dif
+        return new_gens2(g, dy)
 
     def ellwp(self, z='z', long n=20, long flag=0, unsigned long precision=0):
         """

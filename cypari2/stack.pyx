@@ -153,6 +153,22 @@ cdef Gen new_gen(GEN x):
     return new_gen_noclear(x)
 
 
+cdef new_gens2(GEN x, GEN y):
+    """
+    Create a 2-tuple of new ``Gen``s from 2 ``GEN``s.
+
+    Also call ``sig_off``() and clear the PARI stack.
+    """
+    sig_off()
+    global avma
+    av = avma
+    g1 = new_gen_noclear(x)
+    # Restore avma in case that remove_from_pari_stack() was called
+    avma = av
+    g2 = new_gen_noclear(y)
+    return (g1, g2)
+
+
 cdef Gen new_gen_noclear(GEN x):
     """
     Create a new ``Gen`` from a ``GEN``.
