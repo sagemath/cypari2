@@ -1312,7 +1312,7 @@ cdef class Pari(Pari_auto):
         """
         Create an empty list or convert `x` to a list.
 
-        Examples::
+        Examples:
 
         >>> import cypari2
         >>> pari = cypari2.Pari()
