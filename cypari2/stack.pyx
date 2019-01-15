@@ -18,8 +18,10 @@ from __future__ import absolute_import, division, print_function
 cimport cython
 
 from cpython.ref cimport PyObject, Py_XINCREF, Py_XDECREF
+from cpython.exc cimport PyErr_SetString
 
-from cysignals.signals cimport sig_on, sig_off, sig_block, sig_unblock
+from cysignals.signals cimport (sig_on, sig_off, sig_block, sig_unblock,
+                                sig_error)
 from cysignals.memory cimport check_malloc, sig_free
 
 from .gen cimport Gen, Gen_new
@@ -52,6 +54,9 @@ cdef void remove_from_pari_stack(Gen self):
         print("ERROR: removing wrong instance of Gen")
         print(f"Expected: {<object>stackbottom}")
         print(f"Actual:   {self}")
+    if sig_on_count and not block_sigint:
+        PyErr_SetString(SystemError, "calling remove_from_pari_stack() inside sig_on()")
+        sig_error()
     if self.sp() != avma:
         if avma > self.sp():
             print("ERROR: inconsistent avma when removing Gen from PARI stack")
@@ -60,8 +65,6 @@ cdef void remove_from_pari_stack(Gen self):
         else:
             warn(f"cypari2 leaked {self.sp() - avma} bytes on the PARI stack",
                  RuntimeWarning, stacklevel=2)
-    if sig_on_count and not block_sigint:
-        print(f"ERROR: sig_on_count = {sig_on_count} during remove_from_pari_stack()")
     n = self.next
     stackbottom = <PyObject*>n
     self.next = None
