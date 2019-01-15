@@ -783,8 +783,8 @@ cdef class Pari(Pari_auto):
         """
         Create a new complex number, initialized from re and im.
         """
-        cdef Gen t0 = self(re)
-        cdef Gen t1 = self(im)
+        cdef Gen t0 = objtogen(re)
+        cdef Gen t1 = objtogen(im)
         sig_on()
         return new_gen(mkcomplex(t0.g, t1.g))
 
@@ -857,7 +857,7 @@ cdef class Pari(Pari_auto):
         if not precision:
             precision = old_prec
         self.set_real_precision(precision)
-        x = self(s)
+        x = objtogen(s)
         self.set_real_precision(old_prec)
         return x
 
@@ -1227,7 +1227,7 @@ cdef class Pari(Pari_auto):
         ...
         PariError: incorrect type in setrand (t_POL)
         """
-        cdef Gen t0 = self(seed)
+        cdef Gen t0 = objtogen(seed)
         sig_on()
         setrand(t0.g)
         sig_off()
@@ -1279,6 +1279,7 @@ cdef class Pari(Pari_auto):
         [0, 1, 2; 3, 4, 5; 6, 7, 8]
         """
         cdef long i, j, k
+        cdef Gen x
 
         sig_on()
         A = new_gen(zeromatcopy(m,n))
@@ -1289,7 +1290,7 @@ cdef class Pari(Pari_auto):
             for i in range(m):
                 for j in range(n):
                     sig_check()
-                    x = <Gen?>self(entries[k])
+                    x = objtogen(entries[k])
                     set_gcoeff(A.g, i+1, j+1, x.ref_target())
                     A.cache((i,j), x)
                     k += 1
