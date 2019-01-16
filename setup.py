@@ -79,7 +79,7 @@ with open('VERSION') as f:
 setup(
     name='cypari2',
     version=VERSION,
-    description='An interface to the number theory library libpari',
+    description="A Python interface to the number theory library PARI/GP",
     long_description=README,
     url='https://github.com/defeo/cypari2',
     author="Luca De Feo, Vincent Delecroix, Jeroen Demeyer, Vincent Klein",
