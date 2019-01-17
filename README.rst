@@ -128,4 +128,4 @@ the PARI/GP documentation at http://pari.math.u-bordeaux.fr/doc.html
 Contributing
 ------------
 
-Submit pull request or get in contact with `Luca De Feo <http://defeo.lu/>`_.
+Submit pull request or get in touch with the SageMath developers.
