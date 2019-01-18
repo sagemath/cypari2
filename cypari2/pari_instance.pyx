@@ -287,8 +287,8 @@ from .string_utils cimport to_string, to_bytes
 from .paridecl cimport *
 from .paripriv cimport *
 from .gen cimport Gen, objtogen
-from .stack cimport (new_gen, new_gen_noclear,
-                     clear_stack, move_gens_to_heap)
+from .stack cimport (new_gen, new_gen_noclear, clear_stack,
+                     set_pari_stack_size, before_resize, after_resize)
 from .handle_error cimport _pari_init_error_handling
 from .closure cimport _pari_init_closure
 
@@ -472,16 +472,6 @@ cdef void python_flush():
 include 'auto_instance.pxi'
 
 
-cdef int set_pari_stack_size(size_t size, size_t sizemax) except -1:
-    """
-    Safely set the PARI stack size
-    """
-    move_gens_to_heap(-1)
-    sig_on()
-    paristack_setsize(size, sizemax)
-    sig_off()
-
-
 cdef class Pari(Pari_auto):
     def __cinit__(self):
         r"""
@@ -502,6 +492,7 @@ cdef class Pari(Pari_auto):
         # Take 1MB as minimal stack. Use maxprime=0, which PARI will
         # internally increase to some small value like 65537.
         pari_init_opts(1000000, 0, INIT_DFTm)
+        after_resize()
 
         # Disable PARI's stack overflow checking which is incompatible
         # with multi-threading.
@@ -1413,21 +1404,19 @@ cdef long get_var(v) except -2:
     return varno
 
 
-# Monkey-patched versions of default(parisize) and default(parisizemax).
-# We need to call move_gens_to_heap(-1) before reallocating the PARI
-# stack. The monkey-patching is set up in PariInstance.__cinit__
+# Monkey-patched versions of default(parisize) and default(parisizemax)
+# which call before_resize() and after_resize().
+# The monkey-patching is set up in PariInstance.__cinit__
 cdef GEN patched_parisize(const char* v, long flag):
-    try:
-        move_gens_to_heap(-1)
-    except:
+    # Cast to int(*)() to avoid exception handling
+    if (<int(*)()>before_resize)():
         sig_error()
     return sd_parisize(v, flag)
 
 
 cdef GEN patched_parisizemax(const char* v, long flag):
-    try:
-        move_gens_to_heap(-1)
-    except:
+    # Cast to int(*)() to avoid exception handling
+    if (<int(*)()>before_resize)():
         sig_error()
     return sd_parisizemax(v, flag)
 

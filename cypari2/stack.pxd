@@ -14,6 +14,10 @@ cdef void reset_avma()
 cdef void remove_from_pari_stack(Gen self)
 cdef int move_gens_to_heap(pari_sp lim) except -1
 
+cdef int before_resize() except -1
+cdef int set_pari_stack_size(size_t size, size_t sizemax) except -1
+cdef void after_resize()
+
 
 cdef class DetachGen:
     cdef source

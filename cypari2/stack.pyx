@@ -27,7 +27,8 @@ from cysignals.memory cimport check_malloc, sig_free
 from .gen cimport Gen, Gen_new
 from .paridecl cimport (avma, pari_mainstack, gnil, gcopy,
                         is_universal_constant, is_on_stack,
-                        isclone, gclone, gclone_refc)
+                        isclone, gclone, gclone_refc,
+                        paristack_setsize)
 
 from warnings import warn
 
@@ -38,7 +39,7 @@ cdef extern from *:
 
 
 # Singleton object to denote the top of the PARI stack
-cdef object top_of_stack = object()
+cdef Gen top_of_stack = Gen_new(gnil, NULL)
 
 # Pointer to the Gen on the bottom of the PARI stack. This is the first
 # element of the Gen linked list. If the linked list is empty, this
@@ -84,11 +85,10 @@ cdef inline Gen Gen_stack_new(GEN x):
     z = Gen_new(x, <GEN>avma)
     z.next = n
     stackbottom = <PyObject*>z
-    if n is not top_of_stack:
-        sz = z.sp()
-        sn = n.sp()
-        if sz > sn:
-            raise SystemError(f"objects on PARI stack in invalid order (first: 0x{sz:x}; next: 0x{sn:x})")
+    sz = z.sp()
+    sn = n.sp()
+    if sz > sn:
+        raise SystemError(f"objects on PARI stack in invalid order (first: 0x{sz:x}; next: 0x{sn:x})")
     return z
 
 
@@ -102,10 +102,7 @@ cdef void reset_avma():
     # NOTE: this can be called with an exception set (the error handler
     # does that)!
     global avma
-    if stackbottom is <PyObject*>top_of_stack:
-        avma = pari_mainstack.top
-    else:
-        avma = (<Gen>stackbottom).sp()
+    avma = (<Gen>stackbottom).sp()
 
 
 cdef void clear_stack():
@@ -140,6 +137,35 @@ cdef int move_gens_to_heap(pari_sp lim) except -1:
         # remove_from_pari_stack(). Therefore, the object can be used
         # normally regardless of what happens to the PARI stack.
         current.address = current.g
+
+
+cdef int before_resize() except -1:
+    """
+    Prepare for resizing the PARI stack
+
+    This must be called before reallocating the PARI stack
+    """
+    move_gens_to_heap(-1)
+    if top_of_stack.sp() != pari_mainstack.top:
+        raise RuntimeError("cannot resize PARI stack here")
+
+
+cdef int set_pari_stack_size(size_t size, size_t sizemax) except -1:
+    """
+    Safely set the PARI stack size
+    """
+    before_resize()
+    sig_on()
+    paristack_setsize(size, sizemax)
+    sig_off()
+    after_resize()
+
+
+cdef void after_resize():
+    """
+    This must be called after reallocating the PARI stack
+    """
+    top_of_stack.address = <GEN>pari_mainstack.top
 
 
 cdef Gen new_gen(GEN x):

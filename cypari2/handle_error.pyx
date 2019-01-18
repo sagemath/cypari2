@@ -29,7 +29,7 @@ from cysignals.signals cimport sig_block, sig_unblock, sig_error
 
 from .paridecl cimport *
 from .paripriv cimport *
-from .stack cimport clone_gen_noclear, reset_avma
+from .stack cimport clone_gen_noclear, reset_avma, after_resize
 
 
 # We derive PariError from RuntimeError, for backward compatibility with
@@ -222,9 +222,10 @@ cdef void _pari_err_recover(long errnum):
     reset_avma()
 
     # Special case errnum == -1 corresponds to a reallocation of the
-    # PARI stack. This is not an error, so just proceed as if nothing
-    # happened.
+    # PARI stack. This is not an error, so call after_resize() and
+    # proceed as if nothing happened.
     if errnum < 0:
+        after_resize()
         return
 
     # An exception was raised.  Jump to the signal-handling code
