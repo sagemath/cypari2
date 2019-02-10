@@ -13,7 +13,7 @@ if "READTHEDOCS" in os.environ:
 
     # Print PARI/GP defaults and environment variables for debugging
     from subprocess import Popen, PIPE
-    Popen(["gp", "-f", "-q"], stdin=PIPE).communicate("default()")
+    Popen(["gp", "-f", "-q"], stdin=PIPE).communicate(b"default()")
     for item in os.environ.items():
         print("%s=%r" % item)
 
