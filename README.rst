@@ -1,7 +1,11 @@
 CyPari 2
 ========
 
-.. image:: https://travis-ci.org/defeo/cypari2.svg?branch=master
+.. image:: https://travis-ci.org/sagemath/cypari2.svg?branch=master
+    :target: https://travis-ci.org/sagemath/cypari2
+.. image:: https://readthedocs.org/projects/cypari2/badge/?version=latest
+    :target: https://cypari2.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 A Python interface to the number theory library `PARI/GP <http://pari.math.u-bordeaux.fr/>`_.
 
