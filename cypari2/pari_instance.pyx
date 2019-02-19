@@ -243,6 +243,15 @@ Reset default precision for the following tests:
 
 >>> pari.set_real_precision_bits(53)
 
+Test the trashcan mechanism (without the trashcan, this would cause
+a stack overflow):
+
+>>> pari.allocatemem(2**27, silent=True)
+>>> L = [pari(i) for i in range(2**20)]
+>>> x = pari.Pi()
+>>> del L
+>>> del x
+
 Test that interrupts work properly:
 
 >>> pari.allocatemem(8000000, 2**29)

@@ -141,6 +141,7 @@ cdef extern from *:
     GEN old_nfbasis(GEN x, GEN * y, GEN p)
 
 
+@cython.trashcan(True)
 cdef class Gen(Gen_base):
     """
     Wrapper for a PARI ``GEN`` with memory management.
