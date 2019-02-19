@@ -13,7 +13,7 @@ install:
 	$(PIP) install --no-index --upgrade .
 
 check:
-	$(PYTHON) -u tests/rundoctest.py
+	ulimit -s 8192; $(PYTHON) -u tests/rundoctest.py
 
 dist:
 	chmod go+rX-w -R .
