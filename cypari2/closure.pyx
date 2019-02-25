@@ -43,6 +43,11 @@ from .paridecl cimport *
 from .stack cimport new_gen, clone_gen_noclear, DetachGen
 from .gen cimport objtogen
 
+try:
+    from inspect import getfullargspec as getargspec
+except ImportError:
+    from inspect import getargspec
+
 
 cdef inline GEN call_python_func_impl "call_python_func"(GEN* args, object py_func) except NULL:
     """
@@ -84,26 +89,26 @@ cdef extern from *:
     GEN call_python_func(GEN* args, PyObject* py_func)
 
 
-cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5, ulong py_func):
+cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5, ulong nargs, ulong py_func):
     """
     This function, which will be installed in PARI, is a front-end for
     ``call_python_func_impl``.
 
-    It has 5 optional ``GEN``s as argument and one ``ulong``.
-    This last argument is actually a Python callable object cast to
-    ``ulong``.
+    It has 5 optional ``GEN``s as argument, a ``nargs`` argument
+    specifying how many arguments are valid and one ``ulong``, which is
+    actually a Python callable object cast to ``ulong``.
     """
-    # Convert arguments to a NULL-terminated array. From PARI's point
-    # of view, all these arguments are optional: if an argument is not
-    # given, PARI will pass NULL as argument and the array will
-    # terminate sooner.
+    if nargs > 5:
+        sig_error()
+
+    # Convert arguments to a NULL-terminated array.
     cdef GEN args[6]
     args[0] = arg1
     args[1] = arg2
     args[2] = arg3
     args[3] = arg4
     args[4] = arg5
-    args[5] = NULL
+    args[nargs] = NULL
 
     sig_block()
     # Disallow interrupts during the Python code inside
@@ -116,12 +121,16 @@ cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5, ulong py_
         sig_error()
     return r
 
+
 # Install the function "call_python" for use in the PARI library.
 cdef entree* ep_call_python
 
-cdef void _pari_init_closure():
+cdef int _pari_init_closure() except -1:
+    sig_on()
     global ep_call_python
-    ep_call_python = install(<void*>call_python, "call_python", "DGDGDGDGDGU")
+    ep_call_python = install(<void*>call_python, "call_python", 'DGDGDGDGDGD5,U,U')
+    sig_off()
+
 
 cpdef Gen objtoclosure(f):
     """
@@ -145,11 +154,13 @@ cpdef Gen objtoclosure(f):
     >>> def pymul(i,j): return i*j
     >>> mul = objtoclosure(pymul)
     >>> mul
-    (v1,v2,v3,v4,v5)->call_python(v1,v2,v3,v4,v5,...)
-    >>> mul.type()
-    't_CLOSURE'
+    (v1,v2)->call_python(v1,v2,0,0,0,2,...)
     >>> mul(6,9)
     54
+    >>> mul.type()
+    't_CLOSURE'
+    >>> mul.arity()
+    2
     >>> def printme(x):
     ...     print(x)
     >>> objtoclosure(printme)('matid(2)')
@@ -174,10 +185,37 @@ cpdef Gen objtoclosure(f):
     ...
     PariError: call_python: forbidden multiplication t_VEC (1 elts) * t_VEC (1 elts)
     """
+    if not callable(f):
+        raise TypeError("argument to objtoclosure() must be callable")
+
+    # Determine number of arguments of f
+    cdef Py_ssize_t i, nargs
+    try:
+        argspec = getargspec(f)
+    except Exception:
+        nargs = 5
+    else:
+        nargs = len(argspec.args)
+
+    # Only 5 arguments are supported for now...
+    if nargs > 5:
+        nargs = 5
+
+    # Fill in default arguments of PARI function
     sig_on()
+    cdef GEN args = cgetg((5 - nargs) + 2 + 1, t_VEC)
+    for i in range(5 - nargs):
+        set_gel(args, i + 1, gnil)
+    set_gel(args, (5 - nargs) + 1, stoi(nargs))
     # Convert f to a t_INT containing the address of f
-    cdef GEN f_int = utoi(<ulong><PyObject*>f)
+    set_gel(args, (5 - nargs) + 1 + 1, utoi(<ulong><PyObject*>f))
+
     # Create a t_CLOSURE which calls call_python() with py_func equal to f
-    cdef Gen c = new_gen(snm_closure(ep_call_python, mkvec(f_int)))
-    Py_INCREF(f)   # we need to keep a reference to f somewhere...
-    return c
+    cdef Gen res = new_gen(snm_closure(ep_call_python, args))
+
+    # We need to keep a reference to f somewhere and there is no way to
+    # have PARI handle this reference for us. So the only way out is to
+    # force f to be never deallocated
+    Py_INCREF(f)
+
+    return res
