@@ -759,7 +759,8 @@ cdef class Gen(Gen_base):
     # obsolete: https://trac.sagemath.org/ticket/22165
     def polred(self, *args, **kwds):
         r'''
-        This function is :emphasis:`deprecated`, use :meth:`.polredbest` instead.
+        This function is :emphasis:`deprecated`,
+        use :meth:`~cypari2.gen.Gen_base.polredbest` instead.
         '''
         import warnings
         with warnings.catch_warnings():

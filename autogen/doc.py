@@ -13,13 +13,14 @@ trailing_ws = re.compile("( +)$", re.MULTILINE)
 double_space = re.compile("  +")
 
 end_space = re.compile(r"(@\[end[a-z]*\])([A-Za-z])")
+end_paren = re.compile(r"(@\[end[a-z]*\])([(])")
 
 begin_verb = re.compile(r"@1")
 end_verb = re.compile(r"@[23] *@\[endcode\]")
 verb_loop = re.compile("^(    .*)@\[[a-z]*\]", re.MULTILINE)
 
 dollars = re.compile(r"@\[dollar\]\s*(.*?)\s*@\[dollar\]", re.DOTALL)
-doubledollars = re.compile(r"@\[doubledollar\]\s*(.*?)\s*@\[doubledollar\]", re.DOTALL)
+doubledollars = re.compile(r"@\[doubledollar\]\s*(.*?)\s*@\[doubledollar\] *", re.DOTALL)
 
 math_loop = re.compile(r"(@\[start[A-Z]*MATH\][^@]*)@\[[a-z]*\]")
 math_backslash = re.compile(r"(@\[start[A-Z]*MATH\][^@]*)=BACKSLASH=")
@@ -129,6 +130,10 @@ def raw_to_rest(doc):
     # Sphinx dislikes inline markup immediately followed by a letter:
     # insert a non-breaking space
     doc = end_space.sub("\\1\xa0\\2", doc)
+
+    # Similarly, for inline markup immediately followed by an open
+    # parenthesis, insert a space
+    doc = end_paren.sub("\\1 \\2", doc)
 
     # Fix labels and references
     doc = label_define.sub("", doc)
@@ -299,7 +304,7 @@ def get_rest_doc(function):
         <BLANKLINE>
         .. MATH::
         <BLANKLINE>
-            f(x) = \exp(-i\pi/24).\eta((x+1)/2)/\eta(x) {such that}
+            f(x) = \exp (-i\pi/24).\eta ((x+1)/2)/\eta (x) {such that}
             j = (f^{24}-16)^3/f^{24},
         <BLANKLINE>
         where :math:`j` is the elliptic :math:`j`-invariant (see the function :literal:`ellj`).
@@ -307,14 +312,14 @@ def get_rest_doc(function):
         <BLANKLINE>
         .. MATH::
         <BLANKLINE>
-            f_1(x) = \eta(x/2)/\eta(x) {such that}
+            f_1(x) = \eta (x/2)/\eta (x) {such that}
             j = (f_1^{24}+16)^3/f_1^{24}.
         <BLANKLINE>
         Finally, if :math:`flag = 2`, returns
         <BLANKLINE>
         .. MATH::
         <BLANKLINE>
-            f_2(x) = \sqrt{2}\eta(2x)/\eta(x) {such that}
+            f_2(x) = \sqrt{2}\eta (2x)/\eta (x) {such that}
             j = (f_2^{24}+16)^3/f_2^{24}.
         <BLANKLINE>
         Note the identities :math:`f^8 = f_1^8+f_2^8` and :math:`ff_1f_2 = \sqrt2`.
