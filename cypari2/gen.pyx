@@ -3849,7 +3849,11 @@ cdef class Gen(Gen_base):
         >>> f(3) == f.eval(3)
         True
 
-        Evaluating power series:
+        >>> f = pari('Mod(x^2 + x + 1, 3)')
+        >>> f(2)
+        Mod(1, 3)
+
+        Evaluating a power series:
 
         >>> f = pari('1 + x + x^3 + O(x^7)')
         >>> f(2*pari('y')**2)
@@ -3952,25 +3956,6 @@ cdef class Gen(Gen_base):
         [x^2 + 1, [0, 1], -4, 1, [Mat([1, 0.E-38 + 1.00000000000000*I]), [1, 1.00000000000000; 1, -1.00000000000000], [1, 1; 1, -1], [2, 0; 0, -2], [2, 0; 0, 2], [1, 0; 0, -1], [1, [0, -1; 1, 0]], [2]], [0.E-38 + 1.00000000000000*I], [1, x], [1, 0; 0, 1], [1, 0, 0, -1; 0, 1, 1, 0]]
         >>> nf(x='y')
         [y^2 + 1, [0, 1], -4, 1, [Mat([1, 0.E-38 + 1.00000000000000*I]), [1, 1.00000000000000; 1, -1.00000000000000], [1, 1; 1, -1], [2, 0; 0, -2], [2, 0; 0, 2], [1, 0; 0, -1], [1, [0, -1; 1, 0]], [2]], [0.E-38 + 1.00000000000000*I], [1, y], [1, 0; 0, 1], [1, 0, 0, -1; 0, 1, 1, 0]]
-        """
-        return self(*args, **kwds)
-
-    def __call__(self, *args, **kwds):
-        """
-        Evaluate ``self`` with the given arguments.
-
-        This has the same effect as :meth:`eval`.
-
-        Examples:
-
-        >>> from cypari2 import Pari
-        >>> pari = Pari()
-
-        >>> f = pari('Mod(x^2 + x + 1, 3)')
-        >>> f.type()
-        't_POL'
-        >>> f(2)
-        Mod(1, 3)
 
         Tests:
 
@@ -3997,6 +3982,12 @@ cdef class Gen(Gen_base):
         Traceback (most recent call last):
         ...
         TypeError: cannot evaluate PARI t_INT using unnamed arguments
+        """
+        return self(*args, **kwds)
+
+    def __call__(self, *args, **kwds):
+        """
+        Evaluate ``self`` with the given arguments. See ``eval``.
         """
         cdef long t = typ(self.g)
         cdef Gen t0
