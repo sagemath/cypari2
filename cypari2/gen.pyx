@@ -537,6 +537,7 @@ cdef class Gen(Gen_base):
         return new_gen(gmul(t0.g, t1.g))
 
     def __div__(left, right):
+        # Python 2 old-style division: same implementation as __truediv__
         cdef Gen t0, t1
         try:
             t0 = objtogen(left)
@@ -547,6 +548,15 @@ cdef class Gen(Gen_base):
         return new_gen(gdiv(t0.g, t1.g))
 
     def __truediv__(left, right):
+        """
+        Examples:
+
+        >>> from cypari2 import Pari; pari = Pari()
+        >>> pari(11) / pari(4)
+        11/4
+        >>> pari("x^2 + 2*x + 3") / pari("x")
+        (x^2 + 2*x + 3)/x
+        """
         cdef Gen t0, t1
         try:
             t0 = objtogen(left)
@@ -555,6 +565,25 @@ cdef class Gen(Gen_base):
             return NotImplemented
         sig_on()
         return new_gen(gdiv(t0.g, t1.g))
+
+    def __floordiv__(left, right):
+        """
+        Examples:
+
+        >>> from cypari2 import Pari; pari = Pari()
+        >>> pari(11) // pari(4)
+        2
+        >>> pari("x^2 + 2*x + 3") // pari("x")
+        x + 2
+        """
+        cdef Gen t0, t1
+        try:
+            t0 = objtogen(left)
+            t1 = objtogen(right)
+        except Exception:
+            return NotImplemented
+        sig_on()
+        return new_gen(gdivent(t0.g, t1.g))
 
     def __mod__(left, right):
         """
