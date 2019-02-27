@@ -4021,6 +4021,23 @@ cdef class Gen(Gen_base):
             set_gel(v, i+1, pol_x(fetch_user_var(varname)))
         return new_gen(gsubstvec(self.g, v, t0.g))
 
+    def arity(self):
+        """
+        Return the number of arguments of this ``t_CLOSURE``.
+
+        >>> from cypari2 import Pari
+        >>> pari = Pari()
+        >>> pari("() -> 42").arity()
+        0
+        >>> pari("(x) -> x").arity()
+        1
+        >>> pari("(x,y,z) -> x+y+z").arity()
+        3
+        """
+        if typ(self.g) != t_CLOSURE:
+            raise TypeError(f"arity() requires a t_CLOSURE")
+        return closure_arity(self.g)
+
     def factorpadic(self, p, long r=20):
         """
         p-adic factorization of the polynomial ``pol`` to precision ``r``.
