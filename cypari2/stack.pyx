@@ -258,13 +258,15 @@ cdef class DetachGen:
         # Whatever happens, delete self.source
         self.source = None
 
-        # Verify that we hold the only reference to src
-        if (<PyObject*>src).ob_refcnt != 1:
-            raise SystemError("cannot detach a Gen which is still referenced")
-
         # Delete src safely, keeping it available as GEN
         cdef GEN res = src.g
-        if not (is_on_stack(res) or is_universal_constant(res)):
+        if is_on_stack(res):
+            # Verify that we hold the only reference to src
+            if (<PyObject*>src).ob_refcnt != 1:
+                raise SystemError("cannot detach a Gen which is still referenced")
+        elif is_universal_constant(res):
+            pass
+        else:
             # Make a copy to the PARI stack
             res = gcopy(res)
 

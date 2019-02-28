@@ -40,7 +40,7 @@ from cpython.object cimport PyObject_Call
 from cpython.ref cimport Py_INCREF
 
 from .paridecl cimport *
-from .stack cimport new_gen, clone_gen_noclear, DetachGen
+from .stack cimport new_gen, new_gen_noclear, clone_gen_noclear, DetachGen
 from .gen cimport objtogen
 
 try:
@@ -57,9 +57,12 @@ cdef inline GEN call_python_func_impl "call_python_func"(GEN* args, object py_fu
     The arguments are converted from ``GEN`` to a cypari ``gen`` before
     calling ``py_func``. The result is converted back to a PARI ``GEN``.
     """
+    # We need to ensure that nothing above avma is touched
+    avmaguard = new_gen_noclear(<GEN>avma)
+
     # How many arguments are there?
     cdef Py_ssize_t n = 0
-    while args[n] != NULL:
+    while args[n] is not NULL:
         n += 1
 
     # Construct a Python tuple for args
@@ -78,9 +81,16 @@ cdef inline GEN call_python_func_impl "call_python_func"(GEN* args, object py_fu
     if r is None:
         return gnil
 
+    # Safely delete r and avmaguard
     d = DetachGen(objtogen(r))
     del r
-    return d.detach()
+    res = d.detach()
+    d = DetachGen(avmaguard)
+    del avmaguard
+    d.detach()
+
+    return res
+
 
 # We rename this function to be able to call it with a different
 # signature. In particular, we want manual exception handling and we
@@ -165,6 +175,21 @@ cpdef Gen objtoclosure(f):
     ...     print(x)
     >>> objtoclosure(printme)('matid(2)')
     [1, 0; 0, 1]
+
+    Construct the Riemann zeta function using a closure:
+
+    >>> from cypari2 import Pari; pari = Pari()
+    >>> def coeffs(n):
+    ...     return [1 for i in range(n)]
+    >>> Z = pari.lfuncreate([coeffs, 0, [0], 1, 1, 1, 1])
+    >>> Z.lfun(2)
+    1.64493406684823
+
+    A trivial closure:
+
+    >>> f = pari(lambda x: x)
+    >>> f(10)
+    10
 
     Test various kinds of errors:
 
