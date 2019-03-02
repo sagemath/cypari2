@@ -1287,7 +1287,7 @@ cdef class Pari(Pari_auto):
                     k += 1
         return A
 
-    def genus2red(self, P, P0=None):
+    def genus2red(self, P, p=None):
         """
         Let `P` be a polynomial with integer coefficients.
         Determines the reduction of the (proper, smooth) genus 2
@@ -1296,6 +1296,9 @@ cdef class Pari(Pari_auto):
         the polynomials `P` and `Q` have integer coefficients, to
         represent the model `y^2 + Q(x)y = P(x)`.
 
+        If the second argument `p` is specified, it must be a prime.
+        Then only the local information at `p` is computed and returned.
+        
         Examples:
 
         >>> import cypari2
@@ -1303,12 +1306,15 @@ cdef class Pari(Pari_auto):
         >>> x = pari('x')
         >>> pari.genus2red([-5*x**5, x**3 - 2*x**2 - 2*x + 1])
         [1416875, [2, -1; 5, 4; 2267, 1], x^6 - 240*x^4 - 2550*x^3 - 11400*x^2 - 24100*x - 19855, [[2, [2, [Mod(1, 2)]], []], [5, [1, []], ["[V] page 156", [3]]], [2267, [2, [Mod(432, 2267)]], ["[I{1-0-0}] page 170", []]]]]
+        >>> pari.genus2red([-5*x**5, x**3 - 2*x**2 - 2*x + 1],2267)
+        [2267, Mat([2267, 1]), x^6 - 24*x^5 + 10*x^3 - 4*x + 1, [2267, [2, [Mod(432, 2267)]], ["[I{1-0-0}] page 170", []]]]
         """
         cdef Gen t0 = objtogen(P)
-        sig_on()
-        if P0 is None:
+        if p is None:
+            sig_on()
             return new_gen(genus2red(t0.g, NULL))
-        cdef Gen t1 = objtogen(P0)
+        cdef Gen t1 = objtogen(p)
+        sig_on()
         return new_gen(genus2red(t0.g, t1.g))
 
     def List(self, x=None):
