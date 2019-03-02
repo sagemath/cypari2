@@ -1306,7 +1306,10 @@ cdef class Pari(Pari_auto):
         """
         cdef Gen t0 = objtogen(P)
         sig_on()
-        return new_gen(genus2red(t0.g, NULL))
+        if P0 is None:
+            return new_gen(genus2red(t0.g, NULL))
+        cdef Gen t1 = objtogen(P0)
+        return new_gen(genus2red(t0.g, t1.g))
 
     def List(self, x=None):
         """
