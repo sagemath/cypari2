@@ -253,7 +253,7 @@ cdef class DetachGen:
         self.source = s
 
     cdef GEN detach(self) except NULL:
-        src = <Gen_base?>self.source
+        src = <Gen?>self.source
 
         # Whatever happens, delete self.source
         self.source = None
@@ -273,6 +273,7 @@ cdef class DetachGen:
         # delete src but do not change avma
         global avma
         cdef pari_sp av = avma
+        avma = src.sp()  # Avoid a warning when deallocating
         del src
         avma = av
         return res
