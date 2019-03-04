@@ -770,6 +770,19 @@ cdef class Pari(Pari_auto):
     def get_series_precision(self):
         return precdl
 
+    def version(self):
+        """
+        Return the PARI version as tuple with 3 or 4 components:
+        (major, minor, patch) or (major, minor, patch, VCSversion).
+
+        Examples:
+
+        >>> from cypari2 import Pari
+        >>> Pari().version() >= (2, 9, 0)
+        True
+        """
+        return tuple(Pari_auto.version(self))
+
     def complex(self, re, im):
         """
         Create a new complex number, initialized from re and im.
