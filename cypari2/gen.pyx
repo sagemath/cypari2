@@ -111,7 +111,7 @@ cdef inline bint have_ellwp_flag1_bug():
     return ellwp_flag1_bug
 
 
-# Compatibility wrapper for nf_nfzk and nfeltup
+# Compatibility wrappers
 cdef extern from *:
     """
     #if PARI_VERSION_CODE >= PARI_VERSION(2, 10, 1)
@@ -131,6 +131,10 @@ cdef extern from *:
         GEN czknf = gel(arg, 2);
         return nfeltup(nf, x, zknf, czknf);
     }
+    #endif
+
+    #if PARI_VERSION_CODE >= PARI_VERSION(2, 12, 0)
+    #define nfbasis(x, yptr, p) nfbasis(mkvec2(x, p), yptr)
     #endif
     """
     GEN new_nf_nfzk(GEN nf, GEN rnfeq)
