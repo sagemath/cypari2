@@ -30,22 +30,6 @@ from autogen.paths import include_dirs, library_dirs
 # Adapted from Cython's new_build_ext
 class build_ext(_build_ext):
     def finalize_options(self):
-        # Check dependencies
-        try:
-            from Cython.Build.Dependencies import cythonize
-        except ImportError as E:
-            sys.stderr.write("Error: {0}\n".format(E))
-            sys.stderr.write("The installation of cypari2 requires Cython\n")
-            sys.exit(1)
-
-        try:
-            # We need the header files for cysignals at compile-time
-            import cysignals
-        except ImportError as E:
-            sys.stderr.write("Error: {0}\n".format(E))
-            sys.stderr.write("The installation of cypari2 requires cysignals\n")
-            sys.exit(1)
-
         # Generate auto-generated sources from pari.desc
         rebuild()
 
@@ -56,11 +40,16 @@ class build_ext(_build_ext):
             "language_level": 2,
         }
 
+        _build_ext.finalize_options(self)
+
+    def run(self):
+        # Run Cython
+        from Cython.Build.Dependencies import cythonize
         self.distribution.ext_modules[:] = cythonize(
             self.distribution.ext_modules,
             compiler_directives=self.directives)
 
-        _build_ext.finalize_options(self)
+        _build_ext.run(self)
 
 
 class no_egg(_bdist_egg):
@@ -79,6 +68,8 @@ with open('VERSION') as f:
 setup(
     name='cypari2',
     version=VERSION,
+    setup_requires=['Cython>=0.28'],
+    install_requires=['cysignals>=1.7'],
     description="A Python interface to the number theory library PARI/GP",
     long_description=README,
     url='https://github.com/defeo/cypari2',

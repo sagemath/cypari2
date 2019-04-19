@@ -30,7 +30,6 @@ before_install:
   - ccache -M 256M && ccache -s
 install:
   - bash -x .travis-install-pari.sh
-  - pip install --build=/tmp/pip --verbose -r requirements.txt
   # CFLAGS:
   # -O1 to speed up compilation (compared to -O2 or -O3)
   # -fno-strict-aliasing because that is the default in Python
@@ -42,6 +41,7 @@ install:
 # command to run tests
 script:
   - make check
+  - pip install sphinx
   - (cd docs && make html)
 cache:
   directories:
