@@ -3,21 +3,6 @@
 import os
 import sys
 
-if "READTHEDOCS" in os.environ:
-    # When building with readthedocs, install the dependencies too.
-    # See https://github.com/rtfd/readthedocs.org/issues/2776
-    for reqs in ["requirements.txt"]:
-        if os.path.isfile(reqs):
-            from subprocess import check_call
-            check_call([sys.executable, "-m", "pip", "install", "-r", reqs])
-
-    # Print PARI/GP defaults and environment variables for debugging
-    from subprocess import Popen, PIPE
-    Popen(["gp", "-f", "-q"], stdin=PIPE).communicate(b"default()")
-    for item in os.environ.items():
-        print("%s=%r" % item)
-
-
 from setuptools import setup
 from distutils.command.build_ext import build_ext as _build_ext
 from setuptools.command.bdist_egg import bdist_egg as _bdist_egg
@@ -25,6 +10,20 @@ from setuptools.extension import Extension
 
 from autogen import rebuild
 from autogen.paths import include_dirs, library_dirs
+
+ext_kwds = dict(include_dirs=include_dirs(), library_dirs=library_dirs())
+
+
+if "READTHEDOCS" in os.environ:
+    # When building with readthedocs, disable optimizations to decrease
+    # resource usage during build
+    ext_kwds["extra_compile_args"] = ["-O0"]
+
+    # Print PARI/GP defaults and environment variables for debugging
+    from subprocess import Popen, PIPE
+    Popen(["gp", "-f", "-q"], stdin=PIPE).communicate(b"default()")
+    for item in os.environ.items():
+        print("%s=%r" % item)
 
 
 # Adapted from Cython's new_build_ext
@@ -76,8 +75,7 @@ setup(
     author="Luca De Feo, Vincent Delecroix, Jeroen Demeyer, Vincent Klein",
     author_email="sage-devel@googlegroups.com",
     license='GNU General Public License, version 2 or later',
-    ext_modules=[Extension("*", ["cypari2/*.pyx"],
-            include_dirs=include_dirs(), library_dirs=library_dirs())],
+    ext_modules=[Extension("*", ["cypari2/*.pyx"], **ext_kwds)],
     keywords='PARI/GP number theory',
     packages=['cypari2'],
     package_dir={'cypari2': 'cypari2'},

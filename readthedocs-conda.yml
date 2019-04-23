@@ -2,3 +2,6 @@ channels:
   - conda-forge
 dependencies:
   - pari
+  - sphinx
+  - cython
+  - cysignals
