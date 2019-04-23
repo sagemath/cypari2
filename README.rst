@@ -45,7 +45,7 @@ If you want to try the development version use
 
 ::
 
-    $ pip install git+https://github.com/defeo/cypari2.git [--user]
+    $ pip install git+https://github.com/sagemath/cypari2.git [--user]
 
 If you have an error saying libpari-gmp*.so* is missing and have all requirements
 already installed, try to reinstall cysignals and cypari2

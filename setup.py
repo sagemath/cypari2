@@ -72,7 +72,7 @@ setup(
     install_requires=['cysignals>=1.7'],
     description="A Python interface to the number theory library PARI/GP",
     long_description=README,
-    url='https://github.com/defeo/cypari2',
+    url="https://github.com/sagemath/cypari2",
     author="Luca De Feo, Vincent Delecroix, Jeroen Demeyer, Vincent Klein",
     author_email="sage-devel@googlegroups.com",
     license='GNU General Public License, version 2 or later',
