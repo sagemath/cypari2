@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os
-import sys
 
 from setuptools import setup
 from distutils.command.build_ext import build_ext as _build_ext
