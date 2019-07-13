@@ -50,12 +50,6 @@ cdef class Pari_auto:
     """
 '''
 
-decl_banner = autogen_top + '''
-from .types cimport *
-
-cdef extern from *:
-'''
-
 
 function_re = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 function_blacklist = {"O",  # O(p^e) needs special parser support
@@ -82,7 +76,27 @@ class PariFunctionGenerator(object):
     def __init__(self):
         self.gen_filename = os.path.join('cypari2', 'auto_gen.pxi')
         self.instance_filename = os.path.join('cypari2', 'auto_instance.pxi')
-        self.decl_filename = os.path.join('cypari2', 'auto_paridecl.pxd')
+        self.decl_filename = os.path.join('cypari2', 'paridecl.pxd')
+
+    def write_paridecl_no_desc(self, D):
+        r"""
+        Write the template ``template_paridecl.pxd`` into the declaration file
+        after removing all functions from ``D`` (that are obtained from
+        ``pari.desc``).
+        """
+        fnc = re.compile("    (int|long|void|GEN) +([A-Za-z][0-9A-Za-z_]*)\(.*\)")
+
+        functions = set(f.get('cname') for f in D)
+
+        with open('autogen/template_paridecl.pxd') as template:
+            for line in template.read().split('\n'):
+                match = fnc.match(line)
+                if match:
+                    out_type, fname = match.groups()
+                    if fname in functions:
+                        continue
+                self.decl_file.write(line)
+                self.decl_file.write("\n")
 
     def can_handle_function(self, function, cname="", **kwds):
         """
@@ -117,9 +131,10 @@ class PariFunctionGenerator(object):
         if sec == "programming/control":
             # Skip if, return, break, ...
             return False
+
         return True
 
-    def handle_pari_function(self, function, cname, prototype="", help="", obsolete=None, **kwds):
+    def handle_pari_function(self, function, cname, prototype, help, args=None, ret=None, obsolete=None, **kwds):
         r"""
         Handle one PARI function: decide whether or not to add the
         function, in which file (as method of :class:`Gen` or
@@ -128,8 +143,8 @@ class PariFunctionGenerator(object):
 
         EXAMPLES::
 
-            >>> from autogen.parser import read_pari_desc
             >>> from autogen.generator import PariFunctionGenerator
+            >>> import sys
             >>> G = PariFunctionGenerator()
             >>> G.gen_file = sys.stdout
             >>> G.instance_file = sys.stdout
@@ -226,13 +241,14 @@ class PariFunctionGenerator(object):
                     return new_gen(_ret)
             <BLANKLINE>
         """
-        try:
-            args, ret = parse_prototype(prototype, help)
-        except NotImplementedError:
-            return  # Skip unsupported prototype codes
-
+        if args is None or ret is None:
+            aargs, rret = parse_prototype(prototype, help)
+            if args is None:
+                args = aargs
+            if ret is None:
+                ret = rret
+        sys.stdout.flush()
         doc = get_rest_doc(function)
-
         self.write_declaration(cname, args, ret, self.decl_file)
 
         if len(args) > 0 and isinstance(args[0], PariArgumentGEN):
@@ -320,29 +336,43 @@ class PariFunctionGenerator(object):
         """
         D = read_pari_desc()
         D = sorted(D.values(), key=lambda d: d['function'])
-        sys.stdout.write("Generating PARI functions:")
 
         self.gen_file = io.open(self.gen_filename + '.tmp', 'w', encoding='utf-8')
         self.gen_file.write(gen_banner)
         self.instance_file = io.open(self.instance_filename + '.tmp', 'w', encoding='utf-8')
         self.instance_file.write(instance_banner)
         self.decl_file = io.open(self.decl_filename + '.tmp', 'w', encoding='utf-8')
-        self.decl_file.write(decl_banner)
+
+        DD = []
+        sys.stdout.write("Unhandled PARI function:\n")
+        for v in D:
+            func = v["function"]
+            if not self.can_handle_function(**v):
+                sys.stdout.write(" (%s)" % func)
+            else:
+                try:
+                    args, ret = parse_prototype(v["prototype"], v["help"])
+                    v["args"] = args
+                    v["ret"] = ret
+                    DD.append(v)
+                except NotImplementedError:
+                    sys.stdout.write(" ((%s))" % func)
+        sys.stdout.write("\n")
+
+        self.write_paridecl_no_desc(DD)
 
         # Check for availability of hi-res SVG plotting. This requires
         # PARI-2.10 or later.
         have_plot_svg = False
 
-        for v in D:
+        sys.stdout.write("Generating PARI functions:\n")
+        for v in DD:
             func = v["function"]
-            if self.can_handle_function(**v):
-                sys.stdout.write(" %s" % func)
-                sys.stdout.flush()
-                self.handle_pari_function(**v)
-                if func == "plothraw":
-                    have_plot_svg = True
-            else:
-                sys.stdout.write(" (%s)" % func)
+            sys.stdout.write(" %s" % func)
+            self.handle_pari_function(**v)
+            sys.stdout.flush()
+            if func == "plothraw":
+                have_plot_svg = True
         sys.stdout.write("\n")
 
         self.instance_file.write("DEF HAVE_PLOT_SVG = {}".format(have_plot_svg))
