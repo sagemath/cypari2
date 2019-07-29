@@ -28,10 +28,7 @@ from .gen cimport Gen, Gen_new
 from .paridecl cimport (avma, pari_mainstack, gnil, gcopy,
                         is_universal_constant, is_on_stack,
                         isclone, gclone, gclone_refc,
-                        paristack_setsize)
-
-from warnings import warn
-
+                        paristack_setsize, gerepile)
 
 cdef extern from *:
     int sig_on_count "cysigs.sig_on_count"
@@ -51,6 +48,7 @@ cdef PyObject* stackbottom = <PyObject*>top_of_stack
 
 cdef void remove_from_pari_stack(Gen self):
     global avma, stackbottom
+    cdef int repiled = False
     if <PyObject*>self is not stackbottom:
         print("ERROR: removing wrong instance of Gen")
         print(f"Expected: {<object>stackbottom}")
@@ -64,12 +62,13 @@ cdef void remove_from_pari_stack(Gen self):
             print(f"Expected: 0x{self.sp():x}")
             print(f"Actual:   0x{avma:x}")
         else:
-            warn(f"cypari2 leaked {self.sp() - avma} bytes on the PARI stack",
-                 RuntimeWarning, stacklevel=2)
+            gerepile(self.sp() + self.sizebyte(), self.sp(), self.g)
+            repiled = True
     n = self.next
     stackbottom = <PyObject*>n
     self.next = None
-    reset_avma()
+    if not repiled:
+        reset_avma()
 
 
 cdef inline Gen Gen_stack_new(GEN x):
@@ -273,7 +272,7 @@ cdef class DetachGen:
         # delete src but do not change avma
         global avma
         cdef pari_sp av = avma
-        avma = src.sp()  # Avoid a warning when deallocating
+        avma = src.sp()  # Avoid repiling
         del src
         avma = av
         return res
