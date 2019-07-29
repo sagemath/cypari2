@@ -30,6 +30,9 @@ from .paridecl cimport (avma, pari_mainstack, gnil, gcopy,
                         isclone, gclone, gclone_refc,
                         paristack_setsize, gerepile)
 
+from sys import exc_info
+from warnings import warn
+
 cdef extern from *:
     int sig_on_count "cysigs.sig_on_count"
     int block_sigint "cysigs.block_sigint"
@@ -62,8 +65,12 @@ cdef void remove_from_pari_stack(Gen self):
             print(f"Expected: 0x{self.sp():x}")
             print(f"Actual:   0x{avma:x}")
         else:
-            gerepile(self.sp() + self.sizebyte(), self.sp(), self.g)
-            repiled = True
+            if exc_info()[0]:
+                warn(f"cypari2 leaked {self.sp() - avma} bytes on the PARI stack",
+                     RuntimeWarning, stacklevel=2)
+            else:
+                gerepile(self.sp() + self.sizebyte(), self.sp(), self.g)
+                repiled = True
     n = self.next
     stackbottom = <PyObject*>n
     self.next = None
