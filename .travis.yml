@@ -19,7 +19,9 @@ env:
     URLDIR=unix
   - PARI_VERSION=pari-2.11.1
     URLDIR=unix
-  - PARI_VERSION=pari-2.10.1.beta
+  - PARI_VERSION=pari-2.11.2
+    URLDIR=unix
+  - PARI_VERSION=pari-2.12.0.alpha
     URLDIR=unstable
   - PARI_VERSION=snapshot
     URLDIR=snapshots
