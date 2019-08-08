@@ -1936,8 +1936,7 @@ cdef class Gen(Gen_base):
 
     def __complex__(self):
         r"""
-        Return ``self`` as a Python ``complex``
-        value.
+        Return ``self`` as a Python ``complex`` value.
 
         Examples:
 
@@ -1951,18 +1950,40 @@ cdef class Gen(Gen_base):
         >>> complex(g)
         (0.8090169943749475+0.5877852522924731j)
 
+        >>> g = pari('2/3')
+        >>> complex(g)
+        (0.6666666666666666+0j)
+
+        >>> g = pari.quadgen(-23)
+        >>> complex(g)
+        (0.5+2.3979157616563596j)
+
+        >>> g = pari.quadgen(5) + pari('2/3')
+        >>> complex(g)
+        (2.2847006554165614+0j)
+
         >>> g = pari('Mod(3,5)'); g
         Mod(3, 5)
         >>> complex(g)
         Traceback (most recent call last):
         ...
-        PariError: incorrect type in greal/gimag (t_INTMOD)
+        PariError: incorrect type in gtofp (t_INTMOD)
         """
         cdef double re, im
         sig_on()
-        re = gtodouble(greal(self.g))
-        im = gtodouble(gimag(self.g))
-        sig_off()
+        # First convert to floating point (t_REAL or t_COMPLEX)
+        # Note: DEFAULTPREC means 64 bits of precision
+        fp = gtofp(self.g, DEFAULTPREC)
+        if typ(fp) == t_REAL:
+            re = rtodbl(fp)
+            im = 0
+        elif typ(fp) == t_COMPLEX:
+            re = gtodouble(gel(fp, 1))
+            im = gtodouble(gel(fp, 2))
+        else:
+            sig_off()
+            raise AssertionError("unrecognized output from gtofp()")
+        clear_stack()
         return complex(re, im)
 
     def __nonzero__(self):
