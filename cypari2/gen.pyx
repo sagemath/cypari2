@@ -3441,13 +3441,13 @@ cdef class Gen(Gen_base):
         >>> e.omega()
         [1.26920930427955, 0.634604652139777 - 1.45881661693850*I]
 
-        The precision is determined by the ``ellinit`` call::
+        The precision is determined by the ``ellinit`` call:
 
         >>> e = pari([0, -1, 1, -10, -20]).ellinit(precision=256)
         >>> e.omega().bitprecision()
         256
 
-        This also works over quadratic imaginary number fields::
+        This also works over quadratic imaginary number fields:
 
         >>> e = pari.ellinit([0, -1, 1, -10, -20], "nfinit(y^2 - 2)")
         >>> if pari.version() >= (2, 10, 1):
@@ -3913,7 +3913,7 @@ cdef class Gen(Gen_base):
         >>> pari('1/x + O(x^2)').eval(pari('O(x^3)'))
         Traceback (most recent call last):
         ...
-        PariError: impossible inverse in gdiv: O(x^3)
+        PariError: impossible inverse in ...
         >>> pari('O(x^0)').eval(0)
         Traceback (most recent call last):
         ...
@@ -3991,9 +3991,9 @@ cdef class Gen(Gen_base):
 
         >>> nf = pari('x^2 + 1').nfinit()
         >>> nf
-        [x^2 + 1, [0, 1], -4, 1, [Mat([1, 0.E-38 + 1.00000000000000*I]), [1, 1.00000000000000; 1, -1.00000000000000], [1, 1; 1, -1], [2, 0; 0, -2], [2, 0; 0, 2], [1, 0; 0, -1], [1, [0, -1; 1, 0]], [2]], [0.E-38 + 1.00000000000000*I], [1, x], [1, 0; 0, 1], [1, 0, 0, -1; 0, 1, 1, 0]]
+        [x^2 + 1, [0, 1], -4, 1, [Mat([1, 0.E-38 + 1.00000000000000*I]), [1, 1.00000000000000; 1, -1.00000000000000], ..., [2, 0; 0, -2], [2, 0; 0, 2], [1, 0; 0, -1], [1, [0, -1; 1, 0]], [2]], [0.E-38 + 1.00000000000000*I], [1, x], [1, 0; 0, 1], [1, 0, 0, -1; 0, 1, 1, 0]]
         >>> nf(x='y')
-        [y^2 + 1, [0, 1], -4, 1, [Mat([1, 0.E-38 + 1.00000000000000*I]), [1, 1.00000000000000; 1, -1.00000000000000], [1, 1; 1, -1], [2, 0; 0, -2], [2, 0; 0, 2], [1, 0; 0, -1], [1, [0, -1; 1, 0]], [2]], [0.E-38 + 1.00000000000000*I], [1, y], [1, 0; 0, 1], [1, 0, 0, -1; 0, 1, 1, 0]]
+        [y^2 + 1, [0, 1], -4, 1, [Mat([1, 0.E-38 + 1.00000000000000*I]), [1, 1.00000000000000; 1, -1.00000000000000], ..., [2, 0; 0, -2], [2, 0; 0, 2], [1, 0; 0, -1], [1, [0, -1; 1, 0]], [2]], [0.E-38 + 1.00000000000000*I], [1, y], [1, 0; 0, 1], [1, 0, 0, -1; 0, 1, 1, 0]]
 
         Tests:
 
@@ -4259,8 +4259,6 @@ cdef class Gen(Gen_base):
         >>> from cypari2 import Pari
         >>> pari = Pari()
 
-        >>> pari('[2,1;2,1]').matker()
-        [-1/2; 1]
         >>> pari('[2,1;2,1]').matkerint()
         [1; -2]
         >>> import warnings

@@ -1,4 +1,4 @@
-dist: trusty
+dist: xenial
 sudo: required
 language: python
 notifications:
@@ -10,6 +10,8 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
+  - "3.7"
+  - "3.8"
 env:
   - PARI_VERSION=pari-2.9.4
     URLDIR=OLD/2.9
@@ -20,6 +22,8 @@ env:
   - PARI_VERSION=pari-2.11.1
     URLDIR=unix
   - PARI_VERSION=pari-2.11.2
+    URLDIR=unix
+  - PARI_VERSION=pari-2.11.3
     URLDIR=unix
   - PARI_VERSION=pari-2.12.0.alpha
     URLDIR=unstable
