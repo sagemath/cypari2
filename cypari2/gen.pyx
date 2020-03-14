@@ -3441,13 +3441,13 @@ cdef class Gen(Gen_base):
         >>> e.omega()
         [1.26920930427955, 0.634604652139777 - 1.45881661693850*I]
 
-        The precision is determined by the ``ellinit`` call::
+        The precision is determined by the ``ellinit`` call:
 
         >>> e = pari([0, -1, 1, -10, -20]).ellinit(precision=256)
         >>> e.omega().bitprecision()
         256
 
-        This also works over quadratic imaginary number fields::
+        This also works over quadratic imaginary number fields:
 
         >>> e = pari.ellinit([0, -1, 1, -10, -20], "nfinit(y^2 - 2)")
         >>> if pari.version() >= (2, 10, 1):
