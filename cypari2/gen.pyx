@@ -3229,7 +3229,7 @@ cdef class Gen(Gen_base):
         >>> pari = Pari()
 
         >>> x = pari('x')
-        >>> M = pari([[2*x + 5, x - 4], [-2*x^2 - 5*x, -x^2 + 4*x]])
+        >>> M = pari([[2*x + 5, x - 4], [-2*x**2 - 5*x, -x**2 + 4*x]])
         >>> M.ZabM_ker(pari.polcyclo(5), 5)
         [x; 1]
         """
@@ -3257,10 +3257,10 @@ cdef class Gen(Gen_base):
         >>> pari = Pari()
 
         >>> x = pari('x')
-        >>> M = pari([[2*x + 5, x - 4], [-2*x^2 - 5*x, -x^2 + 4*x]])
+        >>> M = pari([[2*x + 5, x - 4], [-2*x**2 - 5*x, -x**2 + 4*x]])
         >>> M.ZabM_indexrank(pari.polcyclo(5), 5)
         [Vecsmall([1]), Vecsmall([1])]
-        >>> M = pari([[2*x + 5, x - 3], [-2*x^2 - 5*x, -x^2 + 4*x]])
+        >>> M = pari([[2*x + 5, x - 3], [-2*x**2 - 5*x, -x**2 + 4*x]])
         >>> M.ZabM_indexrank(pari.polcyclo(5), 5)
         [Vecsmall([1, 2]), Vecsmall([1, 2])]
         """
