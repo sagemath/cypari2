@@ -98,6 +98,8 @@ class PariFunctionGenerator(object):
             False
             >>> G.can_handle_function("bnfinit", "bnfinit0", **{"class":"hard"})
             False
+            >>> G.can_handle_function("_.cyc", "member_cyc", **{"class":"basic"})
+            True
         """
         if not cname:
             # No corresponding C function => must be specific to GP or GP2C
@@ -105,6 +107,9 @@ class PariFunctionGenerator(object):
         if function in function_blacklist:
             # Blacklist specific troublesome functions
             return False
+        if function.startswith("_."):
+            # for member functions
+            function = "member_" + function[2:]
         if not function_re.match(function):
             # Not a legal function name, like "!_"
             return False
@@ -234,6 +239,10 @@ class PariFunctionGenerator(object):
         doc = get_rest_doc(function)
 
         self.write_declaration(cname, args, ret, self.decl_file)
+
+        if function.startswith("_."):
+            # for member functions
+            function = "member_" + function[2:]
 
         if len(args) > 0 and isinstance(args[0], PariArgumentGEN):
             # If the first argument is a GEN, write a method of the
