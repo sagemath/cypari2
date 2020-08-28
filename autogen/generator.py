@@ -56,7 +56,7 @@ from .types cimport *
 cdef extern from *:
 '''
 
-
+member_re = re.compile(r"^_\.[A-Za-z][A-Za-z0-9_]*$")
 function_re = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 function_blacklist = {"O",  # O(p^e) needs special parser support
         "alias",            # Not needed and difficult documentation
@@ -105,6 +105,8 @@ class PariFunctionGenerator(object):
         if function in function_blacklist:
             # Blacklist specific troublesome functions
             return False
+        if member_re.match(function):
+            function = cname
         if not function_re.match(function):
             # Not a legal function name, like "!_"
             return False
