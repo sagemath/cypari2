@@ -35,9 +35,12 @@ def read_pari_desc():
 
         >>> from autogen.parser import read_pari_desc
         >>> D = read_pari_desc()
-        >>> D["cos"] == { 'class': 'basic',
+        >>> Dcos = D["cos"]
+        >>> if "description" in Dcos: _ = Dcos.pop("description")
+        >>> Dcos.pop("doc").startswith('cosine of $x$.')
+        True
+        >>> Dcos == { 'class': 'basic',
         ...   'cname': 'gcos',
-        ...   'doc': 'cosine of $x$.',
         ...   'function': 'cos',
         ...   'help': 'cos(x): cosine of x.',
         ...   'prototype': 'Gp',

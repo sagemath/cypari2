@@ -263,12 +263,7 @@ def get_raw_doc(function):
         <BLANKLINE>
         @[label se:cos]
         Cosine of @[dollar]x@[dollar].
-        <BLANKLINE>
-        <BLANKLINE>
-        The library syntax is @[startcode]GEN @[startbold]gcos@[endbold](GEN x, long prec)@[endcode].
-        <BLANKLINE>
-        <BLANKLINE>
-        <BLANKLINE>
+        ...
         >>> get_raw_doc("abcde")
         Traceback (most recent call last):
         ...
