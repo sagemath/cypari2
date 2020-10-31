@@ -14,6 +14,8 @@ install:
 
 check:
 	ulimit -s 8192; $(PYTHON) -u tests/rundoctest.py
+	ulimit -s 8192; $(PYTHON) tests/test_integers.py
+	ulimit -s 8192; $(PYTHON) tests/test_backward.py
 
 dist:
 	chmod go+rX-w -R .
