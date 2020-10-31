@@ -27,28 +27,5 @@ class TestBackward(unittest.TestCase):
         self.assertEqual(pari('x*y^2 + 1').poldegree(pari('x')), 1)
         self.assertEqual(pari('x*y^2 + 1').poldegree(pari('y')), 2)
 
-    def test_nfbasis(self):
-        pari = cypari2.Pari()
-        x = pari('x')
-        third = pari('1/3')
-        self.assertEqual(pari(x**3 - 17).nfbasis(), [1, x, third*x**2 - third*x + third])
-
-        p = pari(10**10).nextprime()
-        q = (p+1).nextprime()
-        x = pari('x')
-        f = x**2 + p**2*q
-        # Correct result
-        frac = pari('1/10000000019')
-        self.assertEqual(pari(f).nfbasis(), [1, frac*x])
-
-        # Wrong result
-        self.assertEqual(pari.nfbasis([f,1]), [1, x])
-        # Check primes up to 10^6: wrong result
-        self.assertEqual(pari.nfbasis([f, 10**6]), [1, x])
-        # Correct result and faster
-        self.assertEqual(pari.nfbasis([f, pari("[2,2; %s,2]"%p)]), [1, frac*x])
-        # Equivalent with the above
-        self.assertEqual(pari.nfbasis([f, [2,p]]), [1, frac*x])
-
 if __name__ == '__main__':
     unittest.main()

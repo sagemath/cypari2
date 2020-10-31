@@ -2611,24 +2611,6 @@ cdef class Gen(Gen_base):
         """
         return self.new_ref(gel(self.fixGEN(), 2))
 
-    def precision(x, long n=-1):
-        """
-        Change the precision of `x` to be `n`, where `n` is an integer.
-        If `n` is omitted, output the real precision of `x`.
-
-        INPUT:
-
-        -  ``x`` - gen
-
-        -  ``n`` - (optional) int
-
-        OUTPUT: gen
-        """
-        if n <= 0:
-            return precision(x.g)
-        sig_on()
-        return new_gen(precision0(x.g, n))
-
     def round(x, bint estimate=False):
         """
         round(x,estimate=False): If x is a real number, returns x rounded
@@ -3686,6 +3668,19 @@ cdef class Gen(Gen_base):
         [1, 1/10000000019*x]
         >>> pari(f).nfbasis(fa=[2,p])              # Equivalent with the above
         [1, 1/10000000019*x]
+
+        The following alternative syntax closer to PARI/GP can be used
+
+        >>> pari.nfbasis([f, 1])
+        [1, x]
+        >>> pari.nfbasis(f)
+        [1, 1/10000000019*x]
+        >>> pari.nfbasis([f, 10**6])
+        [1, x]
+        >>> pari.nfbasis([f, "[2,2; %s,2]"%p])
+        [1, 1/10000000019*x]
+        >>> pari.nfbasis([f, [2,p]])
+        [1, 1/10000000019*x]
         """
         cdef Gen t0
         cdef GEN g0
@@ -4114,38 +4109,6 @@ cdef class Gen(Gen_base):
         cdef Gen t0 = objtogen(p)
         sig_on()
         return new_gen(factorpadic(self.g, t0.g, r))
-
-    def poldegree(self, var=None):
-        """
-        Return the degree of this polynomial.
-        """
-        sig_on()
-        n = poldegree(self.g, get_var(var))
-        sig_off()
-        return n
-
-    def polisirreducible(self):
-        """
-        f.polisirreducible(): Returns True if f is an irreducible
-        non-constant polynomial, or False if f is reducible or constant.
-        """
-        sig_on()
-        t = polisirreducible(self.g)
-        clear_stack()
-        return t != 0
-
-    def polroots(self, unsigned long precision=0):
-        """
-        Complex roots of the given polynomial using Schonhage's method,
-        as modified by Gourdon.
-        """
-        sig_on()
-        return new_gen(cleanroots(self.g, prec_bits_to_words(precision)))
-
-    def rnfisnorm(self, T, long flag=0):
-        cdef Gen t0 = objtogen(T)
-        sig_on()
-        return new_gen(rnfisnorm(t0.g, self.g, flag))
 
     def ncols(self):
         """
@@ -4699,20 +4662,14 @@ cpdef Gen objtogen(s):
 
     Conversion from reals uses the real's own precision:
 
-    >>> a = pari(1.2); a, a.type()
-    (1.20000000000000, 't_REAL')
-    >>> import sys
-    >>> bitness = '64' if sys.maxsize > (1 << 32) else '32'
-    >>> a.precision() == (4 if bitness == '32' else 3)
-    True
+    >>> a = pari(1.2); a, a.type(), a.bitprecision()
+    (1.20000000000000, 't_REAL', 64)
 
     Conversion from strings uses the current PARI real precision.
     By default, this is 64 bits:
 
-    >>> a = pari('1.2'); a, a.type()
-    (1.20000000000000, 't_REAL')
-    >>> a.precision() == (4 if bitness == '32' else 3)
-    True
+    >>> a = pari('1.2'); a, a.type(), a.bitprecision()
+    (1.20000000000000, 't_REAL', 64)
 
     Unicode and bytes work fine:
 
@@ -4725,11 +4682,10 @@ cpdef Gen objtogen(s):
 
     >>> pari.set_real_precision(35)  # precision in decimal digits
     15
-    >>> a = pari('1.2'); a, a.type()
-    (1.2000000000000000000000000000000000, 't_REAL')
-    >>> bitness = '64' if sys.maxsize > (1 << 32) else '32'
-    >>> a.precision() == (6 if bitness == '32' else 4)
-    True
+    >>> a = pari('Pi'); a, a.type(), a.bitprecision()
+    (3.1415926535897932384626433832795029, 't_REAL', 128)
+    >>> a = pari('1.2'); a, a.type(), a.bitprecision()
+    (1.2000000000000000000000000000000000, 't_REAL', 128)
 
     Set the precision to 15 digits for the remaining tests:
 
