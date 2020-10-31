@@ -15,7 +15,7 @@ Arguments for PARI calls
 from __future__ import unicode_literals
 
 # Some replacements for reserved words
-replacements = {'char': 'character'}
+replacements = {'char': 'character', 'return': 'return_value'}
 
 class PariArgument(object):
     """
@@ -339,6 +339,29 @@ class PariArgumentSeriesPrec(PariArgumentClass):
         s += "            {name} = precdl  # Global PARI series precision\n"
         return s.format(name=self.name)
 
+class PariArgumentGENPointer(PariArgumentObject):
+    default = "NULL"
+    def _typerepr(self):
+        return "GEN*"
+    def ctype(self):
+        return "GEN*"
+    def convert_code(self):
+        """
+        Conversion to NULL or Gen
+        """
+        s  = "        cdef bint _have_{name} = ({name} is not None)\n"
+        s += "        if _have_{name}:\n"
+        s += "            raise NotImplementedError(\"optional argument {name} not available\")\n"
+        return s.format(name=self.name)
+    def c_convert_code(self):
+        """
+        Conversion Gen -> GEN
+        """
+        s  = "        cdef GEN * {tmp} = NULL\n"
+        return s.format(name=self.name, tmp=self.tmpname)
+    def call_code(self):
+        return self.tmpname
+
 
 pari_arg_types = {
         'G': PariArgumentGEN,
@@ -351,9 +374,9 @@ pari_arg_types = {
         'p': PariArgumentPrec,
         'b': PariArgumentBitprec,
         'P': PariArgumentSeriesPrec,
+        '&': PariArgumentGENPointer,
 
     # Codes which are known but not actually supported yet
-        '&': None,
         'V': None,
         'I': None,
         'E': None,

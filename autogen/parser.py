@@ -21,7 +21,7 @@ from .ret import pari_ret_types
 from .paths import pari_share
 
 paren_re = re.compile(r"[(](.*)[)]")
-argname_re = re.compile(r"[ {]*([A-Za-z_][A-Za-z0-9_]*)")
+argname_re = re.compile(r"[ {]*&?([A-Za-z_][A-Za-z0-9_]*)")
 
 def read_pari_desc():
     """
@@ -101,6 +101,10 @@ def parse_prototype(proto, help, initial_args=[]):
         >>> help = 'qfbred(x,{flag=0},{d},{isd},{sd})'
         >>> parse_prototype(proto, help)
         ([GEN x, long flag=0, GEN d=NULL, GEN isd=NULL, GEN sd=NULL], GEN)
+        >>> proto = "GD&"
+        >>> help = "sqrtint(x,{&r})"
+        >>> parse_prototype(proto, help)
+        ([GEN x, GEN* r=NULL], GEN)
         >>> parse_prototype("lp", "foo()", [str("TEST")])
         (['TEST', prec precision=0], long)
     """
