@@ -134,11 +134,14 @@ cdef extern from *:
     #endif
 
     #if PARI_VERSION_CODE >= PARI_VERSION(2, 12, 0)
-    #define nfbasis(x, yptr, p) nfbasis(mkvec2(x, p), yptr)
+    #define old_nfbasis(x, yptr, p) nfbasis(mkvec2(x, p), yptr)
+    #else
+    #define old_nfbasis nfbasis
     #endif
     """
     GEN new_nf_nfzk(GEN nf, GEN rnfeq)
     GEN new_nfeltup(GEN nf, GEN x, GEN zknf)
+    GEN old_nfbasis(GEN x, GEN * y, GEN p)
 
 
 cdef class Gen(Gen_base):
@@ -3692,7 +3695,7 @@ cdef class Gen(Gen_base):
         else:
             g0 = NULL
         sig_on()
-        return new_gen(nfbasis(self.g, NULL, g0))
+        return new_gen(old_nfbasis(self.g, NULL, g0))
 
     def nfbasis_d(self, long flag=0, fa=None):
         """
@@ -3726,7 +3729,7 @@ cdef class Gen(Gen_base):
         else:
             g0 = NULL
         sig_on()
-        ans = nfbasis(self.g, &disc, g0)
+        ans = old_nfbasis(self.g, &disc, g0)
         return new_gens2(ans, disc)
 
     def nfbasistoalg_lift(nf, x):
