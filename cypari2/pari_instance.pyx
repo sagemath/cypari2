@@ -491,7 +491,8 @@ cdef class Pari(Pari_auto):
 
         # Take 1MB as minimal stack. Use maxprime=0, which PARI will
         # internally increase to some small value like 65537.
-        pari_init_opts(1000000, 0, INIT_DFTm)
+        # (see function initprimes in src/language/forprime.c)
+        pari_init_opts(1000000 * sizeof(long), 0, INIT_DFTm)
         after_resize()
 
         # Disable PARI's stack overflow checking which is incompatible
@@ -557,7 +558,7 @@ cdef class Pari(Pari_auto):
 
         When the PARI system is already initialized, the PARI stack is only
         grown if ``size`` is greater than the current stack, and the table
-        of primes is only computed is ``maxprime`` is larger than the current
+        of primes is only computed if ``maxprime`` is larger than the current
         bound.
 
         Examples:
@@ -574,6 +575,11 @@ cdef class Pari(Pari_auto):
         >>> pari2 = Pari(10**6)
         >>> pari.stacksize(), pari2.stacksize()
         (10000000, 10000000)
+
+        >>> Pari().default("primelimit")
+        500000
+        >>> Pari(maxprime=20000).default("primelimit")
+        20000
 
         For more information about how precision works in the PARI
         interface, see :mod:`cypari2.pari_instance`.
@@ -603,6 +609,7 @@ cdef class Pari(Pari_auto):
         set_pari_stack_size(size, sizemax)
 
         # Increase the table of primes if needed
+        GP_DATA.primelimit = maxprime
         self.init_primes(maxprime)
 
         # Initialize some constants
@@ -1042,15 +1049,15 @@ cdef class Pari(Pari_auto):
         >>> pari = cypari2.Pari()
         >>> pari.init_primes(200000)
 
-        We make sure that ticket :trac:`11741` has been fixed::
+        We make sure that ticket :trac:`11741` has been fixed:
 
-            >>> pari.init_primes(2**30)
-            Traceback (most recent call last):
-            ...
-            ValueError: Cannot compute primes beyond 436273290
+        >>> pari.init_primes(2**30)
+        Traceback (most recent call last):
+        ...
+        ValueError: Cannot compute primes beyond 436273290
         """
-        # Hardcoded bound in PARI sources
-        if M > 436273290:
+        # Hardcoded bound in PARI sources (language/forprime.c)
+        if M > 436273289:
             raise ValueError("Cannot compute primes beyond 436273290")
 
         if M <= maxprime():

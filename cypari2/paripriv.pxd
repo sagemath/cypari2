@@ -23,6 +23,7 @@ cdef extern from "pari/paripriv.h":
     struct gp_data:
         pariout_t *fmt
         unsigned long flags
+        ulong primelimit    # deprecated
 
     extern gp_data* GP_DATA
 
