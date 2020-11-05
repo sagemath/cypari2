@@ -893,6 +893,76 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(member_zk(self.g))
 
+    def bnf_get_fu(self):
+        """
+        Return the fundamental units
+
+        Examples:
+
+        >>> from cypari2 import Pari
+        >>> pari = Pari()
+
+        >>> x = pari('x')
+
+        >>> (x**2 - 65).bnfinit().bnf_get_fu()
+        [Mod(x - 8, x^2 - 65)]
+        >>> (x**4 - x**2 + 1).bnfinit().bnf_get_fu()
+        [Mod(x - 1, x^4 - x^2 + 1)]
+        >>> p = x**8 - 40*x**6 + 352*x**4 - 960*x**2 + 576
+        >>> len(p.bnfinit().bnf_get_fu())
+        7
+        """
+        sig_on()
+        return clone_gen(member_fu(self.g))
+
+    def bnf_get_tu(self):
+        r"""
+        Return the torsion unit
+
+        Examples:
+
+        >>> from cypari2 import Pari
+        >>> pari = Pari()
+
+        >>> x = pari('x')
+
+        >>> for p in [x**2 - 65, x**4 - x**2 + 1, x**8 - 40*x**6 + 352*x**4 - 960*x**2 + 576]:
+        ...     bnf = p.bnfinit()
+        ...     n, z = bnf.bnf_get_tu()
+        ...     if pari.version() < (2,11,0) and z.lift().poldegree() == 0: z = z.lift()
+        ...     print([p, n, z])
+        [x^2 - 65, 2, -1]
+        [x^4 - x^2 + 1, 12, Mod(x, x^4 - x^2 + 1)]
+        [x^8 - 40*x^6 + 352*x^4 - 960*x^2 + 576, 2, -1]
+        """
+        sig_on()
+        return clone_gen(member_tu(self.g))
+
+    def bnfunit(self):
+        r"""
+        Deprecated in cypari 2.1.2
+
+        Examples:
+
+        >>> from cypari2 import Pari
+        >>> pari = Pari()
+
+
+        >>> x = pari('x')
+
+        >>> import warnings
+        >>> with warnings.catch_warnings(record=True) as w:
+        ...     warnings.simplefilter('always')
+        ...     funits = (x**2 - 65).bnfinit().bnfunit()
+        ...     assert len(w) == 1
+        ...     assert issubclass(w[0].category, DeprecationWarning)
+        >>> funits
+        [Mod(x - 8, x^2 - 65)]
+        """
+        from warnings import warn
+        warn("'bnfunit' in cypari2 is deprecated, use 'bnf_get_fu'", DeprecationWarning)
+        return self.bnf_get_fu()
+
     def bnf_get_no(self):
         """
         Returns the class number of ``self``, a "big number field" (``bnf``).
@@ -968,10 +1038,6 @@ cdef class Gen(Gen_base):
         """
         sig_on()
         return clone_gen(bnf_get_reg(self.g))
-
-    def bnfunit(self):
-        sig_on()
-        return clone_gen(bnf_get_fu(self.g))
 
     def idealmoddivisor(self, Gen ideal):
         """
