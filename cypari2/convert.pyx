@@ -59,7 +59,7 @@ cdef extern from *:
     ctypedef struct PyLongObject:
         digit* ob_digit
 
-    Py_ssize_t* Py_SIZE_PTR "&Py_SIZE"(object)
+    void __Pyx_SET_SIZE(object, Py_ssize_t)
 
 
 ########################################################################
@@ -450,13 +450,11 @@ cdef PyLong_FromINT(GEN g):
         if d:
             sizedigits_final = i+1
 
-    # Set correct size (use a pointer to hack around Cython's
-    # non-support for lvalues).
-    cdef Py_ssize_t* sizeptr = Py_SIZE_PTR(x)
+    # Set correct size
     if signe(g) > 0:
-        sizeptr[0] = sizedigits_final
+        __Pyx_SET_SIZE(x, sizedigits_final)
     else:
-        sizeptr[0] = -sizedigits_final
+        __Pyx_SET_SIZE(x, -sizedigits_final)
 
     return x
 
