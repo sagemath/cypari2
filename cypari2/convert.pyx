@@ -1,4 +1,5 @@
-# cython: cdivision = True
+# distutils: include_dirs = INCLUDE_DIRS
+# distutils: library_dirs = LIBRARY_DIRS
 """
 Convert PARI objects to/from Python/C native types
 **************************************************

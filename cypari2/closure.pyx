@@ -1,3 +1,5 @@
+# distutils: include_dirs = INCLUDE_DIRS
+# distutils: library_dirs = LIBDRARY_DIRS
 """
 Convert Python functions to PARI closures
 *****************************************

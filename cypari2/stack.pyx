@@ -1,3 +1,5 @@
+# distutils: include_dirs = INCLUDE_DIRS
+# distutils: library_dirs = LIBRARY_DIRS
 """
 Memory management for Gens on the PARI stack or the heap
 ********************************************************
