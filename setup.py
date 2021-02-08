@@ -3,14 +3,23 @@
 import os
 
 from setuptools import setup
-from distutils.command.build_ext import build_ext as _build_ext
+from setuptools.config import read_configuration
 from setuptools.command.bdist_egg import bdist_egg as _bdist_egg
 from setuptools.extension import Extension
+
+from distutils.command.build_ext import build_ext as _build_ext
 
 from autogen import rebuild
 from autogen.paths import include_dirs, library_dirs
 
 ext_kwds = dict(include_dirs=include_dirs(), library_dirs=library_dirs())
+
+# read setup keywords from setup.cfg
+dir_path = os.path.dirname(os.path.realpath(__file__))
+conf_dict = read_configuration(os.path.join(dir_path, "setup.cfg"))
+# NOTE: Python2.7 do not support multiple dictionaries unpacking
+setup_kwds = conf_dict['metadata']
+setup_kwds.update(conf_dict['options'])
 
 
 if "READTHEDOCS" in os.environ:
@@ -64,20 +73,13 @@ with open('VERSION') as f:
 
 
 setup(
-    name='cypari2',
     version=VERSION,
     setup_requires=['Cython>=0.29'],
     install_requires=['cysignals>=1.7'],
-    description="A Python interface to the number theory library PARI/GP",
     long_description=README,
-    url="https://github.com/sagemath/cypari2",
-    author="Luca De Feo, Vincent Delecroix, Jeroen Demeyer, Vincent Klein",
-    author_email="sage-devel@googlegroups.com",
-    license='GNU General Public License, version 2 or later',
     ext_modules=[Extension("*", ["cypari2/*.pyx"], **ext_kwds)],
-    keywords='PARI/GP number theory',
-    packages=['cypari2'],
     package_dir={'cypari2': 'cypari2'},
     package_data={'cypari2': ['declinl.pxi', '*.pxd', '*.h']},
-    cmdclass=dict(build_ext=build_ext, bdist_egg=no_egg)
+    cmdclass=dict(build_ext=build_ext, bdist_egg=no_egg),
+    **setup_kwds
 )
