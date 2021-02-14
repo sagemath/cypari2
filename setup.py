@@ -15,7 +15,13 @@ conf_dict = read_configuration(os.path.join(dir_path, "setup.cfg"))
 # NOTE: Python2.7 do not support multiple dictionaries unpacking
 setup_kwds = conf_dict['metadata']
 setup_kwds.update(conf_dict['options'])
-
+# NOTE: Python2.7 parser for setup.cfg does not support wildcards. We
+# manually update setup_kwds here
+#
+# [options.package_data]
+#     cypari2 = *.pxd, *.h
+#
+setup_kwds['package_data'] = {'cypari2': ['*.pxd', '*.h']}
 
 if "READTHEDOCS" in os.environ:
     # When building with readthedocs, disable optimizations to decrease
@@ -72,21 +78,12 @@ class no_egg(_bdist_egg):
         raise DistutilsOptionError("The package cypari2 will not function correctly when built as egg. Therefore, it cannot be installed using 'python setup.py install' or 'easy_install'. Instead, use 'pip install' to install cypari2.")
 
 
-with open('README.rst') as f:
-    README = f.read()
-
-with open('VERSION') as f:
-    VERSION = f.read().strip()
-
-
 setup(
     version=VERSION,
     setup_requires=['Cython>=0.29'],
     install_requires=['cysignals>=1.7'],
     long_description=README,
     ext_modules=[Extension("*", ["cypari2/*.pyx"])],
-    package_dir={'cypari2': 'cypari2'},
-    package_data={'cypari2': ['declinl.pxi', '*.pxd', '*.h']},
     cmdclass=dict(build_ext=build_ext, bdist_egg=no_egg),
     **setup_kwds
 )
