@@ -66,8 +66,8 @@ class build_ext(_build_ext):
         self.distribution.ext_modules[:] = cythonize(
             self.distribution.ext_modules,
             compiler_directives=self.compiler_directives,
-            aliases={'include_dirs': self.compiler_include_dirs,
-                     'library_dirs': self.compiler_library_dirs}
+            aliases={'INCLUDE_DIRS': self.compiler_include_dirs,
+                     'LIBRARY_DIRS': self.compiler_library_dirs}
             )
 
         _build_ext.run(self)
