@@ -1,27 +1,22 @@
 #!/usr/bin/env python
 
-import os
+import sys, os
 
 from setuptools import setup
-from setuptools.config import read_configuration
 from setuptools.command.bdist_egg import bdist_egg as _bdist_egg
 from setuptools.extension import Extension
 
 from distutils.command.build_ext import build_ext as _build_ext
 
-# read setup keywords from setup.cfg
-dir_path = os.path.dirname(os.path.realpath(__file__))
-conf_dict = read_configuration(os.path.join(dir_path, "setup.cfg"))
-# NOTE: Python2.7 do not support multiple dictionaries unpacking
-setup_kwds = conf_dict['metadata']
-setup_kwds.update(conf_dict['options'])
 # NOTE: Python2.7 parser for setup.cfg does not support wildcards. We
 # manually update setup_kwds here
 #
 # [options.package_data]
 #     cypari2 = *.pxd, *.h
 #
-setup_kwds['package_data'] = {'cypari2': ['*.pxd', '*.h']}
+setup_kwds = {
+    'package_data': {'cypari2': ['*.pxd', '*.h']}
+}
 
 if "READTHEDOCS" in os.environ:
     # When building with readthedocs, disable optimizations to decrease
@@ -42,8 +37,8 @@ class build_ext(_build_ext):
 
         # Let the current repository be part of the module search
         # (otherwise autogen is not found)
-        import sys
-        sys.path.append(os.curdir)
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        sys.path.append(dir_path)
 
         # Generate auto-generated sources from pari.desc
         from autogen import rebuild
