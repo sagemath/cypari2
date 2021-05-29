@@ -40,6 +40,8 @@ def pari_share():
         >>> os.path.isfile(os.path.join(pari_share(), "pari.desc"))
         True
     """
+    if "PARI_SHARE" in os.environ:
+        return os.environ["PARI_SHARE"]
     from subprocess import Popen, PIPE
     if not gppath:
         raise EnvironmentError("cannot find an installation of PARI/GP: make sure that the 'gp' program is in your $PATH")
