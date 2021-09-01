@@ -1,3 +1,4 @@
+# distutils: libraries = pari
 """
 Declarations for types used by PARI
 
