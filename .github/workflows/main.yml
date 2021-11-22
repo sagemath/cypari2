@@ -33,6 +33,8 @@ jobs:
               bash -x .travis-install-pari.sh
         - name: Local build
           run: |
+            make build
+            make install
             make check
             pip install sphinx
             (cd docs && make html)
