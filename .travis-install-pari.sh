@@ -3,7 +3,19 @@
 # Exit on error
 set -e
 
+if [ "$PARI_VERSION" = snapshot ]; then
+    URLDIR=snapshots
+fi
+
+if [ "$URLDIR" = "" ]; then
+    PURE_VERSION=${PARI_VERSION/pari-}
+    URLDIR=OLD/${PURE_VERSION%.*}
+fi
+
 PARI_URL="http://pari.math.u-bordeaux.fr/pub/pari/$URLDIR"
+PARI_URL1="http://pari.math.u-bordeaux.fr/pub/pari/unix"
+PARI_URL2="http://pari.math.u-bordeaux.fr/pub/pari/unstable"
+PARI_URL3="http://pari.math.u-bordeaux.fr/pub/pari/snapshot"
 
 # Figure out PARI version and download location
 # Note that we support giving a list of URLs
@@ -14,7 +26,7 @@ if [ "$PARI_VERSION" = snapshot ]; then
 fi
 
 # Download PARI sources
-wget --no-verbose "$PARI_URL/$PARI_VERSION.tar.gz"
+wget --no-verbose "$PARI_URL/$PARI_VERSION.tar.gz" || wget --no-verbose "$PARI_URL1/$PARI_VERSION.tar.gz" || wget --no-verbose "$PARI_URL2/$PARI_VERSION.tar.gz" || wget --no-verbose "$PARI_URL3/$PARI_VERSION.tar.gz"
 
 # Install
 tar xzf "$PARI_VERSION.tar.gz"

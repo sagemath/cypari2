@@ -1,0 +1,42 @@
+name: cypari2
+
+on:
+    pull_request:
+        types: [opened, synchronize]
+    push:
+        tags:
+            - '*'
+    workflow_dispatch:
+        # Allow to run manually
+
+jobs:
+    build:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [ubuntu-latest]
+                python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
+                pari-version: ['pari-2.9.4', 'pari-2.9.5', 'pari-2.11.0', 'pari-2.11.0', 'pari-2.11.2', 'pari-2.11.3', 'pari-2.11.4', 'pari-2.13.0', 'snapshot']
+        env:
+          LC_ALL: C
+          PARI_VERSION: ${{ matrix.pari-version }}
+        steps:
+        - name: Set up the repository
+          uses: actions/checkout@v2
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v2
+          with:
+            python-version: ${{ matrix.python-version }}
+        - name: Install pari
+          run: |
+              ccache -M 256M && ccache -s
+              export PATH="/usr/lib/ccache:$PATH"
+              bash -x .travis-install-pari.sh
+        - name: Local build
+          run: |
+            pip install sphinx cython cysignals
+            make build
+            make install
+            make check
+            (cd docs && make html)
