@@ -1298,6 +1298,10 @@ cdef class Pari(Pari_auto):
             if len(entries) != m * n:
                 raise IndexError("len of entries (=%s) must be %s*%s=%s"%(len(entries),m,n,m*n))
             k = 0
+
+            # Make sure that A is on the heap, before we assign clones to it.
+            A.fixGEN()
+
             for i in range(m):
                 for j in range(n):
                     sig_check()
@@ -1318,7 +1322,7 @@ cdef class Pari(Pari_auto):
 
         If the second argument `p` is specified, it must be a prime.
         Then only the local information at `p` is computed and returned.
-        
+
         Examples:
 
         >>> import cypari2
