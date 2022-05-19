@@ -125,7 +125,8 @@ cdef extern from "pari/pari.h":
     struct pariFILE
     struct pari_mt
     struct pari_stack
-    struct pari_thread
+    struct pari_thread:
+        pass
     struct pari_timer
     struct GENbin
     struct hashentry
