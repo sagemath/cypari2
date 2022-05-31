@@ -16,9 +16,11 @@ cdef int custom_signal_is_blocked():
     return PARI_SIGINT_block
 
 cdef void custom_signal_unblock():
+    global PARI_SIGINT_block
     PARI_SIGINT_block = 0
 
 cdef void custom_set_pending_signal(int sig):
+    global PARI_SIGINT_pending
     PARI_SIGINT_pending = sig
 
 def init_custom_block():
