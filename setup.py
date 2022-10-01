@@ -66,7 +66,7 @@ with open('VERSION') as f:
 setup(
     name='cypari2',
     version=VERSION,
-    setup_requires=['Cython>=0.28'],
+    setup_requires=['Cython>=0.29'],
     install_requires=['cysignals>=1.7'],
     description="A Python interface to the number theory library PARI/GP",
     long_description=README,

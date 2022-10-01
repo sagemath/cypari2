@@ -4,6 +4,7 @@ from .gen cimport Gen
 from cpython.int cimport PyInt_AS_LONG
 from cpython.float cimport PyFloat_AS_DOUBLE
 from cpython.complex cimport PyComplex_RealAsDouble, PyComplex_ImagAsDouble
+from cpython.longintrepr cimport py_long
 
 
 # Conversion PARI -> Python
@@ -59,7 +60,7 @@ cdef inline GEN doubles_to_COMPLEX(double re, double im):
 cdef inline GEN PyInt_AS_GEN(x):
     return stoi(PyInt_AS_LONG(x))
 
-cdef GEN PyLong_AS_GEN(x)
+cdef GEN PyLong_AS_GEN(py_long x)
 
 cdef inline GEN PyFloat_AS_GEN(x):
     return double_to_REAL(PyFloat_AS_DOUBLE(x))
