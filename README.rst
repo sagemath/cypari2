@@ -29,7 +29,7 @@ Requirements:
 - Python 2.7 or Python >= 3.4
 - pip
 - `cysignals <https://pypi.python.org/pypi/cysignals/>`_ >= 1.7
-- Cython >= 0.28
+- Cython >= 0.29
 
 Install cypari2 via the Python Package Index (PyPI) via
 
