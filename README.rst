@@ -129,6 +129,13 @@ same computations be done via
 The complete documentation of cypari2 is available at http://cypari2.readthedocs.io and
 the PARI/GP documentation at http://pari.math.u-bordeaux.fr/doc.html
 
+Changelog
+---------
+
+2.1.3
+
+- compatibility with Python 3.11 [`https://github.com/sagemath/cypari2/pull/120`]
+
 Contributing
 ------------
 
