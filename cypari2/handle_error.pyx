@@ -123,7 +123,7 @@ class PariError(RuntimeError):
         >>> pari('!@#$%^&*()')
         Traceback (most recent call last):
         ...
-        PariError: syntax error, unexpected invalid token
+        PariError: syntax error, unexpected ...
         """
         return self.errtext().rstrip(" .:")
 
