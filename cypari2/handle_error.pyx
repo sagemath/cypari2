@@ -123,7 +123,7 @@ class PariError(RuntimeError):
         >>> pari('!@#$%^&*()')
         Traceback (most recent call last):
         ...
-        PariError: syntax error, unexpected $undefined
+        PariError: syntax error, unexpected ...
         """
         return self.errtext().rstrip(" .:")
 
