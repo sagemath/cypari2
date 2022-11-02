@@ -35,7 +35,8 @@ jobs:
               bash -x .travis-install-pari.sh
         - name: Local build
           run: |
-            pip install sphinx cython cysignals
+            pip install sphinx cython
+            pip install git+http://github.com/sagemath/cysignals.git@general_signal_hook#egg=cysignals
             make build
             make install
             make check
