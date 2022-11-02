@@ -208,7 +208,7 @@ cpdef Gen objtoclosure(f):
     >>> mul([1], [2])
     Traceback (most recent call last):
     ...
-    PariError: call_python: forbidden multiplication t_VEC (1 elts) * t_VEC (1 elts)
+    PariError: call_python: ...
     """
     if not callable(f):
         raise TypeError("argument to objtoclosure() must be callable")

@@ -29,7 +29,7 @@ Requirements:
 - Python 2.7 or Python >= 3.4
 - pip
 - `cysignals <https://pypi.python.org/pypi/cysignals/>`_ >= 1.7
-- Cython >= 0.28
+- Cython >= 0.29
 
 Install cypari2 via the Python Package Index (PyPI) via
 
@@ -128,6 +128,13 @@ same computations be done via
 
 The complete documentation of cypari2 is available at http://cypari2.readthedocs.io and
 the PARI/GP documentation at http://pari.math.u-bordeaux.fr/doc.html
+
+Changelog
+---------
+
+2.1.3
+
+- compatibility with Python 3.11 [`https://github.com/sagemath/cypari2/pull/120`]
 
 Contributing
 ------------
