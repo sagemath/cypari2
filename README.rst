@@ -1,15 +1,11 @@
 CyPari 2
 ========
 
-.. image:: https://travis-ci.org/sagemath/cypari2.svg?branch=master
-    :target: https://travis-ci.org/sagemath/cypari2
 .. image:: https://readthedocs.org/projects/cypari2/badge/?version=latest
     :target: https://cypari2.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
 A Python interface to the number theory library `PARI/GP <http://pari.math.u-bordeaux.fr/>`_.
-
-This library supports both Python 2 and Python 3.
 
 Installation
 ------------
@@ -26,7 +22,7 @@ Using pip
 Requirements:
 
 - PARI/GP >= 2.9.4 (header files and library)
-- Python 2.7 or Python >= 3.4
+- Python >= 3.6
 - pip
 - `cysignals <https://pypi.python.org/pypi/cysignals/>`_ >= 1.7
 - Cython >= 0.29
@@ -39,7 +35,7 @@ Install cypari2 via the Python Package Index (PyPI) via
 
 (the optional option *--user* allows to install cypari2 for a single user
 and avoids using pip with administrator rights). Depending on your operating
-system the pip command might also be called pip2 or pip3.
+system the pip command might also be called pip3.
 
 If you want to try the development version use
 
@@ -128,13 +124,6 @@ same computations be done via
 
 The complete documentation of cypari2 is available at http://cypari2.readthedocs.io and
 the PARI/GP documentation at http://pari.math.u-bordeaux.fr/doc.html
-
-Changelog
----------
-
-2.1.3
-
-- compatibility with Python 3.11 [`https://github.com/sagemath/cypari2/pull/120`]
 
 Contributing
 ------------
