@@ -245,13 +245,11 @@ Reset default precision for the following tests:
 
 Test that interrupts work properly:
 
->>> pari.allocatemem(8000000, 2**29)
-PARI stack size set to 8000000 bytes, maximum size set to ...
 >>> from cysignals.alarm import alarm, AlarmInterrupt
 >>> for i in range(1, 11):
 ...     try:
 ...         alarm(i/11.0)
-...         pari.binomial(2**100, 2**22)
+...         pari("sumnum(x=1, sumnum(y=1, sumnum(z=1, 1 / (x + y + z)^4)))")
 ...     except AlarmInterrupt:
 ...         pass
 

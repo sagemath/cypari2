@@ -2561,7 +2561,7 @@ cdef class Gen(Gen_base):
 
         >>> pari('"~/subdir"').Strexpand()
         "..."
-        >>> pari('"$SHELL"').Strexpand()
+        >>> pari('"$HOME"').Strexpand()
         "..."
 
         Tests:
