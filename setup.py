@@ -8,15 +8,6 @@ from setuptools.extension import Extension
 
 from distutils.command.build_ext import build_ext as _build_ext
 
-# NOTE: Python2.7 parser for setup.cfg does not support wildcards. We
-# manually update setup_kwds here
-#
-# [options.package_data]
-#     cypari2 = *.pxd, *.h
-#
-setup_kwds = {
-    'package_data': {'cypari2': ['*.pxd', '*.h']}
-}
 
 if "READTHEDOCS" in os.environ:
     # When building with readthedocs, disable optimizations to decrease
@@ -74,11 +65,6 @@ class no_egg(_bdist_egg):
 
 
 setup(
-    version=VERSION,
-    setup_requires=['Cython>=0.29'],
-    install_requires=['cysignals>=1.7'],
-    long_description=README,
     ext_modules=[Extension("*", ["cypari2/*.pyx"])],
-    cmdclass=dict(build_ext=build_ext, bdist_egg=no_egg),
-    **setup_kwds
+    cmdclass=dict(build_ext=build_ext, bdist_egg=no_egg)
 )
