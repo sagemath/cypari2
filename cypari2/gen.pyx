@@ -1,5 +1,3 @@
-# distutils: include_dirs = INCLUDE_DIRS
-# distutils: library_dirs = LIBRARY_DIRS
 """
 The Gen class wrapping PARI's GEN type
 **************************************
