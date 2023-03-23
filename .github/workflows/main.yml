@@ -9,12 +9,11 @@ on:
 
 jobs:
     build:
-        runs-on: ${{ matrix.os }}
+        runs-on: ubuntu-latest
         strategy:
             fail-fast: false
             matrix:
-                os: [ubuntu-latest]
-                python-version: ['3.6', '3.10', '3.11']
+                python-version: ['3.7', '3.10', '3.11']
                 pari-version: ['pari-2.9.5', 'pari-2.11.4', 'pari-2.13.0', 'pari-2.15.1']
         env:
           LC_ALL: C
