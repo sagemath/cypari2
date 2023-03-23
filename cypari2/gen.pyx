@@ -14,27 +14,27 @@ AUTHORS:
   handling.
 
 - Robert Bradshaw, Jeroen Demeyer, William Stein (2010-08-15):
-  Upgrade to PARI 2.4.3 (:trac:`9343`)
+  Upgrade to PARI 2.4.3 (:sage-gh-issue:`9343`)
 
 - Jeroen Demeyer (2011-11-12): rewrite various conversion routines
-  (:trac:`11611`, :trac:`11854`, :trac:`11952`)
+  (:sage-gh-issue:`11611`, :sage-gh-issue:`11854`, :sage-gh-issue:`11952`)
 
 - Peter Bruin (2013-11-17): move Pari to a separate file
-  (:trac:`15185`)
+  (:sage-gh-issue:`15185`)
 
-- Jeroen Demeyer (2014-02-09): upgrade to PARI 2.7 (:trac:`15767`)
+- Jeroen Demeyer (2014-02-09): upgrade to PARI 2.7 (:sage-gh-issue:`15767`)
 
-- Martin von Gagern (2014-12-17): Added some Galois functions (:trac:`17519`)
+- Martin von Gagern (2014-12-17): Added some Galois functions (:sage-gh-issue:`17519`)
 
-- Jeroen Demeyer (2015-01-12): upgrade to PARI 2.8 (:trac:`16997`)
+- Jeroen Demeyer (2015-01-12): upgrade to PARI 2.8 (:sage-gh-issue:`16997`)
 
 - Jeroen Demeyer (2015-03-17): automatically generate methods from
-  ``pari.desc`` (:trac:`17631` and :trac:`17860`)
+  ``pari.desc`` (:sage-gh-issue:`17631` and :sage-gh-issue:`17860`)
 
 - Kiran Kedlaya (2016-03-23): implement infinity type
 
 - Luca De Feo (2016-09-06): Separate Sage-specific components from
-  generic C-interface in ``Pari`` (:trac:`20241`)
+  generic C-interface in ``Pari`` (:sage-gh-issue:`20241`)
 
 - Vincent Delecroix (2017-04-29): Python 3 support and doctest
   conversion
@@ -1618,7 +1618,7 @@ cdef class Gen(Gen_base):
 
         Tests:
 
-        Check that :trac:`16127` has been fixed:
+        Check that :sage-gh-issue:`16127` has been fixed:
 
         >>> pari('1/2') < pari('1/3')
         False
@@ -4041,7 +4041,7 @@ cdef class Gen(Gen_base):
         >>> f()
         [0, 0, 1.00000000000000]
 
-        Variadic closures are supported as well (:trac:`18623`):
+        Variadic closures are supported as well (:sage-gh-issue:`18623`):
 
         >>> f = pari("(v[..])->length(v)")
         >>> f('a', f)

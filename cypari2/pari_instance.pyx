@@ -15,23 +15,23 @@ AUTHORS:
   handling.
 
 - Robert Bradshaw, Jeroen Demeyer, William Stein (2010-08-15):
-  Upgrade to PARI 2.4.3 (:trac:`9343`)
+  Upgrade to PARI 2.4.3 (:sage-gh-issue:`9343`)
 
 - Jeroen Demeyer (2011-11-12): rewrite various conversion routines
-  (:trac:`11611`, :trac:`11854`, :trac:`11952`)
+  (:sage-gh-issue:`11611`, :sage-gh-issue:`11854`, :sage-gh-issue:`11952`)
 
 - Peter Bruin (2013-11-17): split off this file from gen.pyx
-  (:trac:`15185`)
+  (:sage-gh-issue:`15185`)
 
-- Jeroen Demeyer (2014-02-09): upgrade to PARI 2.7 (:trac:`15767`)
+- Jeroen Demeyer (2014-02-09): upgrade to PARI 2.7 (:sage-gh-issue:`15767`)
 
-- Jeroen Demeyer (2014-09-19): upgrade to PARI 2.8 (:trac:`16997`)
+- Jeroen Demeyer (2014-09-19): upgrade to PARI 2.8 (:sage-gh-issue:`16997`)
 
 - Jeroen Demeyer (2015-03-17): automatically generate methods from
-  ``pari.desc`` (:trac:`17631` and :trac:`17860`)
+  ``pari.desc`` (:sage-gh-issue:`17631` and :sage-gh-issue:`17860`)
 
 - Luca De Feo (2016-09-06): Separate Sage-specific components from
-  generic C-interface in ``Pari`` (:trac:`20241`)
+  generic C-interface in ``Pari`` (:sage-gh-issue:`20241`)
 
 Examples:
 
@@ -226,7 +226,7 @@ Check that the documentation is generated correctly:
 'The constant :math:`\\pi` ...'
 
 Check that output from PARI's print command is actually seen by
-Python (:trac:`9636`):
+Python (:sage-gh-issue:`9636`):
 
 >>> pari('print("test")')
 test
@@ -1049,7 +1049,7 @@ cdef class Pari(Pari_auto):
         >>> pari = cypari2.Pari()
         >>> pari.init_primes(200000)
 
-        We make sure that ticket :trac:`11741` has been fixed:
+        We make sure that ticket :sage-gh-issue:`11741` has been fixed:
 
         >>> pari.init_primes(2**30)
         Traceback (most recent call last):

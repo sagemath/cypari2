@@ -32,7 +32,7 @@ jobs:
               bash -x .install-pari.sh
         - name: Local build
           run: |
-            pip install sphinx cython cysignals
+            pip install sphinx>=4.0 cython cysignals
             make build
             make install
             make check

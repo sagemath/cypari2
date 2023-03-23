@@ -4,9 +4,9 @@ Handling PARI errors
 
 AUTHORS:
 
-- Peter Bruin (September 2013): initial version (:trac:`9640`)
+- Peter Bruin (September 2013): initial version (:sage-gh-issue:`9640`)
 
-- Jeroen Demeyer (January 2015): use ``cb_pari_err_handle`` (:trac:`14894`)
+- Jeroen Demeyer (January 2015): use ``cb_pari_err_handle`` (:sage-gh-issue:`14894`)
 
 """
 

@@ -25,7 +25,7 @@
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
-needs_sphinx = '1.6'
+needs_sphinx = '4.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -68,7 +68,7 @@ release = version
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -160,15 +160,14 @@ texinfo_documents = [
 
 # Links to external resources (copied from Sage)
 extlinks = {
-    'trac': ('https://trac.sagemath.org/%s', 'Sage ticket #'),
-    'wikipedia': ('https://en.wikipedia.org/wiki/%s', 'Wikipedia article '),
-    'arxiv': ('http://arxiv.org/abs/%s', 'Arxiv '),
-    'oeis': ('https://oeis.org/%s', 'OEIS sequence '),
-    'doi': ('https://dx.doi.org/%s', 'doi:'),
-    'pari': ('http://pari.math.u-bordeaux.fr/dochtml/help/%s', 'pari:'),
-    'mathscinet': ('http://www.ams.org/mathscinet-getitem?mr=%s', 'MathSciNet ')
-    }
-
+    'sage-gh-issue': ('https://github.com/sagemath/sage/issues/%s', 'sage github issue #%s'),
+    'wikipedia': ('https://en.wikipedia.org/wiki/%s', 'Wikipedia article %s'),
+    'arxiv': ('https://arxiv.org/abs/%s', 'arXiv %s'),
+    'oeis': ('https://oeis.org/%s', 'OEIS sequence %s'),
+    'doi': ('https://doi.org/%s', 'doi:%s'),
+    'pari': ('https://pari.math.u-bordeaux.fr/dochtml/help/%s', 'pari:%s'),
+    'mathscinet': ('https://www.ams.org/mathscinet-getitem?mr=%s', 'MathSciNet %s')
+}
 
 # Monkey-patch inspect with Cython support
 def isfunction(obj):
