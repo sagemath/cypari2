@@ -59,7 +59,7 @@ from __future__ import absolute_import, division, print_function
 
 cimport cython
 
-from cpython.object cimport (Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, Py_GT,
+from cpython.object cimport (Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT,
         PyTypeObject)
 
 from cysignals.memory cimport sig_free, check_malloc
@@ -69,8 +69,7 @@ from .types cimport *
 from .string_utils cimport to_string, to_bytes
 from .paripriv cimport *
 from .convert cimport PyObject_AsGEN, gen_to_integer
-from .pari_instance cimport (prec_bits_to_words, prec_words_to_bits,
-                             default_bitprec, get_var)
+from .pari_instance cimport (prec_bits_to_words, get_var)
 from .stack cimport (new_gen, new_gens2, new_gen_noclear,
                      clone_gen, clear_stack, reset_avma,
                      remove_from_pari_stack, move_gens_to_heap)
@@ -871,8 +870,8 @@ cdef class Gen(Gen_base):
         return [r1, r2]
 
     def nf_get_zk(self):
-        """
-        Returns a vector with a `\ZZ`-basis for the ring of integers of
+        r"""
+        Return a vector with a `\ZZ`-basis for the ring of integers of
         this number field. The first element is always `1`.
 
         INPUT:
@@ -1074,8 +1073,8 @@ cdef class Gen(Gen_base):
         return new_gen(idealmoddivisor(self.g, ideal.g))
 
     def pr_get_p(self):
-        """
-        Returns the prime of `\ZZ` lying below this prime ideal.
+        r"""
+        Return the prime of `\ZZ` lying below this prime ideal.
 
         NOTE: ``self`` must be a PARI prime ideal (as returned by
         ``idealprimedec`` for example).
@@ -1096,8 +1095,8 @@ cdef class Gen(Gen_base):
         return clone_gen(pr_get_p(self.g))
 
     def pr_get_e(self):
-        """
-        Returns the ramification index (over `\QQ`) of this prime ideal.
+        r"""
+        Return the ramification index (over `\QQ`) of this prime ideal.
 
         NOTE: ``self`` must be a PARI prime ideal (as returned by
         ``idealprimedec`` for example).
@@ -1123,8 +1122,8 @@ cdef class Gen(Gen_base):
         return e
 
     def pr_get_f(self):
-        """
-        Returns the residue class degree (over `\QQ`) of this prime ideal.
+        r"""
+        Return the residue class degree (over `\QQ`) of this prime ideal.
 
         NOTE: ``self`` must be a PARI prime ideal (as returned by
         ``idealprimedec`` for example).
@@ -1515,7 +1514,7 @@ cdef class Gen(Gen_base):
         >>> type(v[0])
         <... 'cypari2.gen.Gen'>
         """
-        cdef Py_ssize_t i, j, step
+        cdef Py_ssize_t i, j
         cdef Gen x = objtogen(y)
 
         if isinstance(n, tuple):
@@ -1925,7 +1924,6 @@ cdef class Gen(Gen_base):
         """
         # TODO: deprecate
         cdef long n
-        cdef Gen t
 
         if typ(self.g) != t_VEC and typ(self.g) != t_COL:
             raise TypeError("Object (=%s) must be of type t_VEC or t_COL." % self)
@@ -2730,7 +2728,6 @@ cdef class Gen(Gen_base):
         >>> pari('(2.4*x^2 - 1.7)/x').truncate()
         2.40000000000000*x
         """
-        cdef int n
         cdef long e
         cdef Gen y
         sig_on()
@@ -3142,7 +3139,6 @@ cdef class Gen(Gen_base):
         """
         cdef GEN G
         cdef long t
-        cdef Gen g
         sig_on()
         if find_root:
             t = itos(gissquareall(x.g, &G))
@@ -3445,7 +3441,7 @@ cdef class Gen(Gen_base):
         return new_gens2(x, y)
 
     def elltors(self):
-        """
+        r"""
         Return information about the torsion subgroup of the given
         elliptic curve.
 
@@ -3454,7 +3450,6 @@ cdef class Gen(Gen_base):
         -  ``e`` - elliptic curve over `\QQ`
 
         OUTPUT:
-
 
         -  ``gen`` - the order of the torsion subgroup, a.k.a.
            the number of points of finite order
@@ -3465,7 +3460,6 @@ cdef class Gen(Gen_base):
 
         -  ``gen`` - vector giving points on e generating these
            cyclic groups
-
 
         Examples:
 
@@ -3692,7 +3686,7 @@ cdef class Gen(Gen_base):
         return v
 
     def nfbasis(self, long flag=0, fa=None):
-        """
+        r"""
         Integral basis of the field `\QQ[a]`, where ``a`` is a root of
         the polynomial x.
 
@@ -4157,7 +4151,7 @@ cdef class Gen(Gen_base):
         3
         """
         if typ(self.g) != t_CLOSURE:
-            raise TypeError(f"arity() requires a t_CLOSURE")
+            raise TypeError("arity() requires a t_CLOSURE")
         return closure_arity(self.g)
 
     def factorpadic(self, p, long r=20):

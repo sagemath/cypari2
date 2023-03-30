@@ -1024,7 +1024,6 @@ cdef extern from *:     # PARI headers already included by types.pxd
     long    poliscyclo(GEN f)
     long    poliscycloprod(GEN f)
 
-
     # RgV.c
 
     GEN     Rg_RgC_sub(GEN a, GEN x)
@@ -3171,7 +3170,6 @@ cdef extern from *:     # PARI headers already included by types.pxd
     long    z_pval(long n, GEN p)
     long    z_pvalrem(long n, GEN p, long *py)
 
-
     # gen3.c
 
     GEN     padic_to_Q(GEN x)
@@ -3526,7 +3524,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     void    shiftaddress_canon(GEN x, long dec)
     long    timer()
     long    timer2()
-    void    traverseheap( void(*f)(GEN, void *), void *data )
+    void    traverseheap(void(*f)(GEN, void *), void *data)
 
     # intnum.c
 
