@@ -1,0 +1,8 @@
+[build-system]
+requires = ["setuptools",
+            "Cython>=0.29",
+            "cysignals>=1.7"]
+# We need access to the autogen package at build time.
+# Hence we declare a custom build backend.
+build-backend = "_custom_build_meta"  # just re-exports setuptools.build_meta definitions
+backend-path = ["."]
