@@ -36,6 +36,8 @@ class build_ext(_build_ext):
             "binding": True,
             "cdivision": True,
             "language_level": 2,
+            "legacy_implicit_noexcept": True,
+            "c_api_binop_methods": True,
         }
 
         _build_ext.finalize_options(self)
