@@ -6,9 +6,6 @@ PYTHON = python
 PIP = $(PYTHON) -m pip -v
 
 
-build:
-	$(PYTHON) setup.py build
-
 install:
 	$(PIP) install --no-index --upgrade --no-build-isolation .
 
