@@ -14,8 +14,8 @@ jobs:
             fail-fast: false
             matrix:
                 os: [ubuntu-latest]
-                python-version: ['3.6', '3.10', '3.11']
-                pari-version: ['pari-2.9.5', 'pari-2.11.4', 'pari-2.13.0', 'pari-2.15.1']
+                python-version: ['3.10', '3.11']
+                pari-version: ['pari-2.11.4', 'pari-2.13.0', 'pari-2.15.4']
         env:
           LC_ALL: C
           PARI_VERSION: ${{ matrix.pari-version }}
@@ -28,13 +28,10 @@ jobs:
             python-version: ${{ matrix.python-version }}
         - name: Install pari
           run: |
-              ccache -M 256M && ccache -s
-              export PATH="/usr/lib/ccache:$PATH"
               bash -x .install-pari.sh
         - name: Local build
           run: |
-            pip install sphinx cython cysignals
-            make build
             make install
             make check
+            pip install sphinx
             (cd docs && make html)

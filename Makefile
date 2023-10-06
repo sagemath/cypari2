@@ -6,11 +6,8 @@ PYTHON = python
 PIP = $(PYTHON) -m pip -v
 
 
-build:
-	$(PYTHON) setup.py build
-
 install:
-	$(PIP) install --no-index --upgrade .
+	$(PIP) install --upgrade .
 
 check:
 	ulimit -s 8192; $(PYTHON) -u tests/rundoctest.py
@@ -19,7 +16,8 @@ check:
 
 dist:
 	chmod go+rX-w -R .
-	umask 0022 && $(PYTHON) setup.py sdist --formats=gztar
+	$(PIP) install build
+	umask 0022 && $(PYTHON) -m build --sdist
 
 
-.PHONY: build install check dist
+.PHONY: install check dist

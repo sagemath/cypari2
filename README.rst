@@ -10,22 +10,23 @@ A Python interface to the number theory library `PARI/GP <http://pari.math.u-bor
 Installation
 ------------
 
-GNU/Linux
-^^^^^^^^^
+From a distribution package (GNU/Linux, conda-forge)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A package `python-cypari2` or `python2-cypari2` or `python3-cypari2` might be
-available in your package manager.
+A package might be available in your package manager, see
+https://repology.org/project/python:cypari2/versions
 
-Using pip
-^^^^^^^^^
+From source with pip
+^^^^^^^^^^^^^^^^^^^^
 
 Requirements:
 
-- PARI/GP >= 2.9.4 (header files and library)
+- PARI/GP >= 2.9.4 (header files and library); see
+  https://doc.sagemath.org/html/en/reference/spkg/pari#spkg-pari
+  for availability in distributions (GNU/Linux, conda-forge, Homebrew, FreeBSD),
+  or install from source.
 - Python >= 3.6
 - pip
-- `cysignals <https://pypi.python.org/pypi/cysignals/>`_ >= 1.7
-- Cython >= 0.29
 
 Install cypari2 via the Python Package Index (PyPI) via
 
@@ -34,10 +35,13 @@ Install cypari2 via the Python Package Index (PyPI) via
     $ pip install cypari2 [--user]
 
 (the optional option *--user* allows to install cypari2 for a single user
-and avoids using pip with administrator rights). Depending on your operating
-system the pip command might also be called pip3.
+and avoids using pip with administrator rights).
 
-If you want to try the development version use
+`pip` builds the package using build isolation.  All Python build dependencies
+of the package, declared in pyproject.toml, are automatically installed in
+a temporary virtual environment.
+
+If you want to try the development version, use
 
 ::
 
@@ -50,12 +54,6 @@ already installed, try to reinstall cysignals and cypari2
 
     $ pip install cysignals --upgrade [--user]
     $ pip install cypari2 --upgrade [--user]
-
-Other
-^^^^^
-
-Any other way to install cypari2 is not supported. In particular, ``python
-setup.py install`` will produce an error.
 
 Usage
 -----
