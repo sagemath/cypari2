@@ -21,7 +21,10 @@ From source with pip
 
 Requirements:
 
-- PARI/GP >= 2.9.4 (header files and library)
+- PARI/GP >= 2.9.4 (header files and library); see
+  https://doc.sagemath.org/html/en/reference/spkg/pari#spkg-pari
+  for availability in distributions (GNU/Linux, conda-forge, Homebrew, FreeBSD),
+  or install from source.
 - Python >= 3.6
 - pip
 
