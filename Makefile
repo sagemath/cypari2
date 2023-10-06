@@ -7,7 +7,7 @@ PIP = $(PYTHON) -m pip -v
 
 
 install:
-	$(PIP) install --upgrade --no-build-isolation .
+	$(PIP) install --upgrade .
 
 check:
 	ulimit -s 8192; $(PYTHON) -u tests/rundoctest.py
