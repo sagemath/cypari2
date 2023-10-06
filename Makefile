@@ -10,7 +10,7 @@ build:
 	$(PYTHON) setup.py build
 
 install:
-	$(PIP) install --no-index --upgrade .
+	$(PIP) install --no-index --upgrade --no-build-isolation .
 
 check:
 	ulimit -s 8192; $(PYTHON) -u tests/rundoctest.py

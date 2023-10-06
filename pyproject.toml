@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68.0",
+requires = ["setuptools",
             "Cython>=0.29",
             "cysignals>=1.7"]
 # We need access to the autogen package at build time.
