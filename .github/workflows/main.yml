@@ -33,8 +33,9 @@ jobs:
               bash -x .install-pari.sh
         - name: Local build
           run: |
-            pip install setuptools -U
-            pip install sphinx cython cysignals
+            python3 -m venv tvenv
+            . tvenv/bin/activate
+            pip install setuptools sphinx cython cysignals -U
             make build
             make install
             make check
