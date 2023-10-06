@@ -121,6 +121,5 @@ env:
     DIST_PREREQ: libpari-dev pari-doc
     # Name of this project in the Sage distribution
     SPKG:        cypari
-    # Keep the current downstream patches (for Cython 3 support)
-    #REMOVE_PATCHES: "*"
-    REMOVE_PATCHES:
+    # Remove all downstream patches
+    REMOVE_PATCHES: "*"
