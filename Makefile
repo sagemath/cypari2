@@ -16,7 +16,8 @@ check:
 
 dist:
 	chmod go+rX-w -R .
-	umask 0022 && $(PYTHON) setup.py sdist --formats=gztar
+	$(PIP) install build
+	umask 0022 && $(PYTHON) -m build --sdist
 
 
-.PHONY: build install check dist
+.PHONY: install check dist
