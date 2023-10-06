@@ -33,9 +33,7 @@ jobs:
               bash -x .install-pari.sh
         - name: Local build
           run: |
-            python3 -m venv tvenv
-            . tvenv/bin/activate
-            pip install sphinx
             make install
             make check
+            pip install sphinx
             (cd docs && make html)
