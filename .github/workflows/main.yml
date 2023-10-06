@@ -35,7 +35,8 @@ jobs:
           run: |
             python3 -m venv tvenv
             . tvenv/bin/activate
-            pip install setuptools sphinx cython cysignals -U
+            pip install -Iv setuptools==68.2.2
+            pip install sphinx cython cysignals
             make build
             make install
             make check
