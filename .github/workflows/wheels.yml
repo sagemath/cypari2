@@ -19,6 +19,11 @@ jobs:
       CAN_DEPLOY: ${{ secrets.SAGEMATH_PYPI_API_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
+      - name: Install pari
+        run: |
+          bash -x .install-pari.sh
+        env:
+          PARI_VERSION: pari-2.15.4
       - uses: actions/setup-python@v4
       - name: make sdist
         run: |
@@ -37,20 +42,61 @@ jobs:
         if: env.CAN_DEPLOY == 'true' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
 
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }}, arch ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
+    needs: sdists_for_pypi
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest]
-
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-latest
+            arch: i686
+          - os: macos-latest
+            arch: auto
+    env:
+      # SPKGs to install as system packages
+      SPKGS: _bootstrap _prereq
+      # Non-Python packages to install as spkgs
+      TARGETS_PRE: pari
+      # Disable building PyPy wheels on all platforms
+      # Disable musllinux until #33083 provides alpine package information
+      CIBW_SKIP: "pp* *-musllinux*"
+      #
+      CIBW_ARCHS: ${{ matrix.arch }}
+      # https://cibuildwheel.readthedocs.io/en/stable/options/#requires-python
+      CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
+      # Environment during wheel build
+      CIBW_ENVIRONMENT: "PATH=$(pwd)/local/bin:$PATH CPATH=$(pwd)/local/include:$CPATH LIBRARY_PATH=$(pwd)/local/lib:$LIBRARY_PATH PKG_CONFIG_PATH=$(pwd)/local/share/pkgconfig:$PKG_CONFIG_PATH ACLOCAL_PATH=/usr/share/aclocal"
+      # Use 'build', not 'pip wheel'
+      CIBW_BUILD_FRONTEND: build
     steps:
       - uses: actions/checkout@v4
+        with:
+          repository:   sagemath/sage
+          ref:          develop
 
-      # Used to host cibuildwheel
-      - uses: actions/setup-python@v4
+      - uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: dist
 
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.0
+      - name: Build platform wheels
+        # We build the wheel from the sdist.
+        # But we must run cibuildwheel with the unpacked source directory, not a tarball,
+        # so that SAGE_ROOT is copied into the build containers.
+        #
+        # In the CIBW_BEFORE_ALL phase, we install libraries using the Sage distribution.
+        # https://cibuildwheel.readthedocs.io/en/stable/options/#before-all
+        run: |
+          export PATH=build/bin:$PATH
+          export CIBW_BEFORE_ALL="( $(sage-print-system-package-command debian --yes --no-install-recommends install $(sage-get-system-packages debian $SPKGS)) || $(sage-print-system-package-command fedora --yes --no-install-recommends install $(sage-get-system-packages fedora $SPKGS | sed s/pkg-config/pkgconfig/)) || ( $(sage-print-system-package-command homebrew --yes --no-install-recommends install $(sage-get-system-packages homebrew $SPKGS)) || echo error ignored) ) && ./bootstrap && ./configure --enable-build-as-root && make -j4 V=0 $TARGETS_PRE"
+          mkdir -p unpacked
+          for pkg in cypari2; do
+              (cd unpacked && tar xfz - ) < dist/$pkg*.tar.gz
+              pipx run cibuildwheel==2.16.0 unpacked/$pkg*
+          done
 
       - uses: actions/upload-artifact@v3
         with:
