@@ -2,6 +2,13 @@
 cypari2 change log
 ==================
 
+v2.1.4
+------
+
+- compatibility with Python 3.12 [`https://github.com/sagemath/cypari2/pull/138`]
+- compatibility with Cython 3 [`https://github.com/sagemath/cypari2/pull/139`]
+- declare build dependencies in `pyproject.toml` [`https://github.com/sagemath/cypari2/pull/139`]
+
 v2.1.3
 ------
 
