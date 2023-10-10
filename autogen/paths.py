@@ -15,12 +15,13 @@ Find out installation paths of PARI/GP
 from __future__ import absolute_import, unicode_literals
 
 import os
+import shutil
+
 from glob import glob
-from distutils.spawn import find_executable
 
 
-# find_executable() returns None if nothing was found
-gppath = find_executable("gp")
+gppath = shutil.which("gp")
+
 if gppath is None:
     # This almost certainly won't work, but we need to put something here
     prefix = "."
