@@ -1531,6 +1531,11 @@ cdef class Gen(Gen_base):
 
             self.cache((i,j), x)
             xt = x.ref_target()
+
+            if not is_universal_constant(x.g):
+                # Make sure that self is on the heap, before we assign a clone to it.
+                self.fixGEN()
+
             set_gcoeff(self.g, i+1, j+1, xt)
             return
 
@@ -1555,6 +1560,10 @@ cdef class Gen(Gen_base):
 
         self.cache(i, x)
         xt = x.ref_target()
+        if not is_universal_constant(x.g):
+            # Make sure that self is on the heap, before we assign a clone to it.
+            self.fixGEN()
+
         if typ(self.g) == t_LIST:
             listput(self.g, xt, i+1)
         else:

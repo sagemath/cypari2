@@ -6,6 +6,8 @@ on:
     push:
         tags:
             - '*'
+    workflow_dispatch:
+        # Allow to run manually
 
 concurrency:
   # Cancel previous runs of this workflow for the same branch
