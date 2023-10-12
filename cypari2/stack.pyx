@@ -209,7 +209,10 @@ cdef Gen new_gen_noclear(GEN x):
         elif isclone(x):
             gclone_refc(x)
             return Gen_new(x, x)
-        raise SystemError("new_gen() argument not on PARI stack, not on PARI heap and not a universal constant")
+        else:
+            # NOTE: it might be the case that x belongs to a local stack of a thread
+            # In that case we copy it in the main stack
+            x = gcopy(x)
 
     z = Gen_stack_new(x)
 

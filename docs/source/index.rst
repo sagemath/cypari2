@@ -16,6 +16,7 @@ Welcome to CyPari2's documentation!
    closure
    handle_error
    convert
+   threads
 
 
 Indices and tables
