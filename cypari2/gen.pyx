@@ -328,7 +328,7 @@ cdef class Gen(Gen_base):
         >>> pari = Pari()
         >>> L = pari("vector(10,i,i^2)")
         >>> L.__iter__()
-        <generator object at ...>
+        <...generator object at ...>
         >>> [x for x in L]
         [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
         >>> list(L)
