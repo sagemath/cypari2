@@ -40,7 +40,7 @@ AUTHORS:
   conversion
 """
 
-#*****************************************************************************
+# ****************************************************************************
 #       Copyright (C) 2006,2010 William Stein <wstein@gmail.com>
 #       Copyright (C) ???? Justin Walker
 #       Copyright (C) ???? Gonzalo Tornaria
@@ -52,15 +52,15 @@ AUTHORS:
 #  Distributed under the terms of the GNU General Public License (GPL)
 #  as published by the Free Software Foundation; either version 2 of
 #  the License, or (at your option) any later version.
-#                  http://www.gnu.org/licenses/
-#*****************************************************************************
+#                  https://www.gnu.org/licenses/
+# ****************************************************************************
 
 from __future__ import absolute_import, division, print_function
 
 cimport cython
 
-from cpython.object cimport (Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, Py_GT,
-        PyTypeObject)
+from cpython.object cimport (Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT,
+                             PyTypeObject)
 
 from cysignals.memory cimport sig_free, check_malloc
 from cysignals.signals cimport sig_check, sig_on, sig_off, sig_block, sig_unblock
@@ -69,8 +69,7 @@ from .types cimport *
 from .string_utils cimport to_string, to_bytes
 from .paripriv cimport *
 from .convert cimport PyObject_AsGEN, gen_to_integer
-from .pari_instance cimport (prec_bits_to_words, prec_words_to_bits,
-                             default_bitprec, get_var)
+from .pari_instance cimport (prec_bits_to_words, get_var)
 from .stack cimport (new_gen, new_gens2, new_gen_noclear,
                      clone_gen, clear_stack, reset_avma,
                      remove_from_pari_stack, move_gens_to_heap)
@@ -871,7 +870,7 @@ cdef class Gen(Gen_base):
         return [r1, r2]
 
     def nf_get_zk(self):
-        """
+        r"""
         Returns a vector with a `\ZZ`-basis for the ring of integers of
         this number field. The first element is always `1`.
 
@@ -1074,7 +1073,7 @@ cdef class Gen(Gen_base):
         return new_gen(idealmoddivisor(self.g, ideal.g))
 
     def pr_get_p(self):
-        """
+        r"""
         Returns the prime of `\ZZ` lying below this prime ideal.
 
         NOTE: ``self`` must be a PARI prime ideal (as returned by
@@ -1096,7 +1095,7 @@ cdef class Gen(Gen_base):
         return clone_gen(pr_get_p(self.g))
 
     def pr_get_e(self):
-        """
+        r"""
         Returns the ramification index (over `\QQ`) of this prime ideal.
 
         NOTE: ``self`` must be a PARI prime ideal (as returned by
@@ -1123,7 +1122,7 @@ cdef class Gen(Gen_base):
         return e
 
     def pr_get_f(self):
-        """
+        r"""
         Returns the residue class degree (over `\QQ`) of this prime ideal.
 
         NOTE: ``self`` must be a PARI prime ideal (as returned by
@@ -1354,7 +1353,7 @@ cdef class Gen(Gen_base):
         elif isinstance(n, slice):
             l = glength(self.g)
             start, stop, step = n.indices(l)
-            inds = xrange(start, stop, step)
+            inds = range(start, stop, step)
             k = len(inds)
             # fast exit for empty vector
             if k == 0:
@@ -1372,9 +1371,9 @@ cdef class Gen(Gen_base):
         # Index is not a tuple or slice, convert to integer
         i = n
 
-        ## there are no "out of bounds" problems
-        ## for a polynomial or power series, so these go before
-        ## bounds testing
+        # there are no "out of bounds" problems
+        # for a polynomial or power series, so these go before
+        # bounds testing
         if pari_type == t_POL:
             sig_on()
             return new_gen(polcoeff0(self.g, i, -1))
@@ -1394,8 +1393,8 @@ cdef class Gen(Gen_base):
             raise IndexError("index out of range")
 
         elif pari_type == t_VEC or pari_type == t_MAT:
-            #t_VEC    : row vector        [ code ] [  x_1  ] ... [  x_k  ]
-            #t_MAT    : matrix            [ code ] [ col_1 ] ... [ col_k ]
+            # t_VEC    : row vector        [ code ] [  x_1  ] ... [  x_k  ]
+            # t_MAT    : matrix            [ code ] [ col_1 ] ... [ col_k ]
             ind = i
             if self.itemcache is not None and ind in self.itemcache:
                 return self.itemcache[ind]
@@ -1407,11 +1406,11 @@ cdef class Gen(Gen_base):
                 return val
 
         elif pari_type == t_VECSMALL:
-            #t_VECSMALL: vec. small ints  [ code ] [ x_1 ] ... [ x_k ]
+            # t_VECSMALL: vec. small ints  [ code ] [ x_1 ] ... [ x_k ]
             return self.g[i+1]
 
         elif pari_type == t_STR:
-            #t_STR    : string            [ code ] [ man_1 ] ... [ man_k ]
+            # t_STR    : string            [ code ] [ man_1 ] ... [ man_k ]
             return chr(GSTR(self.g)[i])
 
         elif pari_type == t_LIST:
@@ -1515,7 +1514,7 @@ cdef class Gen(Gen_base):
         >>> type(v[0])
         <... 'cypari2.gen.Gen'>
         """
-        cdef Py_ssize_t i, j, step
+        cdef Py_ssize_t i, j
         cdef Gen x = objtogen(y)
 
         if isinstance(n, tuple):
@@ -1529,14 +1528,14 @@ cdef class Gen(Gen_base):
             if j < 0 or j >= glength(self.g):
                 raise IndexError("column j(=%s) must be between 0 and %s" % (j, self.ncols()-1))
 
-            self.cache((i,j), x)
+            self.cache((i, j), x)
             xt = x.ref_target()
             set_gcoeff(self.g, i+1, j+1, xt)
             return
 
         elif isinstance(n, slice):
             l = glength(self.g)
-            inds = xrange(*n.indices(l))
+            inds = range(*n.indices(l))
             k = len(inds)
             if k > len(y):
                 raise ValueError("attempt to assign sequence of size %s to slice of size %s" % (len(y), k))
@@ -1729,8 +1728,8 @@ cdef class Gen(Gen_base):
             return "0"
         lx = lgefint(x) - 2  # number of words
         size = lx * 4 * sizeof(long)
-        s = <char *>check_malloc(size+3) # 1 char for sign, 1 char for 0, 1 char for '\0'
-        sp = s + size + 3 - 1 # last character
+        s = <char *>check_malloc(size+3)  # 1 char for sign, 1 char for 0, 1 char for '\0'
+        sp = s + size + 3 - 1  # last character
         sp[0] = 0
         xp = int_LSW(x)
         for i from 0 <= i < lx:
@@ -1772,11 +1771,11 @@ cdef class Gen(Gen_base):
             return "0x0"
         lx = lgefint(x) - 2  # number of words
         size = lx*2*sizeof(long)
-        s = <char *>check_malloc(size+4) # 1 char for sign, 2 chars for 0x, 1 char for '\0'
-        sp = s + size + 4 - 1 # last character
+        s = <char *>check_malloc(size+4)  # 1 char for sign, 2 chars for 0x, 1 char for '\0'
+        sp = s + size + 4 - 1  # last character
         sp[0] = 0
         xp = int_LSW(x)
-        for i from 0 <= i < lx:
+        for i in range(lx):
             w = xp[0]
             for j in range(2*sizeof(long)):
                 sp -= 1
@@ -1925,7 +1924,6 @@ cdef class Gen(Gen_base):
         """
         # TODO: deprecate
         cdef long n
-        cdef Gen t
 
         if typ(self.g) != t_VEC and typ(self.g) != t_COL:
             raise TypeError("Object (=%s) must be of type t_VEC or t_COL." % self)
@@ -2730,7 +2728,6 @@ cdef class Gen(Gen_base):
         >>> pari('(2.4*x^2 - 1.7)/x').truncate()
         2.40000000000000*x
         """
-        cdef int n
         cdef long e
         cdef Gen y
         sig_on()
@@ -3142,7 +3139,6 @@ cdef class Gen(Gen_base):
         """
         cdef GEN G
         cdef long t
-        cdef Gen g
         sig_on()
         if find_root:
             t = itos(gissquareall(x.g, &G))
@@ -3445,7 +3441,7 @@ cdef class Gen(Gen_base):
         return new_gens2(x, y)
 
     def elltors(self):
-        """
+        r"""
         Return information about the torsion subgroup of the given
         elliptic curve.
 
@@ -3692,7 +3688,7 @@ cdef class Gen(Gen_base):
         return v
 
     def nfbasis(self, long flag=0, fa=None):
-        """
+        r"""
         Integral basis of the field `\QQ[a]`, where ``a`` is a root of
         the polynomial x.
 
@@ -4147,6 +4143,8 @@ cdef class Gen(Gen_base):
         """
         Return the number of arguments of this ``t_CLOSURE``.
 
+        Examples:
+
         >>> from cypari2 import Pari
         >>> pari = Pari()
         >>> pari("() -> 42").arity()
@@ -4157,7 +4155,7 @@ cdef class Gen(Gen_base):
         3
         """
         if typ(self.g) != t_CLOSURE:
-            raise TypeError(f"arity() requires a t_CLOSURE")
+            raise TypeError("arity() requires a t_CLOSURE")
         return closure_arity(self.g)
 
     def factorpadic(self, p, long r=20):

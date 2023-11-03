@@ -27,7 +27,7 @@ Because of this difference in bit lengths, converting integers involves
 some bit shuffling.
 """
 
-#*****************************************************************************
+# ****************************************************************************
 #       Copyright (C) 2016 Jeroen Demeyer <jdemeyer@cage.ugent.be>
 #       Copyright (C) 2016 Luca De Feo <luca.defeo@polytechnique.edu>
 #       Copyright (C) 2016 Vincent Delecroix <vincent.delecroix@u-bordeaux.fr>
@@ -36,26 +36,26 @@ some bit shuffling.
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-#                  http://www.gnu.org/licenses/
-#*****************************************************************************
+#                  https://www.gnu.org/licenses/
+# ****************************************************************************
 
 from __future__ import absolute_import, division, print_function
 
 from cysignals.signals cimport sig_on, sig_off, sig_error
 
 from cpython.version cimport PY_MAJOR_VERSION
-from cpython.object cimport Py_SIZE
 from cpython.int cimport PyInt_AS_LONG, PyInt_FromLong
 from cpython.longintrepr cimport (_PyLong_New,
-        digit, PyLong_SHIFT, PyLong_MASK)
+                                  digit, PyLong_SHIFT, PyLong_MASK)
 from libc.limits cimport LONG_MIN, LONG_MAX
 from libc.math cimport INFINITY
 
 from .paridecl cimport *
 from .stack cimport new_gen, reset_avma
 from .string_utils cimport to_string, to_bytes
-from .pycore_long cimport (ob_digit, _PyLong_IsZero, _PyLong_IsNegative,
-        _PyLong_IsPositive, _PyLong_DigitCount, _PyLong_SetSignAndDigitCount)
+from .pycore_long cimport (ob_digit, _PyLong_IsZero,
+                           _PyLong_IsPositive, _PyLong_DigitCount,
+                           _PyLong_SetSignAndDigitCount)
 
 ########################################################################
 # Conversion PARI -> Python
@@ -331,8 +331,9 @@ cdef PyObject_FromGEN(GEN g):
         lc = lg(g)
         if lc <= 1:
             return [[]]
-        lr = lg(gel(g,1))
-        return [[PyObject_FromGEN(gcoeff(g, i, j)) for j in range(1, lc)] for i in range(1, lr)]
+        lr = lg(gel(g, 1))
+        return [[PyObject_FromGEN(gcoeff(g, i, j)) for j in range(1, lc)]
+                for i in range(1, lr)]
     elif t == t_INFINITY:
         if inf_get_sign(g) >= 0:
             return INFINITY
@@ -390,10 +391,10 @@ cdef GEN gtoi(GEN g0) except NULL:
         sig_on()
         g = simplify_shallow(g0)
         if typ(g) == t_COMPLEX:
-            if gequal0(gel(g,2)):
-                g = gel(g,1)
+            if gequal0(gel(g, 2)):
+                g = gel(g, 1)
         if typ(g) == t_INTMOD:
-            g = gel(g,2)
+            g = gel(g, 2)
         g = trunc_safe(g)
         if typ(g) != t_INT:
             sig_error()

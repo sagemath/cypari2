@@ -267,19 +267,18 @@ Test that changing the stack size using ``default`` works properly:
 536870912
 """
 
-#*****************************************************************************
+# ****************************************************************************
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-#                  http://www.gnu.org/licenses/
-#*****************************************************************************
+#                  https://www.gnu.org/licenses/
+# ****************************************************************************
 
 from __future__ import absolute_import, division
 
 import sys
 from libc.stdio cimport *
-cimport cython
 
 from cysignals.signals cimport sig_check, sig_on, sig_off, sig_error
 
@@ -295,6 +294,7 @@ from .closure cimport _pari_init_closure
 # Default precision (in PARI words) for the PARI library interface,
 # when no explicit precision is given and the inputs are exact.
 cdef long prec = prec_bits_to_words(53)
+
 
 #################################################################
 # conversions between various real precision models
@@ -632,10 +632,10 @@ cdef class Pari(Pari_auto):
         # chances that something goes wrong here (for example, if we
         # are out of memory).
         printf("top =  %p\navma = %p\nbot =  %p\nsize = %lu\n",
-            <void*>pari_mainstack.top,
-            <void*>avma,
-            <void*>pari_mainstack.bot,
-            <unsigned long>pari_mainstack.rsize)
+               <void*>pari_mainstack.top,
+               <void*>avma,
+               <void*>pari_mainstack.bot,
+               <unsigned long>pari_mainstack.rsize)
         fflush(stdout)
 
     def __repr__(self):
@@ -1025,7 +1025,7 @@ cdef class Pari(Pari_auto):
         set_pari_stack_size(s, sizemax)
         if not silent:
             print("PARI stack size set to {} bytes, maximum size set to {}".
-                format(self.stacksize(), self.stacksizemax()))
+                  format(self.stacksize(), self.stacksizemax()))
 
     @staticmethod
     def pari_version():
@@ -1182,25 +1182,25 @@ cdef class Pari(Pari_auto):
         return new_gen(mpfact(n))
 
     def polsubcyclo(self, long n, long d, v=None):
-        """
+        r"""
         polsubcyclo(n, d, v=x): return the pari list of polynomial(s)
         defining the sub-abelian extensions of degree `d` of the
         cyclotomic field `\QQ(\zeta_n)`, where `d`
         divides `\phi(n)`.
 
-        Examples::
+        Examples:
 
         >>> import cypari2
         >>> pari = cypari2.Pari()
 
-            >>> pari.polsubcyclo(8, 4)
-            [x^4 + 1]
-            >>> pari.polsubcyclo(8, 2, 'z')
-            [z^2 + 2, z^2 - 2, z^2 + 1]
-            >>> pari.polsubcyclo(8, 1)
-            [x - 1]
-            >>> pari.polsubcyclo(8, 3)
-            []
+        >>> pari.polsubcyclo(8, 4)
+        [x^4 + 1]
+        >>> pari.polsubcyclo(8, 2, 'z')
+        [z^2 + 2, z^2 - 2, z^2 + 1]
+        >>> pari.polsubcyclo(8, 1)
+        [x - 1]
+        >>> pari.polsubcyclo(8, 3)
+        []
         """
         cdef Gen plist
         sig_on()
@@ -1265,8 +1265,8 @@ cdef class Pari(Pari_auto):
         v = self._empty_vector(n)
         if entries is not None:
             if len(entries) != n:
-                raise IndexError("length of entries (=%s) must equal n (=%s)"%\
-                      (len(entries), n))
+                raise IndexError("length of entries (=%s) must equal n (=%s)" %
+                                 (len(entries), n))
             for i, x in enumerate(entries):
                 v[i] = x
         return v
@@ -1293,32 +1293,33 @@ cdef class Pari(Pari_auto):
         cdef Gen x
 
         sig_on()
-        A = new_gen(zeromatcopy(m,n))
+        A = new_gen(zeromatcopy(m, n))
         if entries is not None:
             if len(entries) != m * n:
-                raise IndexError("len of entries (=%s) must be %s*%s=%s"%(len(entries),m,n,m*n))
+                raise IndexError("len of entries (=%s) must be %s*%s=%s" % (len(entries), m, n, m * n))
             k = 0
             for i in range(m):
                 for j in range(n):
                     sig_check()
                     x = objtogen(entries[k])
-                    set_gcoeff(A.g, i+1, j+1, x.ref_target())
-                    A.cache((i,j), x)
+                    set_gcoeff(A.g, i + 1, j + 1, x.ref_target())
+                    A.cache((i, j), x)
                     k += 1
         return A
 
     def genus2red(self, P, p=None):
-        """
+        r"""
         Let `P` be a polynomial with integer coefficients.
         Determines the reduction of the (proper, smooth) genus 2
         curve `C/\QQ`, defined by the hyperelliptic equation `y^2 = P`.
+
         The special syntax ``genus2red([P,Q])`` is also allowed, where
         the polynomials `P` and `Q` have integer coefficients, to
         represent the model `y^2 + Q(x)y = P(x)`.
 
         If the second argument `p` is specified, it must be a prime.
         Then only the local information at `p` is computed and returned.
-        
+
         Examples:
 
         >>> import cypari2
