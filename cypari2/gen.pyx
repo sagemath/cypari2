@@ -69,7 +69,7 @@ from .types cimport *
 from .string_utils cimport to_string, to_bytes
 from .paripriv cimport *
 from .convert cimport PyObject_AsGEN, gen_to_integer
-from .pari_instance cimport (prec_bits_to_words, get_var)
+from .pari_instance cimport (default_bitprec, prec_bits_to_words, get_var)
 from .stack cimport (new_gen, new_gens2, new_gen_noclear,
                      clone_gen, clear_stack, reset_avma,
                      remove_from_pari_stack, move_gens_to_heap)
