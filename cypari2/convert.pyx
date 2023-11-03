@@ -54,14 +54,8 @@ from libc.math cimport INFINITY
 from .paridecl cimport *
 from .stack cimport new_gen, reset_avma
 from .string_utils cimport to_string, to_bytes
-
-cdef extern from *:
-    ctypedef struct PyLongObject:
-        digit* ob_digit
-
-cdef extern from "Py_SET_SIZE.h":
-    void Py_SET_SIZE(py_long o, Py_ssize_t size)
-
+from .pycore_long cimport (ob_digit, _PyLong_IsZero, _PyLong_IsNegative,
+        _PyLong_IsPositive, _PyLong_DigitCount, _PyLong_SetSignAndDigitCount)
 
 ########################################################################
 # Conversion PARI -> Python
@@ -424,7 +418,7 @@ cdef PyLong_FromINT(GEN g):
     cdef Py_ssize_t sizedigits_final = 0
 
     cdef py_long x = _PyLong_New(sizedigits)
-    cdef digit* D = x.ob_digit
+    cdef digit* D = ob_digit(x)
 
     cdef digit d
     cdef ulong w
@@ -452,10 +446,7 @@ cdef PyLong_FromINT(GEN g):
             sizedigits_final = i+1
 
     # Set correct size
-    if signe(g) > 0:
-        Py_SET_SIZE(x, sizedigits_final)
-    else:
-        Py_SET_SIZE(x, -sizedigits_final)
+    _PyLong_SetSignAndDigitCount(x, signe(g), sizedigits_final)
 
     return x
 
@@ -465,18 +456,18 @@ cdef PyLong_FromINT(GEN g):
 ########################################################################
 
 cdef GEN PyLong_AS_GEN(py_long x):
-    cdef const digit* D = x.ob_digit
+    cdef const digit* D = ob_digit(x)
 
     # Size of the input
     cdef size_t sizedigits
     cdef long sgn
-    if Py_SIZE(x) == 0:
+    if _PyLong_IsZero(x):
         return gen_0
-    elif Py_SIZE(x) > 0:
-        sizedigits = Py_SIZE(x)
+    elif _PyLong_IsPositive(x):
+        sizedigits = _PyLong_DigitCount(x)
         sgn = evalsigne(1)
     else:
-        sizedigits = -Py_SIZE(x)
+        sizedigits = _PyLong_DigitCount(x)
         sgn = evalsigne(-1)
 
     # Size of the output, in bits and in words

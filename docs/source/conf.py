@@ -50,9 +50,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'CyPari2'
-copyright = u'2017, Many people'
-author = u'Many people'
+project = 'CyPari2'
+copyright = '2017, Many people'
+author = 'Many people'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -68,7 +68,7 @@ release = version
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = 'en'
+#language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -161,13 +161,15 @@ texinfo_documents = [
 # Links to external resources (copied from Sage)
 extlinks = {
     'sage-gh-issue': ('https://github.com/sagemath/sage/issues/%s', 'sage github issue #%s'),
+    'trac': ('https://github.com/sagemath/sage/issues/%s', 'github issue #%s'), # support :trac: for backward compatibility
+    'issue': ('https://github.com/sagemath/sage/issues/%s', 'github issue #%s'),
     'wikipedia': ('https://en.wikipedia.org/wiki/%s', 'Wikipedia article %s'),
     'arxiv': ('https://arxiv.org/abs/%s', 'arXiv %s'),
     'oeis': ('https://oeis.org/%s', 'OEIS sequence %s'),
-    'doi': ('https://doi.org/%s', 'doi:%s'),
+    'doi': ('https://dx.doi.org/%s', 'doi:%s'),
     'pari': ('https://pari.math.u-bordeaux.fr/dochtml/help/%s', 'pari:%s'),
     'mathscinet': ('https://www.ams.org/mathscinet-getitem?mr=%s', 'MathSciNet %s')
-}
+    }
 
 # Monkey-patch inspect with Cython support
 def isfunction(obj):

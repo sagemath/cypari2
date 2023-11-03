@@ -7,33 +7,120 @@ on:
         tags:
             - '*'
 
+concurrency:
+  # Cancel previous runs of this workflow for the same branch
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
     build:
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
             matrix:
-                python-version: ['3.7', '3.10', '3.11']
-                pari-version: ['pari-2.9.5', 'pari-2.11.4', 'pari-2.13.0', 'pari-2.15.1']
+                os: [ubuntu-latest]
+                python-version: ['3.9', '3.10', '3.11', '3.12']
+                pari-version: ['pari-2.11.4', 'pari-2.13.0', 'pari-2.15.4']
         env:
           LC_ALL: C
           PARI_VERSION: ${{ matrix.pari-version }}
         steps:
         - name: Set up the repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v4
         - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v2
+          uses: actions/setup-python@v4
           with:
             python-version: ${{ matrix.python-version }}
         - name: Install pari
           run: |
-              ccache -M 256M && ccache -s
-              export PATH="/usr/lib/ccache:$PATH"
               bash -x .install-pari.sh
         - name: Local build
           run: |
-            pip install sphinx>=4.0 cython cysignals
-            make build
             make install
             make check
+            pip install sphinx >=4.0 cython cysignals
+            make build
             (cd docs && make html)
+
+    dist:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Check out ${{ env.SPKG }}
+            uses: actions/checkout@v4
+            with:
+              path: build/pkgs/${{ env.SPKG }}/src
+          - name: Set up Python ${{ matrix.python-version }}
+            uses: actions/setup-python@v4
+          - name: Install prerequisites
+            run: |
+              sudo DEBIAN_FRONTEND=noninteractive apt-get update
+              sudo DEBIAN_FRONTEND=noninteractive apt-get install $DIST_PREREQ
+              python3 -m pip install build
+          - name: Run make dist, prepare upstream artifact
+            run: |
+              (cd build/pkgs/${{ env.SPKG }}/src && python3 -m build --sdist) \
+              && mkdir -p upstream && cp build/pkgs/${{ env.SPKG }}/src/dist/*.tar.gz upstream/${{ env.SPKG }}-git.tar.gz \
+              && echo "sage-package create ${{ env.SPKG }} --version git --tarball ${{ env.SPKG }}-git.tar.gz --type=standard" > upstream/update-pkgs.sh \
+              && if [ -n "${{ env.REMOVE_PATCHES }}" ]; then echo "(cd ../build/pkgs/${{ env.SPKG }}/patches && rm -f ${{ env.REMOVE_PATCHES }}; :)" >> upstream/update-pkgs.sh; fi \
+              && ls -l upstream/
+          - uses: actions/upload-artifact@v3
+            with:
+              path: upstream
+              name: upstream
+
+    linux-sage:
+        uses: sagemath/sage/.github/workflows/docker.yml@develop
+        with:
+          targets:           SAGE_CHECK=no SAGE_CHECK_PACKAGES="cypari" cypari
+          targets_optional:  build/make/Makefile
+          sage_repo:         sagemath/sage
+          sage_ref:          develop
+          upstream_artifact: upstream
+          # We prefix the image name with the SPKG name ("cypari2-") to avoid the error
+          # 'Package "sage-docker-..." is already associated with another repository.'
+          docker_push_repository: ghcr.io/${{ github.repository }}/cypari2-
+        needs: [dist]
+
+    linux-sage-incremental:
+        uses: sagemath/sage/.github/workflows/docker.yml@develop
+        with:
+          # Build incrementally from published Docker image
+          incremental: true
+          free_disk_space: true
+          from_docker_repository: ghcr.io/sagemath/sage/
+          from_docker_target: "with-targets"
+          from_docker_tag: "dev"
+          docker_targets: "with-targets"
+          targets_pre:       build/make/Makefile
+          targets:           "cypari-uninstall build doc-html ptest"
+          targets_optional:  build/make/Makefile
+          sage_repo:         sagemath/sage
+          sage_ref:          develop
+          upstream_artifact: upstream
+          # We prefix the image name with the SPKG name ("cypari2-") to avoid the error
+          # 'Package "sage-docker-..." is already associated with another repository.'
+          docker_push_repository: ghcr.io/${{ github.repository }}/cypari2-
+        needs: [linux-sage]
+
+    macos-sage:
+        uses: sagemath/sage/.github/workflows/macos.yml@develop
+        with:
+          osversion_xcodeversion_toxenv_tuples: >-
+            [["latest", "",           "homebrew-macos-usrlocal-minimal"],
+             ["latest", "",           "homebrew-macos-usrlocal-standard"],
+             ["13",     "xcode_15.0", "homebrew-macos-usrlocal-standard"],
+             ["latest", "",           "conda-forge-macos-standard"]]
+          targets:           SAGE_CHECK=no SAGE_CHECK_PACKAGES="cypari" cypari
+          # Standard setting: Test the current beta release of Sage
+          sage_repo:         sagemath/sage
+          sage_ref:          develop
+          upstream_artifact: upstream
+        needs: [dist]
+
+env:
+    # Ubuntu packages to install so that the project's "setup.py sdist" can succeed
+    DIST_PREREQ: libpari-dev pari-doc
+    # Name of this project in the Sage distribution
+    SPKG:        cypari
+    # Remove all downstream patches
+    REMOVE_PATCHES: "*"

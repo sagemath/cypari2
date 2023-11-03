@@ -36,6 +36,8 @@ class build_ext(_build_ext):
             "binding": True,
             "cdivision": True,
             "language_level": 2,
+            "legacy_implicit_noexcept": True,
+            "c_api_binop_methods": True,
         }
 
         _build_ext.finalize_options(self)
@@ -66,7 +68,6 @@ with open('VERSION') as f:
 setup(
     name='cypari2',
     version=VERSION,
-    setup_requires=['Cython>=0.29'],
     install_requires=['cysignals>=1.7'],
     description="A Python interface to the number theory library PARI/GP",
     long_description=README,
