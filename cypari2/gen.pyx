@@ -1522,6 +1522,9 @@ cdef class Gen(Gen_base):
             if typ(self.g) != t_MAT:
                 raise TypeError("cannot index PARI type %s by tuple" % typ(self.g))
 
+            if len(n) != 2:
+                raise ValueError("matrix index must be [row, column]")
+
             i, j = n
 
             if i < 0 or i >= glength(gel(self.g, 1)):
@@ -1529,7 +1532,7 @@ cdef class Gen(Gen_base):
             if j < 0 or j >= glength(self.g):
                 raise IndexError("column j(=%s) must be between 0 and %s" % (j, self.ncols()-1))
 
-            self.cache((i,j), x)
+            self.cache((i, j), x)
             xt = x.ref_target()
             set_gcoeff(self.g, i+1, j+1, xt)
             return
