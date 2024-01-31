@@ -59,8 +59,7 @@ from __future__ import absolute_import, division, print_function
 
 cimport cython
 
-from cpython.object cimport (Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, Py_GT,
-        PyTypeObject)
+from cpython.object cimport (Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, PyTypeObject)
 
 from cysignals.memory cimport sig_free, check_malloc
 from cysignals.signals cimport sig_check, sig_on, sig_off, sig_block, sig_unblock
@@ -69,7 +68,7 @@ from .types cimport *
 from .string_utils cimport to_string, to_bytes
 from .paripriv cimport *
 from .convert cimport PyObject_AsGEN, gen_to_integer
-from .pari_instance cimport (prec_bits_to_words, prec_words_to_bits,
+from .pari_instance cimport (prec_bits_to_words,
                              default_bitprec, get_var)
 from .stack cimport (new_gen, new_gens2, new_gen_noclear,
                      clone_gen, clear_stack, reset_avma,
@@ -871,7 +870,7 @@ cdef class Gen(Gen_base):
         return [r1, r2]
 
     def nf_get_zk(self):
-        """
+        r"""
         Returns a vector with a `\ZZ`-basis for the ring of integers of
         this number field. The first element is always `1`.
 
@@ -1074,7 +1073,7 @@ cdef class Gen(Gen_base):
         return new_gen(idealmoddivisor(self.g, ideal.g))
 
     def pr_get_p(self):
-        """
+        r"""
         Returns the prime of `\ZZ` lying below this prime ideal.
 
         NOTE: ``self`` must be a PARI prime ideal (as returned by
@@ -1096,7 +1095,7 @@ cdef class Gen(Gen_base):
         return clone_gen(pr_get_p(self.g))
 
     def pr_get_e(self):
-        """
+        r"""
         Returns the ramification index (over `\QQ`) of this prime ideal.
 
         NOTE: ``self`` must be a PARI prime ideal (as returned by
@@ -1123,7 +1122,7 @@ cdef class Gen(Gen_base):
         return e
 
     def pr_get_f(self):
-        """
+        r"""
         Returns the residue class degree (over `\QQ`) of this prime ideal.
 
         NOTE: ``self`` must be a PARI prime ideal (as returned by
@@ -1372,9 +1371,9 @@ cdef class Gen(Gen_base):
         # Index is not a tuple or slice, convert to integer
         i = n
 
-        ## there are no "out of bounds" problems
-        ## for a polynomial or power series, so these go before
-        ## bounds testing
+        # there are no "out of bounds" problems
+        # for a polynomial or power series, so these go before
+        # bounds testing
         if pari_type == t_POL:
             sig_on()
             return new_gen(polcoeff0(self.g, i, -1))
@@ -1515,7 +1514,7 @@ cdef class Gen(Gen_base):
         >>> type(v[0])
         <... 'cypari2.gen.Gen'>
         """
-        cdef Py_ssize_t i, j, step
+        cdef Py_ssize_t i, j
         cdef Gen x = objtogen(y)
 
         if isinstance(n, tuple):
@@ -3448,7 +3447,7 @@ cdef class Gen(Gen_base):
         return new_gens2(x, y)
 
     def elltors(self):
-        """
+        r"""
         Return information about the torsion subgroup of the given
         elliptic curve.
 
@@ -3695,7 +3694,7 @@ cdef class Gen(Gen_base):
         return v
 
     def nfbasis(self, long flag=0, fa=None):
-        """
+        r"""
         Integral basis of the field `\QQ[a]`, where ``a`` is a root of
         the polynomial x.
 
@@ -4160,7 +4159,7 @@ cdef class Gen(Gen_base):
         3
         """
         if typ(self.g) != t_CLOSURE:
-            raise TypeError(f"arity() requires a t_CLOSURE")
+            raise TypeError("arity() requires a t_CLOSURE")
         return closure_arity(self.g)
 
     def factorpadic(self, p, long r=20):
