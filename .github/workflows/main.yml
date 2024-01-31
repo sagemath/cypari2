@@ -107,7 +107,6 @@ jobs:
           osversion_xcodeversion_toxenv_tuples: >-
             [["latest", "",           "homebrew-macos-usrlocal-minimal"],
              ["latest", "",           "homebrew-macos-usrlocal-standard"],
-             ["13",     "xcode_15.0", "homebrew-macos-usrlocal-standard"],
              ["latest", "",           "conda-forge-macos-standard"]]
           targets:           SAGE_CHECK=no SAGE_CHECK_PACKAGES="cypari" cypari
           # Standard setting: Test the current beta release of Sage

@@ -22,7 +22,6 @@ from cpython.exc cimport PyErr_SetString
 
 from cysignals.signals cimport (sig_on, sig_off, sig_block, sig_unblock,
                                 sig_error)
-from cysignals.memory cimport check_malloc, sig_free
 
 from .gen cimport Gen, Gen_new
 from .paridecl cimport (avma, pari_mainstack, gnil, gcopy,
