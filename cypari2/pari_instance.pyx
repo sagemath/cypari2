@@ -296,6 +296,7 @@ from .closure cimport _pari_init_closure
 # when no explicit precision is given and the inputs are exact.
 cdef long prec = prec_bits_to_words(53)
 
+
 #################################################################
 # conversions between various real precision models
 #################################################################
@@ -632,10 +633,10 @@ cdef class Pari(Pari_auto):
         # chances that something goes wrong here (for example, if we
         # are out of memory).
         printf("top =  %p\navma = %p\nbot =  %p\nsize = %lu\n",
-            <void*>pari_mainstack.top,
-            <void*>avma,
-            <void*>pari_mainstack.bot,
-            <unsigned long>pari_mainstack.rsize)
+               <void*>pari_mainstack.top,
+               <void*>avma,
+               <void*>pari_mainstack.bot,
+               <unsigned long>pari_mainstack.rsize)
         fflush(stdout)
 
     def __repr__(self):
@@ -1025,7 +1026,7 @@ cdef class Pari(Pari_auto):
         set_pari_stack_size(s, sizemax)
         if not silent:
             print("PARI stack size set to {} bytes, maximum size set to {}".
-                format(self.stacksize(), self.stacksizemax()))
+                  format(self.stacksize(), self.stacksizemax()))
 
     @staticmethod
     def pari_version():
@@ -1182,7 +1183,7 @@ cdef class Pari(Pari_auto):
         return new_gen(mpfact(n))
 
     def polsubcyclo(self, long n, long d, v=None):
-        """
+        r"""
         polsubcyclo(n, d, v=x): return the pari list of polynomial(s)
         defining the sub-abelian extensions of degree `d` of the
         cyclotomic field `\QQ(\zeta_n)`, where `d`
@@ -1265,8 +1266,7 @@ cdef class Pari(Pari_auto):
         v = self._empty_vector(n)
         if entries is not None:
             if len(entries) != n:
-                raise IndexError("length of entries (=%s) must equal n (=%s)"%\
-                      (len(entries), n))
+                raise IndexError(f"length of entries (={len(entries)}) must equal n (={n})")
             for i, x in enumerate(entries):
                 v[i] = x
         return v
@@ -1293,22 +1293,22 @@ cdef class Pari(Pari_auto):
         cdef Gen x
 
         sig_on()
-        A = new_gen(zeromatcopy(m,n))
+        A = new_gen(zeromatcopy(m, n))
         if entries is not None:
             if len(entries) != m * n:
-                raise IndexError("len of entries (=%s) must be %s*%s=%s"%(len(entries),m,n,m*n))
+                raise IndexError("len of entries (=%s) must be %s*%s=%s" % (len(entries), m, n, m*n))
             k = 0
             for i in range(m):
                 for j in range(n):
                     sig_check()
                     x = objtogen(entries[k])
                     set_gcoeff(A.g, i+1, j+1, x.ref_target())
-                    A.cache((i,j), x)
+                    A.cache((i, j), x)
                     k += 1
         return A
 
     def genus2red(self, P, p=None):
-        """
+        r"""
         Let `P` be a polynomial with integer coefficients.
         Determines the reduction of the (proper, smooth) genus 2
         curve `C/\QQ`, defined by the hyperelliptic equation `y^2 = P`.
