@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
     build:
-        runs-on: ${{ matrix.os }}
+        runs-on: ubuntu-latest
         strategy:
             fail-fast: false
             matrix:
@@ -38,7 +38,8 @@ jobs:
           run: |
             make install
             make check
-            pip install sphinx
+            pip install sphinx >=4.0 cython cysignals
+            make build
             (cd docs && make html)
 
     dist:

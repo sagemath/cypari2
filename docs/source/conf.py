@@ -25,7 +25,7 @@
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
-needs_sphinx = '1.6'
+needs_sphinx = '4.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -160,6 +160,7 @@ texinfo_documents = [
 
 # Links to external resources (copied from Sage)
 extlinks = {
+    'sage-gh-issue': ('https://github.com/sagemath/sage/issues/%s', 'sage github issue #%s'),
     'trac': ('https://github.com/sagemath/sage/issues/%s', 'github issue #%s'), # support :trac: for backward compatibility
     'issue': ('https://github.com/sagemath/sage/issues/%s', 'github issue #%s'),
     'wikipedia': ('https://en.wikipedia.org/wiki/%s', 'Wikipedia article %s'),
@@ -169,7 +170,6 @@ extlinks = {
     'pari': ('https://pari.math.u-bordeaux.fr/dochtml/help/%s', 'pari:%s'),
     'mathscinet': ('https://www.ams.org/mathscinet-getitem?mr=%s', 'MathSciNet %s')
     }
-
 
 # Monkey-patch inspect with Cython support
 def isfunction(obj):

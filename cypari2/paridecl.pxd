@@ -12,13 +12,13 @@ AUTHORS:
  - (unknown authors before 2010)
 
  - Robert Bradshaw, Jeroen Demeyer, William Stein (2010-08-15):
-   Upgrade to PARI 2.4.3 (:trac:`9343`)
+   Upgrade to PARI 2.4.3 (:sage-gh-issue:`9343`)
 
- - Jeroen Demeyer (2010-08-15): big clean up (:trac:`9898`)
+ - Jeroen Demeyer (2010-08-15): big clean up (:sage-gh-issue:`9898`)
 
- - Jeroen Demeyer (2014-02-09): upgrade to PARI 2.7 (:trac:`15767`)
+ - Jeroen Demeyer (2014-02-09): upgrade to PARI 2.7 (:sage-gh-issue:`15767`)
 
- - Jeroen Demeyer (2014-09-19): upgrade to PARI 2.8 (:trac:`16997`)
+ - Jeroen Demeyer (2014-09-19): upgrade to PARI 2.8 (:sage-gh-issue:`16997`)
 """
 
 #*****************************************************************************
