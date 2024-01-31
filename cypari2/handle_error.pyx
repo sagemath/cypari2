@@ -18,12 +18,10 @@ AUTHORS:
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-#                  http://www.gnu.org/licenses/
+#                  https://www.gnu.org/licenses/
 #*****************************************************************************
 
 from __future__ import absolute_import, division, print_function
-
-from cpython cimport PyErr_Occurred
 
 from cysignals.signals cimport sig_block, sig_unblock, sig_error
 
@@ -99,7 +97,7 @@ class PariError(RuntimeError):
         >>> PariError(11)
         PariError(11)
         """
-        return "PariError(%d)"%self.errnum()
+        return "PariError(%d)" % self.errnum()
 
     def __str__(self):
         r"""

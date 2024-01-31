@@ -1024,7 +1024,6 @@ cdef extern from *:     # PARI headers already included by types.pxd
     long    poliscyclo(GEN f)
     long    poliscycloprod(GEN f)
 
-
     # RgV.c
 
     GEN     Rg_RgC_sub(GEN a, GEN x)
@@ -3170,7 +3169,6 @@ cdef extern from *:     # PARI headers already included by types.pxd
     long    z_lvalrem(long s, ulong p, long *py)
     long    z_pval(long n, GEN p)
     long    z_pvalrem(long n, GEN p, long *py)
-
 
     # gen3.c
 
