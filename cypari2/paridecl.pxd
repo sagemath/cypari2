@@ -3524,7 +3524,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     void    shiftaddress_canon(GEN x, long dec)
     long    timer()
     long    timer2()
-    void    traverseheap( void(*f)(GEN, void *), void *data )
+    void    traverseheap(void(*f)(GEN, void *), void *data)
 
     # intnum.c
 

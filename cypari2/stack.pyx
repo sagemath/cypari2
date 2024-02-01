@@ -3,7 +3,7 @@ Memory management for Gens on the PARI stack or the heap
 ********************************************************
 """
 
-#*****************************************************************************
+# ****************************************************************************
 #       Copyright (C) 2016 Luca De Feo <luca.defeo@polytechnique.edu>
 #       Copyright (C) 2018 Jeroen Demeyer <J.Demeyer@UGent.be>
 #
@@ -12,12 +12,12 @@ Memory management for Gens on the PARI stack or the heap
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
 #                  http://www.gnu.org/licenses/
-#*****************************************************************************
+# ****************************************************************************
 
 from __future__ import absolute_import, division, print_function
 cimport cython
 
-from cpython.ref cimport PyObject, Py_XINCREF, Py_XDECREF
+from cpython.ref cimport PyObject
 from cpython.exc cimport PyErr_SetString
 
 from cysignals.signals cimport (sig_on, sig_off, sig_block, sig_unblock,

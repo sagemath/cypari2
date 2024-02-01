@@ -21,15 +21,15 @@ Examples:
 [0, 1, 8, 27, 64, 125, 216, 343, 512, 729]
 """
 
-#*****************************************************************************
+# ****************************************************************************
 #       Copyright (C) 2015 Jeroen Demeyer <jdemeyer@cage.ugent.be>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-#                  http://www.gnu.org/licenses/
-#*****************************************************************************
+#                  https://www.gnu.org/licenses/
+# ****************************************************************************
 
 from __future__ import absolute_import, division, print_function
 
@@ -99,7 +99,8 @@ cdef extern from *:
     GEN call_python_func(GEN* args, PyObject* py_func)
 
 
-cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5, ulong nargs, ulong py_func):
+cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5,
+                     ulong nargs, ulong py_func):
     """
     This function, which will be installed in PARI, is a front-end for
     ``call_python_func_impl``.
