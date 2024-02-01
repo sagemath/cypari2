@@ -68,12 +68,12 @@ jobs:
               name: upstream
 
     linux-sage:
-        uses: sagemath/sage/.github/workflows/docker.yml@develop
+        uses: saraedum/sage/.github/workflows/docker.yml@sys-devel-gentoo
         with:
           targets:           SAGE_CHECK=no SAGE_CHECK_PACKAGES="cypari" cypari
           targets_optional:  build/make/Makefile
-          sage_repo:         sagemath/sage
-          sage_ref:          develop
+          sage_repo:         saraedum/sage
+          sage_ref:          sys-devel-gentoo
           upstream_artifact: upstream
           # We prefix the image name with the SPKG name ("cypari2-") to avoid the error
           # 'Package "sage-docker-..." is already associated with another repository.'
@@ -81,7 +81,7 @@ jobs:
         needs: [dist]
 
     linux-sage-incremental:
-        uses: sagemath/sage/.github/workflows/docker.yml@develop
+        uses: saraedum/sage/.github/workflows/docker.yml@sys-devel-gentoo
         with:
           # Build incrementally from published Docker image
           incremental: true
@@ -93,8 +93,8 @@ jobs:
           targets_pre:       build/make/Makefile
           targets:           "cypari-uninstall build doc-html ptest"
           targets_optional:  build/make/Makefile
-          sage_repo:         sagemath/sage
-          sage_ref:          develop
+          sage_repo:         saraedum/sage
+          sage_ref:          sys-devel-gentoo
           upstream_artifact: upstream
           # We prefix the image name with the SPKG name ("cypari2-") to avoid the error
           # 'Package "sage-docker-..." is already associated with another repository.'
@@ -102,7 +102,7 @@ jobs:
         needs: [linux-sage]
 
     macos-sage:
-        uses: sagemath/sage/.github/workflows/macos.yml@develop
+        uses: saraedum/sage/.github/workflows/macos.yml@sys-devel-gentoo
         with:
           osversion_xcodeversion_toxenv_tuples: >-
             [["latest", "",           "homebrew-macos-usrlocal-minimal"],
@@ -110,8 +110,8 @@ jobs:
              ["latest", "",           "conda-forge-macos-standard"]]
           targets:           SAGE_CHECK=no SAGE_CHECK_PACKAGES="cypari" cypari
           # Standard setting: Test the current beta release of Sage
-          sage_repo:         sagemath/sage
-          sage_ref:          develop
+          sage_repo:         saraedum/sage
+          sage_ref:          sys-devel-gentoo
           upstream_artifact: upstream
         needs: [dist]
 
