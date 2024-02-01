@@ -19,7 +19,7 @@ jobs:
             fail-fast: false
             matrix:
                 os: [ubuntu-latest]
-                python-version: ['3.9', '3.10', '3.11', '3.12']
+                python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
                 pari-version: ['pari-2.11.4', 'pari-2.13.0', 'pari-2.15.4']
         env:
           LC_ALL: C
