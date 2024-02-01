@@ -11,12 +11,12 @@ linking to PARI. This file should consist only of typedefs and macros
 from PARI's include files.
 """
 
-#*****************************************************************************
+# ****************************************************************************
 #  Distributed under the terms of the GNU General Public License (GPL)
 #  as published by the Free Software Foundation; either version 2 of
 #  the License, or (at your option) any later version.
-#                  http://www.gnu.org/licenses/
-#*****************************************************************************
+#                  https://www.gnu.org/licenses/
+# ****************************************************************************
 
 cdef extern from "pari/pari.h":
     ctypedef unsigned long ulong "pari_ulong"

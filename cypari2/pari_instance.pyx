@@ -267,13 +267,13 @@ Test that changing the stack size using ``default`` works properly:
 536870912
 """
 
-#*****************************************************************************
+# ****************************************************************************
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-#                  http://www.gnu.org/licenses/
-#*****************************************************************************
+#                  https://www.gnu.org/licenses/
+# ****************************************************************************
 
 from __future__ import absolute_import, division
 
@@ -1318,7 +1318,7 @@ cdef class Pari(Pari_auto):
 
         If the second argument `p` is specified, it must be a prime.
         Then only the local information at `p` is computed and returned.
-        
+
         Examples:
 
         >>> import cypari2
