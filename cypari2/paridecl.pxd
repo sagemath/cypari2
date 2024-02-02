@@ -21,12 +21,12 @@ AUTHORS:
  - Jeroen Demeyer (2014-09-19): upgrade to PARI 2.8 (:trac:`16997`)
 """
 
-#*****************************************************************************
+# ****************************************************************************
 #  Distributed under the terms of the GNU General Public License (GPL)
 #  as published by the Free Software Foundation; either version 2 of
 #  the License, or (at your option) any later version.
-#                  http://www.gnu.org/licenses/
-#*****************************************************************************
+#                  https://www.gnu.org/licenses/
+# ****************************************************************************
 
 from __future__ import print_function
 
@@ -135,9 +135,9 @@ cdef extern from *:     # PARI headers already included by types.pxd
     void    mpbern(long n, long prec)
     GEN     simplefactmod(GEN f, GEN p)
     void    listkill(GEN l)
-    GEN     isprincipalforce(GEN bnf,GEN x)
+    GEN     isprincipalforce(GEN bnf, GEN x)
     GEN     isprincipalgen(GEN bnf, GEN x)
-    GEN     isprincipalgenforce(GEN bnf,GEN x)
+    GEN     isprincipalgenforce(GEN bnf, GEN x)
 
     # F2v.c
 
@@ -232,7 +232,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN     F2xq_Artin_Schreier(GEN a, GEN T)
     GEN     F2xq_autpow(GEN x, long n, GEN T)
     GEN     F2xq_conjvec(GEN x, GEN T)
-    GEN     F2xq_div(GEN x,GEN y,GEN T)
+    GEN     F2xq_div(GEN x, GEN y, GEN T)
     GEN     F2xq_inv(GEN x, GEN T)
     GEN     F2xq_invsafe(GEN x, GEN T)
     GEN     F2xq_log(GEN a, GEN g, GEN ord, GEN T)
@@ -380,7 +380,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN     Fl2_sqr_pre(GEN x, ulong D, ulong p, ulong pi)
     GEN     Fl2_sqrtn_pre(GEN a, GEN n, ulong D, ulong p, ulong pi, GEN *zeta)
     GEN     Flm_to_FlxV(GEN x, long sv)
-    GEN     Flm_to_FlxX(GEN x, long v,long w)
+    GEN     Flm_to_FlxX(GEN x, long v, long w)
     GEN     Flv_Flm_polint(GEN xa, GEN ya, ulong p, long vs)
     GEN     Flv_inv(GEN x, ulong p)
     void    Flv_inv_inplace(GEN x, ulong p)
@@ -490,7 +490,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN     Flxq_charpoly(GEN x, GEN T, ulong p)
     GEN     Flxq_conjvec(GEN x, GEN T, ulong p)
     GEN     Flxq_div(GEN x, GEN y, GEN T, ulong p)
-    GEN     Flxq_inv(GEN x,GEN T,ulong p)
+    GEN     Flxq_inv(GEN x, GEN T, ulong p)
     GEN     Flxq_invsafe(GEN x, GEN T, ulong p)
     int     Flxq_issquare(GEN x, GEN T, ulong p)
     int     Flxq_is2npower(GEN x, long n, GEN T, ulong p)
@@ -507,7 +507,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN     Flxq_pow_table(GEN R, GEN n, GEN T, ulong p)
     GEN     Flxq_powu(GEN x, ulong n, GEN T, ulong p)
     GEN     Flxq_powers(GEN x, long l, GEN T, ulong p)
-    GEN     Flxq_sqr(GEN y,GEN T,ulong p)
+    GEN     Flxq_sqr(GEN y, GEN T, ulong p)
     GEN     Flxq_sqrt(GEN a, GEN T, ulong p)
     GEN     Flxq_sqrtn(GEN a, GEN n, GEN T, ulong p, GEN *zetan)
     ulong   Flxq_trace(GEN x, GEN T, ulong p)
@@ -992,7 +992,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN     ZpX_Frobenius(GEN T, GEN p, long e)
     GEN     ZpX_ZpXQ_liftroot(GEN P, GEN S, GEN T, GEN p, long e)
     GEN     ZpX_ZpXQ_liftroot_ea(GEN P, GEN S, GEN T, GEN p, long n, void *E,
-                         int early(void *E, GEN x, GEN q))
+                                 int early(void *E, GEN x, GEN q))
     GEN     ZpX_liftfact(GEN pol, GEN Q, GEN T, GEN p, long e, GEN pe)
     GEN     ZpX_liftroot(GEN f, GEN a, GEN p, long e)
     GEN     ZpX_liftroots(GEN f, GEN S, GEN p, long e)
@@ -1006,11 +1006,11 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN     ZpXQX_liftroot(GEN f, GEN a, GEN T, GEN p, long e)
     GEN     ZpXQX_liftroot_vald(GEN f, GEN a, long v, GEN T, GEN p, long e)
     GEN     gen_ZpX_Dixon(GEN F, GEN V, GEN q, GEN p, long N, void *E,
-                                 GEN lin(void *E, GEN F, GEN d, GEN q),
-                                 GEN invl(void *E, GEN d))
+                          GEN lin(void *E, GEN F, GEN d, GEN q),
+                          GEN invl(void *E, GEN d))
     GEN     gen_ZpX_Newton(GEN x, GEN p, long n, void *E,
-                                  GEN eval(void *E, GEN f, GEN q),
-                                  GEN invd(void *E, GEN V, GEN v, GEN q, long M))
+                           GEN eval(void *E, GEN f, GEN q),
+                           GEN invd(void *E, GEN V, GEN v, GEN q, long M))
     GEN     polhensellift(GEN pol, GEN fct, GEN p, long exp)
     ulong   quadratic_prec_mask(long n)
 
