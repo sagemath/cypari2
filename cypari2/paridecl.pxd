@@ -1198,9 +1198,11 @@ cdef extern from *:     # PARI headers already included by types.pxd
     int     ZXQX_dvd(GEN x, GEN y, GEN T)
     long    brent_kung_optpow(long d, long n, long m)
     GEN     gen_bkeval(GEN Q, long d, GEN x, int use_sqr, void *E,
-              const bb_algebra *ff, GEN cmul(void *E, GEN P, long a, GEN x))
+                       const bb_algebra *ff,
+                       GEN cmul(void *E, GEN P, long a, GEN x))
     GEN     gen_bkeval_powers(GEN P, long d, GEN V, void *E,
-              const bb_algebra *ff, GEN cmul(void *E, GEN P, long a, GEN x))
+                              const bb_algebra *ff,
+                              GEN cmul(void *E, GEN P, long a, GEN x))
     const bb_algebra * get_Rg_algebra()
 
     # ZG.c
@@ -1666,11 +1668,11 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN     vecapply(void *E, GEN (*f)(void* E, GEN x), GEN x)
     GEN     veccatapply(void *E, GEN (*f)(void* E, GEN x), GEN x)
     GEN     veccatselapply(void *Epred, long (*pred)(void* E, GEN x), void *Efun,
-                                GEN (*fun)(void* E, GEN x), GEN A)
+                           GEN (*fun)(void* E, GEN x), GEN A)
     GEN     vecrange(GEN a, GEN b)
     GEN     vecrangess(long a, long b)
     GEN     vecselapply(void *Epred, long (*pred)(void* E, GEN x), void *Efun,
-                                GEN (*fun)(void* E, GEN x), GEN A)
+                        GEN (*fun)(void* E, GEN x), GEN A)
     GEN     vecselect(void *E, long (*f)(void* E, GEN x), GEN A)
     GEN     vecslice0(GEN A, long y1, long y2)
     GEN     vecsum(GEN v)
@@ -1917,7 +1919,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN     fromdigits(GEN x, GEN B)
     GEN     fuse_Z_factor(GEN f, GEN B)
     GEN     gen_digits(GEN x, GEN B, long n, void *E, bb_ring *r,
-                              GEN (*div)(void *E, GEN x, GEN y, GEN *r))
+                       GEN (*div)(void *E, GEN x, GEN y, GEN *r))
     GEN     gen_fromdigits(GEN x, GEN B, void *E, bb_ring *r)
     byteptr initprimes(ulong maxnum, long *lenp, ulong *lastp)
     void    initprimetable(ulong maxnum)
@@ -2251,7 +2253,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN gen_Shanks_sqrtn(GEN a, GEN n, GEN q, GEN *zetan, void *E, const bb_group *grp)
     GEN gen_gener(GEN o, void *E, const bb_group *grp)
     GEN gen_ellgens(GEN d1, GEN d2, GEN m, void *E, const bb_group *grp,
-                     GEN pairorder(void *E, GEN P, GEN Q, GEN m, GEN F))
+                    GEN pairorder(void *E, GEN P, GEN Q, GEN m, GEN F))
     GEN gen_ellgroup(GEN N, GEN F, GEN *pt_m, void *E, const bb_group *grp,
                      GEN pairorder(void *E, GEN P, GEN Q, GEN m, GEN F))
     GEN gen_factored_order(GEN a, GEN o, void *E, const bb_group *grp)

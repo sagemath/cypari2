@@ -1393,8 +1393,8 @@ cdef class Gen(Gen_base):
             raise IndexError("index out of range")
 
         elif pari_type == t_VEC or pari_type == t_MAT:
-            #t_VEC    : row vector        [ code ] [  x_1  ] ... [  x_k  ]
-            #t_MAT    : matrix            [ code ] [ col_1 ] ... [ col_k ]
+            # t_VEC    : row vector        [ code ] [  x_1  ] ... [  x_k  ]
+            # t_MAT    : matrix            [ code ] [ col_1 ] ... [ col_k ]
             ind = i
             if self.itemcache is not None and ind in self.itemcache:
                 return self.itemcache[ind]
@@ -1406,11 +1406,11 @@ cdef class Gen(Gen_base):
                 return val
 
         elif pari_type == t_VECSMALL:
-            #t_VECSMALL: vec. small ints  [ code ] [ x_1 ] ... [ x_k ]
+            # t_VECSMALL: vec. small ints  [ code ] [ x_1 ] ... [ x_k ]
             return self.g[i+1]
 
         elif pari_type == t_STR:
-            #t_STR    : string            [ code ] [ man_1 ] ... [ man_k ]
+            # t_STR    : string            [ code ] [ man_1 ] ... [ man_k ]
             return chr(GSTR(self.g)[i])
 
         elif pari_type == t_LIST:
@@ -1731,8 +1731,8 @@ cdef class Gen(Gen_base):
             return "0"
         lx = lgefint(x) - 2  # number of words
         size = lx * 4 * sizeof(long)
-        s = <char *>check_malloc(size+3) # 1 char for sign, 1 char for 0, 1 char for '\0'
-        sp = s + size + 3 - 1 # last character
+        s = <char *>check_malloc(size+3)  # 1 char for sign, 1 char for 0, 1 char for '\0'
+        sp = s + size + 3 - 1  # last character
         sp[0] = 0
         xp = int_LSW(x)
         for i from 0 <= i < lx:
@@ -1774,8 +1774,8 @@ cdef class Gen(Gen_base):
             return "0x0"
         lx = lgefint(x) - 2  # number of words
         size = lx*2*sizeof(long)
-        s = <char *>check_malloc(size+4) # 1 char for sign, 2 chars for 0x, 1 char for '\0'
-        sp = s + size + 4 - 1 # last character
+        s = <char *>check_malloc(size+4)  # 1 char for sign, 2 chars for 0x, 1 char for '\0'
+        sp = s + size + 4 - 1  # last character
         sp[0] = 0
         xp = int_LSW(x)
         for i from 0 <= i < lx:
