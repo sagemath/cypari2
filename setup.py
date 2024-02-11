@@ -58,25 +58,8 @@ class no_egg(_bdist_egg):
         raise DistutilsOptionError("The package cypari2 will not function correctly when built as egg. Therefore, it cannot be installed using 'python setup.py install' or 'easy_install'. Instead, use 'pip install' to install cypari2.")
 
 
-with open('README.rst') as f:
-    README = f.read()
-
-with open('VERSION') as f:
-    VERSION = f.read().strip()
-
-
 setup(
-    name='cypari2',
-    version=VERSION,
-    install_requires=['cysignals>=1.7'],
-    description="A Python interface to the number theory library PARI/GP",
-    long_description=README,
-    url="https://github.com/sagemath/cypari2",
-    author="Luca De Feo, Vincent Delecroix, Jeroen Demeyer, Vincent Klein",
-    author_email="sage-devel@googlegroups.com",
-    license='GNU General Public License, version 2 or later',
     ext_modules=[Extension("*", ["cypari2/*.pyx"], **ext_kwds)],
-    keywords='PARI/GP number theory',
     packages=['cypari2'],
     package_dir={'cypari2': 'cypari2'},
     package_data={'cypari2': ['declinl.pxi', '*.pxd', '*.h']},
