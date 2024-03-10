@@ -100,7 +100,7 @@ cdef extern from *:
 
 
 cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5,
-                     ulong nargs, ulong py_func):
+                     ulong nargs, ulong py_func) noexcept:
     """
     This function, which will be installed in PARI, is a front-end for
     ``call_python_func_impl``.

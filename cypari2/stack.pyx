@@ -48,7 +48,7 @@ cdef Gen top_of_stack = Gen_new(gnil, NULL)
 cdef PyObject* stackbottom = <PyObject*>top_of_stack
 
 
-cdef void remove_from_pari_stack(Gen self):
+cdef void remove_from_pari_stack(Gen self) noexcept:
     global avma, stackbottom
     if <PyObject*>self is not stackbottom:
         print("ERROR: removing wrong instance of Gen")
@@ -91,7 +91,7 @@ cdef inline Gen Gen_stack_new(GEN x):
     return z
 
 
-cdef void reset_avma():
+cdef void reset_avma() noexcept:
     """
     Reset PARI stack pointer to remove unused stuff from the PARI stack.
 
@@ -104,7 +104,7 @@ cdef void reset_avma():
     avma = (<Gen>stackbottom).sp()
 
 
-cdef void clear_stack():
+cdef void clear_stack() noexcept:
     """
     Call ``sig_off()`` and clean the PARI stack.
     """
@@ -160,7 +160,7 @@ cdef int set_pari_stack_size(size_t size, size_t sizemax) except -1:
     after_resize()
 
 
-cdef void after_resize():
+cdef void after_resize() noexcept:
     """
     This must be called after reallocating the PARI stack
     """
