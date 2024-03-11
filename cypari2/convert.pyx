@@ -496,7 +496,7 @@ cdef GEN PyLong_AS_GEN(py_long x) noexcept:
         w += <ulong>(D[dgt+5]) << (5*PyLong_SHIFT - bit)
 
     # Effective size in words plus 2 special codewords
-    cdef pariwords = sizewords+2 if w else sizewords+1
+    cdef size_t pariwords = sizewords+2 if w else sizewords+1
     cdef GEN g = cgeti(pariwords)
     g[1] = sgn + evallgefint(pariwords)
 
