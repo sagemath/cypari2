@@ -55,6 +55,8 @@ jobs:
             arch: i686
           - os: macos-latest
             arch: auto
+          - os: macos-14
+            arch: auto
     env:
       # SPKGs to install as system packages
       SPKGS: _bootstrap _prereq
@@ -95,7 +97,7 @@ jobs:
           mkdir -p unpacked
           for pkg in cypari2; do
               (cd unpacked && tar xfz - ) < dist/$pkg*.tar.gz
-              pipx run cibuildwheel==2.16.0 unpacked/$pkg*
+              pipx run cibuildwheel==2.17.0 unpacked/$pkg*
           done
 
       - uses: actions/upload-artifact@v3
