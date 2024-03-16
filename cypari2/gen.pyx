@@ -81,7 +81,7 @@ include 'auto_gen.pxi'
 
 
 cdef bint ellwp_flag1_bug = -1
-cdef inline bint have_ellwp_flag1_bug():
+cdef inline bint have_ellwp_flag1_bug() except -1:
     """
     The PARI function ``ellwp(..., flag=1)`` has a bug in PARI versions
     2.9.x where the derivative is a factor 2 too small.

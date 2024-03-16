@@ -126,7 +126,7 @@ class PariError(RuntimeError):
         return self.errtext().rstrip(" .:")
 
 
-cdef void _pari_init_error_handling():
+cdef void _pari_init_error_handling() noexcept:
     """
     Set up our code for handling PARI errors.
 
@@ -211,7 +211,7 @@ cdef int _pari_err_handle(GEN E) except 0:
     raise PariError(errnum, pari_error_string, clone_gen_noclear(E))
 
 
-cdef void _pari_err_recover(long errnum):
+cdef void _pari_err_recover(long errnum) noexcept:
     """
     Reset the error string and jump back to ``sig_on()``, either to
     retry the code (in case of no error) or to make the already-raised

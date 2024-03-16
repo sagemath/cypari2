@@ -5327,7 +5327,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
 
 
 # Work around a bug in PARI's is_universal_constant()
-cdef inline int is_universal_constant(GEN x):
+cdef inline int is_universal_constant(GEN x) noexcept:
     return _is_universal_constant(x) or (x is err_e_STACK)
 
 

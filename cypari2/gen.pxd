@@ -24,7 +24,7 @@ cdef class Gen(Gen_base):
     # memory allocated by gclone(). For constants, this is NULL.
     cdef GEN address
 
-    cdef inline pari_sp sp(self):
+    cdef inline pari_sp sp(self) noexcept:
         return <pari_sp>self.address
 
     # The Gen objects on the PARI stack form a linked list, from the

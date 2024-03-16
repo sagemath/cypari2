@@ -22,7 +22,7 @@ cpdef gen_to_integer(Gen x)
 
 # Conversion C -> PARI
 
-cdef inline GEN double_to_REAL(double x):
+cdef inline GEN double_to_REAL(double x) noexcept:
     # PARI has an odd concept where it attempts to track the accuracy
     # of floating-point 0; a floating-point zero might be 0.0e-20
     # (meaning roughly that it might represent any number in the
@@ -42,7 +42,7 @@ cdef inline GEN double_to_REAL(double x):
         return dbltor(x)
 
 
-cdef inline GEN doubles_to_COMPLEX(double re, double im):
+cdef inline GEN doubles_to_COMPLEX(double re, double im) noexcept:
     cdef GEN g = cgetg(3, t_COMPLEX)
     if re == 0:
         set_gel(g, 1, gen_0)
@@ -57,15 +57,15 @@ cdef inline GEN doubles_to_COMPLEX(double re, double im):
 
 # Conversion Python -> PARI
 
-cdef inline GEN PyInt_AS_GEN(x):
+cdef inline GEN PyInt_AS_GEN(x) except? NULL:
     return stoi(PyInt_AS_LONG(x))
 
-cdef GEN PyLong_AS_GEN(py_long x)
+cdef GEN PyLong_AS_GEN(py_long x) noexcept
 
-cdef inline GEN PyFloat_AS_GEN(x):
+cdef inline GEN PyFloat_AS_GEN(x) except? NULL:
     return double_to_REAL(PyFloat_AS_DOUBLE(x))
 
-cdef inline GEN PyComplex_AS_GEN(x):
+cdef inline GEN PyComplex_AS_GEN(x) except? NULL:
     return doubles_to_COMPLEX(
         PyComplex_RealAsDouble(x), PyComplex_ImagAsDouble(x))
 

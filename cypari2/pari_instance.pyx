@@ -334,7 +334,7 @@ def prec_dec_to_bits(long prec_in_dec):
     return int(prec_in_dec*log_10 + 1.0)  # Add one to round up
 
 
-cpdef long prec_bits_to_words(unsigned long prec_in_bits):
+cpdef long prec_bits_to_words(unsigned long prec_in_bits) noexcept:
     r"""
     Convert from precision expressed in bits to pari real precision
     expressed in words. Note: this rounds up to the nearest word,
@@ -362,7 +362,7 @@ cpdef long prec_bits_to_words(unsigned long prec_in_bits):
     return (prec_in_bits - 1)//wordsize + 3
 
 
-cpdef long prec_words_to_bits(long prec_in_words):
+cpdef long prec_words_to_bits(long prec_in_words) noexcept:
     r"""
     Convert from pari real precision expressed in words to precision
     expressed in bits. Note: this adjusts for the two codewords of a
@@ -385,7 +385,7 @@ cpdef long prec_words_to_bits(long prec_in_words):
     return (prec_in_words - 2) * BITS_IN_LONG
 
 
-cpdef long default_bitprec():
+cpdef long default_bitprec() noexcept:
     r"""
     Return the default precision in bits.
 
@@ -446,7 +446,7 @@ def prec_words_to_dec(long prec_in_words):
 # of C library functions like puts().
 cdef PariOUT python_pariOut
 
-cdef void python_putchar(char c):
+cdef void python_putchar(char c) noexcept:
     cdef char s[2]
     s[0] = c
     s[1] = 0
@@ -459,7 +459,7 @@ cdef void python_putchar(char c):
     # so it doesn't print one when an error occurs.
     pari_set_last_newline(1)
 
-cdef void python_puts(const char* s):
+cdef void python_puts(const char* s) noexcept:
     try:
         # avoid string conversion if possible
         sys.stdout.buffer.write(s)
@@ -467,7 +467,7 @@ cdef void python_puts(const char* s):
         sys.stdout.write(to_string(s))
     pari_set_last_newline(1)
 
-cdef void python_flush():
+cdef void python_flush() noexcept:
     sys.stdout.flush()
 
 include 'auto_instance.pxi'
@@ -1436,22 +1436,22 @@ cdef long get_var(v) except -2:
 # Monkey-patched versions of default(parisize) and default(parisizemax)
 # which call before_resize() and after_resize().
 # The monkey-patching is set up in PariInstance.__cinit__
-cdef GEN patched_parisize(const char* v, long flag):
-    # Cast to int(*)() to avoid exception handling
-    if (<int(*)()>before_resize)():
+cdef GEN patched_parisize(const char* v, long flag) noexcept:
+    # Cast to `int(*)() noexcept` to avoid exception handling
+    if (<int(*)() noexcept>before_resize)():
         sig_error()
     return sd_parisize(v, flag)
 
 
-cdef GEN patched_parisizemax(const char* v, long flag):
-    # Cast to int(*)() to avoid exception handling
-    if (<int(*)()>before_resize)():
+cdef GEN patched_parisizemax(const char* v, long flag) noexcept:
+    # Cast to `int(*)() noexcept` to avoid exception handling
+    if (<int(*)() noexcept>before_resize)():
         sig_error()
     return sd_parisizemax(v, flag)
 
 
 IF HAVE_PLOT_SVG:
-    cdef void get_plot_ipython(PARI_plot* T):
+    cdef void get_plot_ipython(PARI_plot* T) noexcept:
         # Values copied from src/graph/plotsvg.c in PARI sources
         T.width = 480
         T.height = 320
@@ -1462,7 +1462,7 @@ IF HAVE_PLOT_SVG:
 
         T.draw = draw_ipython
 
-    cdef void draw_ipython(PARI_plot *T, GEN w, GEN x, GEN y):
+    cdef void draw_ipython(PARI_plot *T, GEN w, GEN x, GEN y) noexcept:
         global avma
         cdef pari_sp av = avma
         cdef char* svg = rect2svg(w, x, y, T)
