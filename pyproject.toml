@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools",
-            "Cython>=0.29",
+            "Cython>=3.0",
             "cysignals>=1.7"]
 # We need access to the autogen package at build time.
 # Hence we declare a custom build backend.
