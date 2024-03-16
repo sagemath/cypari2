@@ -55,8 +55,6 @@ AUTHORS:
 #                  https://www.gnu.org/licenses/
 # ****************************************************************************
 
-from __future__ import absolute_import, division, print_function
-
 cimport cython
 
 from cpython.object cimport (Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, PyTypeObject)

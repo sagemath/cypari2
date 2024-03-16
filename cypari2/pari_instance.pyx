@@ -275,8 +275,6 @@ Test that changing the stack size using ``default`` works properly:
 #                  https://www.gnu.org/licenses/
 # ****************************************************************************
 
-from __future__ import absolute_import, division
-
 import sys
 from libc.stdio cimport *
 cimport cython

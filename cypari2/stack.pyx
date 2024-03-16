@@ -14,7 +14,6 @@ Memory management for Gens on the PARI stack or the heap
 #                  http://www.gnu.org/licenses/
 # ****************************************************************************
 
-from __future__ import absolute_import, division, print_function
 cimport cython
 
 from cpython.ref cimport PyObject
