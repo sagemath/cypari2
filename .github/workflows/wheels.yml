@@ -84,6 +84,14 @@ jobs:
           name: dist
           path: dist
 
+      - uses: actions/setup-python@v5
+        # As of 2024-02-03, the macOS M1 runners do not have preinstalled python or pipx.
+        # Installing pipx follows the approach of https://github.com/pypa/cibuildwheel/pull/1743
+        id: python
+        with:
+          python-version: "3.8 - 3.12"
+          update-environment: false
+
       - name: Build platform wheels
         # We build the wheel from the sdist.
         # But we must run cibuildwheel with the unpacked source directory, not a tarball,
@@ -92,12 +100,13 @@ jobs:
         # In the CIBW_BEFORE_ALL phase, we install libraries using the Sage distribution.
         # https://cibuildwheel.readthedocs.io/en/stable/options/#before-all
         run: |
+          "${{ steps.python.outputs.python-path }}" -m pip install pipx
           export PATH=build/bin:$PATH
           export CIBW_BEFORE_ALL="( $(sage-print-system-package-command debian --yes --no-install-recommends install $(sage-get-system-packages debian $SPKGS)) || $(sage-print-system-package-command fedora --yes --no-install-recommends install $(sage-get-system-packages fedora $SPKGS | sed s/pkg-config/pkgconfig/)) || ( $(sage-print-system-package-command homebrew --yes --no-install-recommends install $(sage-get-system-packages homebrew $SPKGS)) || echo error ignored) ) && ./bootstrap && ./configure --enable-build-as-root && make -j4 V=0 $TARGETS_PRE"
           mkdir -p unpacked
           for pkg in cypari2; do
               (cd unpacked && tar xfz - ) < dist/$pkg*.tar.gz
-              pipx run cibuildwheel==2.17.0 unpacked/$pkg*
+              "${{ steps.python.outputs.python-path }}" -m pipx run cibuildwheel==2.17.0 unpacked/$pkg*
           done
 
       - uses: actions/upload-artifact@v3
