@@ -25,7 +25,7 @@ Requirements:
   https://doc.sagemath.org/html/en/reference/spkg/pari#spkg-pari
   for availability in distributions (GNU/Linux, conda-forge, Homebrew, FreeBSD),
   or install from source.
-- Python >= 3.6
+- Python >= 3.9
 - pip
 
 Install cypari2 via the Python Package Index (PyPI) via
