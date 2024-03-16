@@ -24,3 +24,9 @@ keywords = ["PARI/GP number theory"]
 
 [project.urls]
 Homepage = "https://github.com/sagemath/cypari2"
+[tool.cibuildwheel]
+before-all = """
+  apt-get install --yes wget sudo || yum install -y wget sudo || brew install bash coreutils
+  bash -x ./.install-pari.sh
+"""
+environment = { PARI_VERSION="pari-2.15.4" }
