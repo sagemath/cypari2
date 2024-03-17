@@ -17,6 +17,7 @@ authors = [
 dependencies = [
     "cysignals>=1.7",
 ]
+requires-python = ">=3.9"
 readme = "README.rst"
 license = {text = "GNU General Public License, version 2 or later"}
 keywords = ["PARI/GP number theory"]
