@@ -14,7 +14,28 @@ From a distribution package (GNU/Linux, conda-forge)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A package might be available in your package manager, see
-https://repology.org/project/python:cypari2/versions
+https://repology.org/project/python:cypari2/versions or
+https://doc.sagemath.org/html/en/reference/spkg/cypari for
+installation instructions.
+
+
+From a pre-built wheel from PyPI
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Requirements:
+
+- Python >= 3.9
+- pip
+
+Install cypari2 via the Python Package Index (PyPI) via
+
+::
+
+    $ pip install cypari2 [--user]
+
+(the optional option *--user* allows to install cypari2 for a single user
+and avoids using pip with administrator rights).
+
 
 From source with pip
 ^^^^^^^^^^^^^^^^^^^^
@@ -32,7 +53,7 @@ Install cypari2 via the Python Package Index (PyPI) via
 
 ::
 
-    $ pip install cypari2 [--user]
+    $ pip install --no-binary cypari2 cypari2 [--user]
 
 (the optional option *--user* allows to install cypari2 for a single user
 and avoids using pip with administrator rights).
