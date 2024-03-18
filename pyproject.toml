@@ -9,7 +9,6 @@ backend-path = ["."]
 
 [project]
 name = "cypari2"
-version = "2.1.4"
 description = "A Python interface to the number theory library PARI/GP"
 authors = [
     {name = "Luca De Feo, Vincent Delecroix, Jeroen Demeyer, Vincent Klein"},
@@ -24,6 +23,12 @@ requires-python = ">=3.9"
 readme = "README.rst"
 license = {text = "GNU General Public License, version 2 or later"}
 keywords = ["PARI/GP number theory"]
+dynamic = [
+    "version",
+]
 
 [project.urls]
 Homepage = "https://github.com/sagemath/cypari2"
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
