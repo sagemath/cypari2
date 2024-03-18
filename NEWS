@@ -2,6 +2,23 @@
 cypari2 change log
 ==================
 
+v2.1.5 (release candidate)
+------
+
+- build wheels for PyPI [`https://github.com/sagemath/cypari2/pull/141`] by @mkoeppe
+- add missing `noexcept` clauses for Cython 3 [`https://github.com/sagemath/cypari2/pull/160`]
+  by @tornaria
+- require Python >= 3.9 [`https://github.com/sagemath/cypari2/pull/155`] by @saraedum
+- modernize Python metadata [`https://github.com/sagemath/cypari2/pull/158`] by @mkoeppe
+- add input checking for matrix indices [`https://github.com/sagemath/cypari2/pull/149`]
+  by @fchapoton
+- coding style improvements [`https://github.com/sagemath/cypari2/pull/148`,
+  `https://github.com/sagemath/cypari2/pull/150`,
+  `https://github.com/sagemath/cypari2/pull/151`,
+  `https://github.com/sagemath/cypari2/pull/156`,
+  `https://github.com/sagemath/cypari2/pull/157`,
+  `https://github.com/sagemath/cypari2/pull/159`] by @fchapoton
+
 v2.1.4
 ------
 
@@ -14,5 +31,3 @@ v2.1.3
 
 - compatibility with PARI 2.15
 - compatibility with Python 3.11 [`https://github.com/sagemath/cypari2/pull/120`]
-
-
