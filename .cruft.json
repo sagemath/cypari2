@@ -1,0 +1,12 @@
+{
+  "template": "https://github.com/mkoeppe/sage",
+  "commit": "b73d4e2fad3b71c74b62740aa83f37e98faa3f15",
+  "checkout": "sagemath-environment-cookiecutter",
+  "context": {
+    "cookiecutter": {
+      "project_name": "cypari2",
+      "_template": "https://github.com/mkoeppe/sage"
+    }
+  },
+  "directory": "pkgs/sage-project-cookiecutter/sage_project_cookiecutter/sagemath-upstream-package-template"
+}
