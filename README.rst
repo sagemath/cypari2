@@ -47,13 +47,6 @@ If you want to try the development version, use
 
     $ pip install git+https://github.com/sagemath/cypari2.git [--user]
 
-If you have an error saying libpari-gmp*.so* is missing and have all requirements
-already installed, try to reinstall cysignals and cypari2
-
-::
-
-    $ pip install cysignals --upgrade [--user]
-    $ pip install cypari2 --upgrade [--user]
 
 Usage
 -----
@@ -126,4 +119,7 @@ the PARI/GP documentation at http://pari.math.u-bordeaux.fr/doc.html
 Contributing
 ------------
 
-Submit pull request or get in touch with the SageMath developers.
+CyPari 2 is maintained by the SageMath community.
+
+Open issues or submit pull requests at https://github.com/sagemath/cypari2
+and join https://groups.google.com/group/sage-devel to discuss.

@@ -12,7 +12,10 @@ name = "cypari2"
 version = "2.1.4"
 description = "A Python interface to the number theory library PARI/GP"
 authors = [
-    {name = "Luca De Feo, Vincent Delecroix, Jeroen Demeyer, Vincent Klein", email = "sage-devel@googlegroups.com"},
+    {name = "Luca De Feo, Vincent Delecroix, Jeroen Demeyer, Vincent Klein"},
+]
+maintainers = [
+    {name = "SageMath developers", email = "sage-devel@googlegroups.com"},
 ]
 dependencies = [
     "cysignals>=1.7",
