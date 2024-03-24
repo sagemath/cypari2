@@ -2,7 +2,7 @@
 cypari2 change log
 ==================
 
-v2.1.5 (release candidate)
+v2.1.5
 ------
 
 - build wheels for PyPI [`https://github.com/sagemath/cypari2/pull/141`] by @mkoeppe
