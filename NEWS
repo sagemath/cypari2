@@ -2,10 +2,13 @@
 cypari2 change log
 ==================
 
-v2.2.0 (in development)
+v2.2.0 (release candidate)
 ------
 
-- require cysignals >= 1.11.3
+- Require cysignals >= 1.11.3, use the signal hook
+  [`https://github.com/sagemath/cypari2/pull/130`] by @kliem
+- Require Cython >= 3.0, use the trashcan for class Gen
+  [`https://github.com/sagemath/cypari2/pull/77`] by @jdemeyer
 
 v2.1.5
 ------
