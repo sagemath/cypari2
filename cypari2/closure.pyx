@@ -4,7 +4,7 @@ Convert Python functions to PARI closures
 
 AUTHORS:
 
-- Jeroen Demeyer (2015-04-10): initial version, :trac:`18052`.
+- Jeroen Demeyer (2015-04-10): initial version, :sage-gh-issue:`18052`.
 
 Examples:
 
