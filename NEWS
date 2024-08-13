@@ -2,7 +2,7 @@
 cypari2 change log
 ==================
 
-v2.2.0 (release candidate)
+v2.2.0
 ------
 
 - Require cysignals >= 1.11.3, use the signal hook
