@@ -24,6 +24,7 @@ cdef extern from "pari/pari.h":
     ctypedef long* GEN
     ctypedef char* byteptr
     ctypedef unsigned long pari_sp
+    ctypedef unsigned long pari_prime
 
     # PARI types
     enum:
