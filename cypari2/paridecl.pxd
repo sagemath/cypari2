@@ -118,6 +118,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     extern PariOUT* pariOut
     extern PariOUT* pariErr
     extern byteptr diffptr
+    extern pari_prime* pari_PRIMES
 
     ###############################################
     #                                             #
