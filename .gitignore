@@ -8,6 +8,7 @@ cypari2/auto_paridecl.pxd.tmp
 cypari2/auto_paridecl.pxd
 cypari2/closure.c
 cypari2/convert.c
+cypari2/custom_block.c
 cypari2/gen.c
 cypari2/handle_error.c
 cypari2/pari_instance.c
