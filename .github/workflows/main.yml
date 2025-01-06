@@ -21,8 +21,8 @@ jobs:
             fail-fast: false
             matrix:
                 os: [ubuntu-latest]
-                python-version: ['3.9', '3.10', '3.11', '3.12', '3.13-dev']
-                pari-version: ['pari-2.11.4', 'pari-2.13.0', 'pari-2.15.4', 'pari-2.15.5']
+                python-version: ['3.10', '3.11', '3.12', '3.13-dev']
+                pari-version: ['pari-2.13.0', 'pari-2.15.4', 'pari-2.15.5', '2.17.1']
         env:
           LC_ALL: C
           PARI_VERSION: ${{ matrix.pari-version }}
