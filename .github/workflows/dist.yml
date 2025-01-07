@@ -29,10 +29,10 @@ jobs:
         run: |
           python3 -m pip install build
           python3 -m build --sdist
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: "dist/*.tar.gz"
-          name: dist
+          name: dist-ubuntu-latest
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
@@ -68,7 +68,7 @@ jobs:
       #
       CIBW_ARCHS: ${{ matrix.arch }}
       # https://cibuildwheel.readthedocs.io/en/stable/options/#requires-python
-      CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
+      CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
       # Environment during wheel build
       CIBW_ENVIRONMENT: "PATH=$(pwd)/local/bin:$PATH CPATH=$(pwd)/local/include:$CPATH LIBRARY_PATH=$(pwd)/local/lib:$LIBRARY_PATH LD_LIBRARY_PATH=$(pwd)/local/lib:$LD_LIBRARY_PATH PKG_CONFIG_PATH=$(pwd)/local/share/pkgconfig:$PKG_CONFIG_PATH ACLOCAL_PATH=/usr/share/aclocal"
       # Use 'build', not 'pip wheel'
@@ -79,9 +79,9 @@ jobs:
           repository:   sagemath/sage
           ref:          develop
 
-      - uses: actions/download-artifact@v4.1.7
+      - uses: actions/download-artifact@v4
         with:
-          name: dist
+          name: dist-${{ matrix.os }}
           path: dist
 
       - uses: actions/setup-python@v5
@@ -89,7 +89,7 @@ jobs:
         # Installing pipx follows the approach of https://github.com/pypa/cibuildwheel/pull/1743
         id: python
         with:
-          python-version: "3.8 - 3.12"
+          python-version: "3.10 - 3.12"
           update-environment: false
 
       - name: Build platform wheels
@@ -109,9 +109,9 @@ jobs:
               "${{ steps.python.outputs.python-path }}" -m pipx run cibuildwheel==2.17.0 unpacked/$pkg*
           done
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: wheels
+          name: wheels-${{ matrix.os }}
           path: ./wheelhouse/*.whl
 
   pypi-publish:
@@ -124,7 +124,7 @@ jobs:
       CAN_DEPLOY: ${{ secrets.SAGEMATH_PYPI_API_TOKEN != '' }}
     steps:
 
-      - uses: actions/download-artifact@v4.1.7
+      - uses: actions/download-artifact@v4
         with:
           name: wheels
           path: wheelhouse
