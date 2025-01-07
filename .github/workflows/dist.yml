@@ -105,7 +105,7 @@ jobs:
           export CIBW_BEFORE_ALL="( $(sage-print-system-package-command debian --yes --no-install-recommends install $(sage-get-system-packages debian $SPKGS)) || $(sage-print-system-package-command fedora --yes --no-install-recommends install $(sage-get-system-packages fedora $SPKGS | sed s/pkg-config/pkgconfig/)) || ( $(sage-print-system-package-command homebrew --yes --no-install-recommends install $(sage-get-system-packages homebrew $SPKGS)) || echo error ignored) ) && ./bootstrap && ./configure --enable-build-as-root && make -j4 V=0 $TARGETS_PRE"
           mkdir -p unpacked
           for pkg in cypari2; do
-              (cd unpacked && tar xfz - ) < dist/$pkg*.tar.gz
+              (cd unpacked && tar xfz - ) < dist/dist-"${{ matrix.os }}"/$pkg*.tar.gz
               "${{ steps.python.outputs.python-path }}" -m pipx run cibuildwheel==2.17.0 unpacked/$pkg*
           done
 
