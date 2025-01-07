@@ -24,6 +24,7 @@ jobs:
           bash -x .install-pari.sh
         env:
           PARI_VERSION: pari-2.17.1
+          URLDIR: unix
       - uses: actions/setup-python@v4
       - name: make sdist
         run: |
