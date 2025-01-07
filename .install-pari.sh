@@ -13,11 +13,12 @@ PARI_URL1="http://pari.math.u-bordeaux.fr/pub/pari/unix"
 PARI_URL2="http://pari.math.u-bordeaux.fr/pub/pari/unstable"
 
 # Download PARI sources
-wget --no-verbose "$PARI_URL/$PARI_VERSION.tar.gz" || wget --no-verbose "$PARI_URL1/$PARI_VERSION.tar.gz" || wget --no-verbose "$PARI_URL2/$PARI_VERSION.tar.gz" || wget --no-verbose "$PARI_URL3/$PARI_VERSION.tar.gz"
+wget --no-verbose "$PARI_URL/$PARI_VERSION.tar.gz" -O pari.tgz || wget --no-verbose "$PARI_URL1/pari-$PARI_VERSION.tar.gz" -O pari.tgz || wget --no-verbose "$PARI_URL2/pari-$PARI_VERSION.tar.gz" -O pari.tgz
 
 # Install
-tar xzf "$PARI_VERSION.tar.gz"
-cd "$PARI_VERSION"
+mkdir Pari42
+tar xzf pari.tgz -C Pari42
+cd Pari42/*
 ./Configure --prefix=/usr
 make gp
 sudo make install
