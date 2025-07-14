@@ -62,11 +62,12 @@ cdef void remove_from_pari_stack(Gen self) noexcept:
             print(f"Expected: 0x{self.sp():x}")
             print(f"Actual:   0x{avma:x}")
         else:
-            warn(f"cypari2 leaked {self.sp() - avma} bytes on the PARI stack",
-                 RuntimeWarning, stacklevel=2)
-    n = self.next
+            # This could only happen when a PARI computation is interrupted, in which
+            # case the avma needs to be reset.
+            reset_avma()
+    n = self.get_next()
     stackbottom = <PyObject*>n
-    self.next = None
+    self.set_next(None)
     reset_avma()
 
 
@@ -81,7 +82,7 @@ cdef inline Gen Gen_stack_new(GEN x):
     # the PARI stack.
     n = <Gen>stackbottom
     z = Gen_new(x, <GEN>avma)
-    z.next = n
+    z.set_next(n)
     stackbottom = <PyObject*>z
     sz = z.sp()
     sn = n.sp()
@@ -116,12 +117,17 @@ cdef int move_gens_to_heap(pari_sp lim) except -1:
     Move some/all Gens from the PARI stack to the heap.
 
     If lim == -1, move everything. Otherwise, keep moving as long as
-    avma <= lim.
+    avma < lim.
     """
-    while avma <= lim and stackbottom is not <PyObject*>top_of_stack:
+    while avma < lim and stackbottom is not <PyObject*>top_of_stack:
         current = <Gen>stackbottom
         sig_on()
         current.g = gclone(current.g)
+        # If current is a container type (e.g., a matrix or a vector),
+        # its entries will be cloned during this move. Hence, the
+        # itemcache will contain obsolete objects that needs to be
+        # cleared.
+        current.itemcache = None
         sig_block()
         remove_from_pari_stack(current)
         sig_unblock()
