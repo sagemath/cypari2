@@ -1,5 +1,5 @@
 include LICENSE README.rst VERSION
-include Makefile
+include Makefile meson.build
 global-include *.py *.pyx *.pxd *.pxi
 
 recursive-exclude cypari2 auto_*
