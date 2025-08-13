@@ -1,13 +1,13 @@
 [build-system]
 requires = [
-    "setuptools",
+    "meson-python>=0.15.0",
     "Cython>=3.0",
     "cysignals>=1.11.3",
+    "meson>=1.1.0",
+    "ninja",
+    "pkg-config",
 ]
-# We need access to the autogen package at build time.
-# Hence we declare a custom build backend.
-build-backend = "_custom_build_meta"  # just re-exports setuptools.build_meta definitions
-backend-path = ["."]
+build-backend = "mesonpy"
 
 [project]
 name = "cypari2"
@@ -32,5 +32,4 @@ dynamic = [
 [project.urls]
 Homepage = "https://github.com/sagemath/cypari2"
 
-[tool.setuptools.dynamic]
-version = {file = "VERSION"}
+
