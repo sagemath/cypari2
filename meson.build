@@ -13,6 +13,8 @@ py = import('python').find_installation(pure: false)
 # Compilers
 cc = meson.get_compiler('c')
 cython = meson.get_compiler('cython')
+# Workaround as described in https://cython.readthedocs.io/en/latest/src/userguide/special_methods.html#arithmetic-methods
+add_project_arguments('-X c_api_binop_methods=True', language: 'cython')
 
 # Dependencies  
 inc_cysignals = run_command(
