@@ -42,14 +42,10 @@ From source with pip
 
 Requirements:
 
-- PARI/GP >= 2.9.4 (header files and library); see
+  PARI/GP >= 2.9.4 (header files and library); see
   https://doc.sagemath.org/html/en/reference/spkg/pari#spkg-pari
   for availability in distributions (GNU/Linux, conda-forge, Homebrew, FreeBSD),
   or install from source.
-- Python >= 3.9
-- pip
-- `cysignals <https://pypi.python.org/pypi/cysignals/>`_ >= 1.11.3
-- Cython >= 3.0
 
 Install cypari2 via the Python Package Index (PyPI) via
 
@@ -139,10 +135,22 @@ same computations be done via
 The complete documentation of cypari2 is available at http://cypari2.readthedocs.io and
 the PARI/GP documentation at http://pari.math.u-bordeaux.fr/doc.html
 
-Contributing
-------------
+Contributing & Development
+--------------------------
 
 CyPari 2 is maintained by the SageMath community.
 
 Open issues or submit pull requests at https://github.com/sagemath/cypari2
 and join https://groups.google.com/group/sage-devel to discuss.
+
+To get started with development, you can set up an environment using Conda 
+as follows:
+
+::
+    $ conda create -n cypari2-dev python cython pari=*=*_pthread ninja meson-python cysignals c-compiler
+    $ conda activate cypari2-dev
+
+Afterwards, you can build and install the package in editable mode: 
+
+::
+    $ pip install -e . --no-build-isolation
