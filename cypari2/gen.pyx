@@ -1789,9 +1789,9 @@ cdef class Gen(Gen_base):
         while sp[0] == c'0':
             sp = sp + 1
         sp -= 1
-        sp[0] = 'x'
+        sp[0] = c'x'
         sp -= 1
-        sp[0] = '0'
+        sp[0] = c'0'
         if signe(x) < 0:
             sp -= 1
             sp[0] = c'-'
