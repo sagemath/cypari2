@@ -37,7 +37,6 @@ foreach name, pyx : extension_data
     sources: pyx,
     subdir: 'cypari2',
     install: true,
-    #include_directories: [inc_dirs, 'cypari2'],
     dependencies: [cysignals, pari],
   )
 endforeach
