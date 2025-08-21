@@ -1927,7 +1927,6 @@ cdef class Gen(Gen_base):
         """
         # TODO: deprecate
         cdef long n
-        cdef Gen t
 
         if typ(self.g) != t_VEC and typ(self.g) != t_COL:
             raise TypeError("Object (=%s) must be of type t_VEC or t_COL." % self)
@@ -2703,7 +2702,6 @@ cdef class Gen(Gen_base):
         >>> pari('(2.4*x^2 - 1.7)/x').truncate()
         2.40000000000000*x
         """
-        cdef int n
         cdef long e
         cdef Gen y
         sig_on()
@@ -3116,7 +3114,6 @@ cdef class Gen(Gen_base):
         """
         cdef GEN G
         cdef long t
-        cdef Gen g
         sig_on()
         if find_root:
             t = itos(gissquareall(x.g, &G))
