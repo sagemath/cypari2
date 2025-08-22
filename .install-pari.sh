@@ -8,9 +8,9 @@ if [ "$URLDIR" = "" ]; then
     URLDIR=OLD/${PURE_VERSION%.*}
 fi
 
-PARI_URL="http://pari.math.u-bordeaux.fr/pub/pari/$URLDIR"
-PARI_URL1="http://pari.math.u-bordeaux.fr/pub/pari/unix"
-PARI_URL2="http://pari.math.u-bordeaux.fr/pub/pari/unstable"
+PARI_URL="https://pari.math.u-bordeaux.fr/pub/pari/$URLDIR"
+PARI_URL1="https://pari.math.u-bordeaux.fr/pub/pari/unix"
+PARI_URL2="https://pari.math.u-bordeaux.fr/pub/pari/unstable"
 
 # Download PARI sources
 wget --no-verbose "$PARI_URL/$PARI_VERSION.tar.gz" -O pari.tgz || wget --no-verbose "$PARI_URL1/pari-$PARI_VERSION.tar.gz" -O pari.tgz || wget --no-verbose "$PARI_URL2/pari-$PARI_VERSION.tar.gz" -O pari.tgz

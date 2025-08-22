@@ -3639,7 +3639,7 @@ cdef class Gen(Gen_base):
         >>> G.galoissubfields(flag=2, v='z')[3]
         [...^2 + 2, Mod(x^3 + x, x^4 + 1), [x^2 - z*x - 1, x^2 + z*x - 1]]
 
-        .. _galoissubfields: http://pari.math.u-bordeaux.fr/dochtml/html.stable/Functions_related_to_general_number_fields.html#galoissubfields
+        .. _galoissubfields: https://pari.math.u-bordeaux.fr/dochtml/html.stable/Functions_related_to_general_number_fields.html#galoissubfields
         """
         sig_on()
         return new_gen(galoissubfields(self.g, flag, get_var(v)))

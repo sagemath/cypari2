@@ -5,7 +5,7 @@ CyPari 2
     :target: https://cypari2.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-A Python interface to the number theory library `PARI/GP <http://pari.math.u-bordeaux.fr/>`_.
+A Python interface to the number theory library `PARI/GP <https://pari.math.u-bordeaux.fr/>`_.
 
 Installation
 ------------
@@ -132,8 +132,8 @@ same computations be done via
     >>> pari.centerlift(pari.lift(fq))
     [x - t, 1; x + (t^2 + t - 1), 1; x + (-t^2 - 1), 1]
 
-The complete documentation of cypari2 is available at http://cypari2.readthedocs.io and
-the PARI/GP documentation at http://pari.math.u-bordeaux.fr/doc.html
+The complete documentation of cypari2 is available at https://cypari2.readthedocs.io and
+the PARI/GP documentation at https://pari.math.u-bordeaux.fr/doc.html
 
 Contributing & Development
 --------------------------
