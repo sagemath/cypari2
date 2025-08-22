@@ -14,7 +14,8 @@ maintainers = [
 dependencies = ["cysignals>=1.11.3"]
 requires-python = ">=3.9"
 readme = "README.rst"
-license = { text = "GNU General Public License, version 2 or later" }
+license = "GPL-2.0-or-later"
+license-files = ["LICENSE"]
 keywords = ["PARI/GP number theory"]
 dynamic = ["version"]
 
