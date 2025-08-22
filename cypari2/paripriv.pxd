@@ -1,4 +1,3 @@
-# distutils: libraries = gmp pari
 """
 Declarations for private functions from PARI
 
