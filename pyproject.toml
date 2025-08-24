@@ -1,5 +1,5 @@
 [build-system]
-requires = ["meson-python>=0.15.0", "cython>=3.0", "cysignals>=1.11.3"]
+requires = ["meson-python>=0.18.0", "cython>=3.0", "cysignals>=1.11.3"]
 build-backend = "mesonpy"
 
 [project]
