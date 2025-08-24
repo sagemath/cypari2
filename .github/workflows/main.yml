@@ -118,7 +118,7 @@ jobs:
         needs: [dist]
 
 env:
-    # Ubuntu packages to install so that the project's "setup.py sdist" can succeed
+    # Ubuntu packages to install so that building the sdist can succeed
     DIST_PREREQ: libpari-dev pari-doc libbz2-dev bzip2
     # Name of this project in the Sage distribution
     SPKG:        cypari

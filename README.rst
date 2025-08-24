@@ -5,7 +5,7 @@ CyPari 2
     :target: https://cypari2.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-A Python interface to the number theory library `PARI/GP <http://pari.math.u-bordeaux.fr/>`_.
+A Python interface to the number theory library `PARI/GP <https://pari.math.u-bordeaux.fr/>`_.
 
 Installation
 ------------
@@ -42,14 +42,10 @@ From source with pip
 
 Requirements:
 
-- PARI/GP >= 2.9.4 (header files and library); see
+  PARI/GP >= 2.9.4 (header files and library); see
   https://doc.sagemath.org/html/en/reference/spkg/pari#spkg-pari
   for availability in distributions (GNU/Linux, conda-forge, Homebrew, FreeBSD),
   or install from source.
-- Python >= 3.9
-- pip
-- `cysignals <https://pypi.python.org/pypi/cysignals/>`_ >= 1.11.3
-- Cython >= 3.0
 
 Install cypari2 via the Python Package Index (PyPI) via
 
@@ -136,13 +132,25 @@ same computations be done via
     >>> pari.centerlift(pari.lift(fq))
     [x - t, 1; x + (t^2 + t - 1), 1; x + (-t^2 - 1), 1]
 
-The complete documentation of cypari2 is available at http://cypari2.readthedocs.io and
-the PARI/GP documentation at http://pari.math.u-bordeaux.fr/doc.html
+The complete documentation of cypari2 is available at https://cypari2.readthedocs.io and
+the PARI/GP documentation at https://pari.math.u-bordeaux.fr/doc.html
 
-Contributing
-------------
+Contributing & Development
+--------------------------
 
 CyPari 2 is maintained by the SageMath community.
 
 Open issues or submit pull requests at https://github.com/sagemath/cypari2
 and join https://groups.google.com/group/sage-devel to discuss.
+
+To get started with development, you can set up an environment using Conda 
+as follows:
+
+::
+    $ conda create -n cypari2-dev python cython pari=*=*_pthread ninja meson-python cysignals c-compiler
+    $ conda activate cypari2-dev
+
+Afterwards, you can build and install the package in editable mode: 
+
+::
+    $ pip install -e . --no-build-isolation

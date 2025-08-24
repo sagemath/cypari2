@@ -1,4 +1,3 @@
-# distutils: libraries = gmp pari
 """
 Declarations for non-inline functions from PARI.
 

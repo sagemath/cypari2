@@ -1,9 +1,0 @@
-include LICENSE README.rst VERSION
-include Makefile
-global-include *.py *.pyx *.pxd *.pxi
-
-recursive-exclude cypari2 auto_*
-global-exclude *.c .gitignore readthedocs* .install-pari.sh
-prune .github
-
-prune dist

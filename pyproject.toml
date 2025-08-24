@@ -1,36 +1,23 @@
 [build-system]
-requires = [
-    "setuptools",
-    "Cython>=3.0",
-    "cysignals>=1.11.3",
-]
-# We need access to the autogen package at build time.
-# Hence we declare a custom build backend.
-build-backend = "_custom_build_meta"  # just re-exports setuptools.build_meta definitions
-backend-path = ["."]
+requires = ["meson-python>=0.18.0", "cython>=3.0", "cysignals>=1.11.3"]
+build-backend = "mesonpy"
 
 [project]
 name = "cypari2"
 description = "A Python interface to the number theory library PARI/GP"
 authors = [
-    {name = "Luca De Feo, Vincent Delecroix, Jeroen Demeyer, Vincent Klein"},
+    { name = "Luca De Feo, Vincent Delecroix, Jeroen Demeyer, Vincent Klein" },
 ]
 maintainers = [
-    {name = "SageMath developers", email = "sage-devel@googlegroups.com"},
+    { name = "SageMath developers", email = "sage-devel@googlegroups.com" },
 ]
-dependencies = [
-    "cysignals>=1.11.3",
-]
+dependencies = ["cysignals>=1.11.3"]
 requires-python = ">=3.9"
 readme = "README.rst"
-license = {text = "GNU General Public License, version 2 or later"}
+license = "GPL-2.0-or-later"
+license-files = ["LICENSE"]
 keywords = ["PARI/GP number theory"]
-dynamic = [
-    "version",
-]
+dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://github.com/sagemath/cypari2"
-
-[tool.setuptools.dynamic]
-version = {file = "VERSION"}

@@ -9,16 +9,18 @@ Read and parse the file pari.desc
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-#                  http://www.gnu.org/licenses/
+#                  https://www.gnu.org/licenses/
 #*****************************************************************************
 
 from __future__ import absolute_import, unicode_literals
 
-import os, re, io
+import io
+import os
+import re
 
 from .args import pari_arg_types
-from .ret import pari_ret_types
 from .paths import pari_share
+from .ret import pari_ret_types
 
 paren_re = re.compile(r"[(](.*)[)]")
 argname_re = re.compile(r"[ {]*&?([A-Za-z_][A-Za-z0-9_]*)")

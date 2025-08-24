@@ -9,16 +9,14 @@ Find out installation paths of PARI/GP
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-#                  http://www.gnu.org/licenses/
+#                  https://www.gnu.org/licenses/
 #*****************************************************************************
 
 from __future__ import absolute_import, unicode_literals
 
 import os
 import shutil
-
 from glob import glob
-
 
 gppath = shutil.which("gp")
 
@@ -43,7 +41,7 @@ def pari_share():
     """
     if "PARI_SHARE" in os.environ:
         return os.environ["PARI_SHARE"]
-    from subprocess import Popen, PIPE
+    from subprocess import PIPE, Popen
     if not gppath:
         raise EnvironmentError("cannot find an installation of PARI/GP: make sure that the 'gp' program is in your $PATH")
     # Ignore GP_DATA_DIR environment variable
