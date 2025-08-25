@@ -4,9 +4,9 @@ Handle PARI documentation
 """
 
 from __future__ import unicode_literals
+
 import re
 import subprocess
-
 
 leading_ws = re.compile("^( +)", re.MULTILINE)
 trailing_ws = re.compile("( +)$", re.MULTILINE)
@@ -20,7 +20,9 @@ end_verb = re.compile(r"@[23] *@\[endcode\]")
 verb_loop = re.compile("^(    .*)@\[[a-z]*\]", re.MULTILINE)
 
 dollars = re.compile(r"@\[dollar\]\s*(.*?)\s*@\[dollar\]", re.DOTALL)
-doubledollars = re.compile(r"@\[doubledollar\]\s*(.*?)\s*@\[doubledollar\] *", re.DOTALL)
+doubledollars = re.compile(
+    r"@\[doubledollar\]\s*(.*?)\s*@\[doubledollar\] *", re.DOTALL
+)
 
 math_loop = re.compile(r"(@\[start[A-Z]*MATH\][^@]*)@\[[a-z]*\]")
 math_backslash = re.compile(r"(@\[start[A-Z]*MATH\][^@]*)=BACKSLASH=")
@@ -101,6 +103,8 @@ def raw_to_rest(doc):
           dividing :math:`\#E`.
     """
     doc = doc.decode("utf-8")
+    if not doc:
+        return ""
 
     # Work around a specific problem with doc of "component"
     doc = doc.replace("[@[dollar]@[dollar]]", "[]")
@@ -242,8 +246,8 @@ def raw_to_rest(doc):
         i = doc.index("@")
     except ValueError:
         return doc
-    ilow = max(0, i-30)
-    ihigh = min(len(doc), i+30)
+    ilow = max(0, i - 30)
+    ihigh = min(len(doc), i + 30)
     raise SyntaxError("@ found: " + doc[ilow:ihigh])
 
 
@@ -269,9 +273,19 @@ def get_raw_doc(function):
         ...
         RuntimeError: no help found for 'abcde'
     """
-    doc = subprocess.check_output(["gphelp", "-raw", function])
+    try:
+        doc = subprocess.check_output(["gphelp", "-raw", function])
+    except (subprocess.CalledProcessError, FileNotFoundError) as error:
+        print(
+            f"""
+    Error calling gphelp: {error}.
+    This is most likely because your PARI installation doesn't include the documentation.
+    As a result, the generated function will not have a docstring.
+    """.strip()
+        )
+        return b""
     if doc.endswith(b"""' not found !\n"""):
-        raise RuntimeError("no help found for '{}'".format(function))
+        raise RuntimeError(f"no help found for '{function}'")
     return doc
 
 
@@ -328,7 +342,7 @@ def get_rest_doc(function):
 
         >>> print(get_rest_doc("bitor"))
         bitwise (inclusive)
-        :literal:`or` of two integers :math:`x` and :math:`y`, that is the integer 
+        :literal:`or` of two integers :math:`x` and :math:`y`, that is the integer
         <BLANKLINE>
         .. MATH::
         <BLANKLINE>
