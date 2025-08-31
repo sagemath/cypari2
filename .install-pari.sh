@@ -31,6 +31,6 @@ else
 fi
 
 echo "Building Pari ..."
-./Configure --prefix=/usr
+./Configure
 make gp
 sudo make install
