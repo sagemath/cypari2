@@ -38,6 +38,9 @@ jobs:
         env:
           LC_ALL: C
           PARI_VERSION: ${{ matrix.pari-version }}
+        defaults:
+          run:
+            shell: ${{ matrix.os == 'windows-latest' && 'msys2 {0}' || 'bash' }}
         steps:
         - name: Set up the repository
           uses: actions/checkout@v4
