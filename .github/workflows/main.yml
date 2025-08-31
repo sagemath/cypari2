@@ -58,6 +58,7 @@ jobs:
                 make
                 patch
                 sed
+                wget
               pacboy: gcc:p
         - name: Install pari
           run: |
