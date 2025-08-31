@@ -13,9 +13,6 @@ py.install_sources(
   'types.pxd',
   'cypari.h',
   'pycore_long.h',
-  'auto_paridecl.pxd',
-  'auto_gen.pxi',
-  'auto_instance.pxi',
   subdir: 'cypari2'
 )
 
@@ -31,6 +28,13 @@ extension_data = {
   'pari_instance': files('pari_instance.pyx')
 }
 
+inc_src = include_directories('.')
+# Meson currently ignores include_directories for Cython modules, so we
+# have to add them manually.
+# https://github.com/mesonbuild/meson/issues/9562
+add_project_arguments('-I', meson.current_source_dir(), language: 'cython')
+add_project_arguments('-I', meson.current_build_dir(), language: 'cython')
+
 foreach name, pyx : extension_data
   py.extension_module(
     name,
@@ -38,6 +42,7 @@ foreach name, pyx : extension_data
     subdir: 'cypari2',
     install: true,
     dependencies: [cysignals, pari],
+    include_directories: [inc_root, inc_src],
   )
 endforeach
 

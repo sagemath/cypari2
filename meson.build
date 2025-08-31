@@ -35,7 +35,11 @@ except Exception:
 ).stdout().strip()
 cysignals = declare_dependency(include_directories: inc_cysignals)
 # Cannot be found via pkg-config
-pari = cc.find_library('pari', required: true)
+pari = cc.find_library('pari', required: false)
+if not pari.found()
+  # On Windows, the library is named libpari.dll
+  pari = cc.find_library('libpari', required: true)
+endif
 
 # Run code generation step
 code_gen_result = run_command(
@@ -44,10 +48,23 @@ code_gen_result = run_command(
 import sys
 sys.path.insert(0, ".")
 from autogen import rebuild
-rebuild(force=True)
+rebuild(force=True, output=r"''' + meson.current_build_dir() + '''/cypari2")
 print("Code generation successful")
   ''',
   check: true
 )
+py.install_sources(
+  meson.current_build_dir() + '/cypari2/auto_paridecl.pxd',
+  meson.current_build_dir() + '/cypari2/auto_gen.pxi',
+  meson.current_build_dir() + '/cypari2/auto_instance.pxi',
+  subdir: 'cypari2'
+)
+inc_root = include_directories('.')
+# Meson currently ignores include_directories for Cython modules, so we
+# have to add them manually.
+# https://github.com/mesonbuild/meson/issues/9562
+add_project_arguments('-I', meson.current_source_dir(), language: 'cython')
+add_project_arguments('-I', meson.current_build_dir(), language: 'cython')
+
 
 subdir('cypari2')
