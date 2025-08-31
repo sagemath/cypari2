@@ -3,7 +3,7 @@ project('cypari2',
   version: files('VERSION'),
   license: 'GPL v2+',
   default_options: ['c_std=c17', 'python.install_env=auto'],
-  meson_version: '>=1.2',
+  meson_version: '>=1.5.0',
 )
 
 # Python module
@@ -35,11 +35,31 @@ except Exception:
 ).stdout().strip()
 cysignals = declare_dependency(include_directories: inc_cysignals)
 # Cannot be found via pkg-config
-pari = cc.find_library('pari', required: false)
+pari = cc.find_library('pari', has_headers: ['pari/pari.h'], required: false)
 if not pari.found()
   # On Windows, the library is named libpari.dll
-  pari = cc.find_library('libpari', required: true)
+  pari = cc.find_library('libpari', has_headers: ['pari/pari.h'], required: true)
 endif
+# Get PARI version (mostly as smoke test)
+pari_version_code = '''
+#include <stdio.h>
+#include <pari/pari.h>
+int main(void) {
+  pari_init(1000000, 2);
+  GEN v = pari_version();
+  const char *version = GENtostr(pari_version());
+  pari_printf("%s",version);
+  pari_close();
+  return 0;
+}
+'''
+pari_version = cc.run(
+  pari_version_code,
+  name: 'pari version',
+  dependencies: [pari],
+  required: true,
+)
+message('PARI Version: ' + pari_version.stdout())
 
 # Run code generation step
 code_gen_result = run_command(
