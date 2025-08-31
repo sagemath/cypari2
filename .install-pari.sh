@@ -21,12 +21,13 @@ if [ -d build/pari-$PURE_VERSION ] ; then
     cd "build/pari-$PURE_VERSION"
 else
     echo "Download PARI sources"
-    wget --no-verbose "$PARI_URL/$PARI_VERSION.tar.gz" -O "pari-$PURE_VERSION.tgz" || wget --no-verbose "$PARI_URL1/pari-$PARI_VERSION.tar.gz" -O "pari-$PURE_VERSION.tgz" || wget --no-verbose "$PARI_URL2/pari-$PARI_VERSION.tar.gz" -O "pari-$PURE_VERSION.tgz"
     if [ ! -d build ] ; then
         mkdir build
     fi
-    tar xzf "pari-$PURE_VERSION.tgz" -C build
-    cd "build/pari-$PURE_VERSION"
+    cd build
+    wget --no-verbose "$PARI_URL/$PARI_VERSION.tar.gz" -O "pari-$PURE_VERSION.tgz" || wget --no-verbose "$PARI_URL1/pari-$PURE_VERSION.tar.gz" -O "pari-$PURE_VERSION.tgz" || wget --no-verbose "$PARI_URL2/pari-$PURE_VERSION.tar.gz" -O "pari-$PURE_VERSION.tgz"
+    tar xzf "pari-$PURE_VERSION.tgz"
+    cd "pari-$PURE_VERSION"
 fi
 
 echo "Building Pari ..."
