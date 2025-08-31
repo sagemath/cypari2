@@ -7,6 +7,11 @@
 
 from cysignals.signals cimport add_custom_signals
 
+cdef extern from *:
+    """
+    #include "pari_compat.h"
+    """
+
 cdef extern from "pari/pari.h":
     int     PARI_SIGINT_block, PARI_SIGINT_pending
 

@@ -18,6 +18,11 @@ from PARI's include files.
 #                  https://www.gnu.org/licenses/
 # ****************************************************************************
 
+cdef extern from *:
+    """
+    #include "pari_compat.h"
+    """
+
 cdef extern from "pari/pari.h":
     ctypedef unsigned long ulong "pari_ulong"
 
