@@ -4,9 +4,10 @@ Handle PARI documentation
 """
 
 from __future__ import unicode_literals
+
 import re
 import subprocess
-
+import sys
 
 leading_ws = re.compile("^( +)", re.MULTILINE)
 trailing_ws = re.compile("( +)$", re.MULTILINE)
@@ -269,6 +270,9 @@ def get_raw_doc(function):
         ...
         RuntimeError: no help found for 'abcde'
     """
+    if sys.platform.startswith("win"):
+        return b""
+
     doc = subprocess.check_output(["gphelp", "-raw", function])
     if doc.endswith(b"""' not found !\n"""):
         raise RuntimeError("no help found for '{}'".format(function))
