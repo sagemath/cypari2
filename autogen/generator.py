@@ -94,7 +94,7 @@ class PariFunctionGenerator(object):
         EXAMPLES::
 
             >>> from autogen.generator import PariFunctionGenerator
-            >>> G = PariFunctionGenerator()
+            >>> G = PariFunctionGenerator("dummy")
             >>> G.can_handle_function("bnfinit", "bnfinit0", **{"class":"basic"})
             True
             >>> G.can_handle_function("_bnfinit", "bnfinit0", **{"class":"basic"})
@@ -134,7 +134,7 @@ class PariFunctionGenerator(object):
 
             >>> from autogen.parser import read_pari_desc
             >>> from autogen.generator import PariFunctionGenerator
-            >>> G = PariFunctionGenerator()
+            >>> G = PariFunctionGenerator("dummy")
             >>> G.gen_file = sys.stdout
             >>> G.instance_file = sys.stdout
             >>> G.decl_file = sys.stdout
