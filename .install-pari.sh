@@ -7,10 +7,8 @@ if [ "$PARI_VERSION" = "" ]; then
     PARI_VERSION=2.17.2
 fi
 
-if [ "$URLDIR" = "" ]; then
-    PURE_VERSION=${PARI_VERSION/pari-}
-    URLDIR=OLD/${PURE_VERSION%.*}
-fi
+PURE_VERSION=${PARI_VERSION/pari-}
+URLDIR=OLD/${PURE_VERSION%.*}
 
 PARI_URL="https://pari.math.u-bordeaux.fr/pub/pari/$URLDIR"
 PARI_URL1="https://pari.math.u-bordeaux.fr/pub/pari/unix"
