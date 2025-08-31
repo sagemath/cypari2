@@ -1,10 +1,9 @@
-#ifdef _WIN32
+#ifdef _MSC_VER
 // The following should probably work to get inline working on Windows
 // with MSVC, but it doesn't. So we just disable inlining for now.
 //#  define inline __inline
 //#  define INLINE static inline
 # define DISABLE_INLINE 1
-
 
 // Pari doesn't annotate those exports with __declspec(dllimport), so we
 // need to use linker directives to avoid "unresolved external symbol" errors.
@@ -29,4 +28,4 @@
 #pragma comment(linker, "/alternatename:err_e_STACK=__imp_err_e_STACK")
 #pragma comment(linker, "/alternatename:cb_pari_err_handle=__imp_cb_pari_err_handle")
 
-#endif // _WIN32
+#endif // _MSC_VER
