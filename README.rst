@@ -143,14 +143,28 @@ CyPari 2 is maintained by the SageMath community.
 Open issues or submit pull requests at https://github.com/sagemath/cypari2
 and join https://groups.google.com/group/sage-devel to discuss.
 
-To get started with development, you can set up an environment using Conda 
-as follows:
+To get started with development, you can use the provided ``environment.yml`` 
+file to create the full development environment including build backend, 
+compilers, and documentation dependencies:
 
 ::
-    $ conda create -n cypari2-dev python cython pari=*=*_pthread ninja meson-python cysignals c-compiler
+
+    $ conda env create -f environment.yml
     $ conda activate cypari2-dev
+    $ pip install -e . --no-build-isolation
 
-Afterwards, you can build and install the package in editable mode: 
+On Windows, you can use ``environment-win.yml`` and you may also need to set a
+few environment variables:
 
 ::
+    $ conda env create -f environment-win.yml
+    $ conda activate cypari2-dev
+    $ set LIBRARY_PATH=%CONDA_PREFIX%\Library\lib;%LIBRARY_PATH%
+    $ set C_INCLUDE_PATH=%CONDA_PREFIX%\Library\include;%C_INCLUDE_PATH%
     $ pip install -e . --no-build-isolation
+
+To update an existing environment after changes to ``environment.yml``:
+
+::
+
+    $ conda env update -f environment.yml --prune
