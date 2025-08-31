@@ -1,6 +1,11 @@
 from .types cimport GEN, pari_sp
 from .gen cimport Gen_base, Gen
 
+cdef extern from *:
+    """
+    // see pari_long.pxd for explanation
+    #undef long // stack
+    """
 
 cdef Gen new_gen(GEN x)
 cdef new_gens2(GEN x, GEN y)

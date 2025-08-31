@@ -15,6 +15,12 @@ cdef extern from *:
 cdef extern from "pari/pari.h":
     int     PARI_SIGINT_block, PARI_SIGINT_pending
 
+cdef extern from *:
+    """
+    // see pari_long.pxd for explanation
+    #undef long // custom_block
+    """
+
 cdef int custom_signal_is_blocked() noexcept:
     return PARI_SIGINT_block
 

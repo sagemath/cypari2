@@ -458,7 +458,7 @@ cdef GEN PyLong_AS_GEN(py_long x) noexcept:
 
     # Size of the input
     cdef size_t sizedigits
-    cdef long sgn
+    cdef pari_longword sgn
     if _PyLong_IsZero(x):
         return gen_0
     elif _PyLong_IsPositive(x):
