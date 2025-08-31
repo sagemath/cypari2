@@ -292,7 +292,7 @@ from cysignals.signals cimport sig_check, sig_on, sig_off, sig_error
 
 from .string_utils cimport to_string, to_bytes
 from .paridecl cimport *
-from .paripriv cimport *
+from .paripriv cimport GP_DATA, gpd_TEST
 from .gen cimport Gen, objtogen
 from .stack cimport (new_gen, new_gen_noclear, clear_stack,
                      set_pari_stack_size, before_resize, after_resize)

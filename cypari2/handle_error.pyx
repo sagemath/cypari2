@@ -25,8 +25,7 @@ from cpython cimport PyErr_Occurred
 
 from cysignals.signals cimport sig_block, sig_unblock, sig_error
 
-from .paridecl cimport *
-from .paripriv cimport *
+from .paridecl cimport cb_pari_err_recover, cb_pari_err_handle, e_STACK, pari_mainstack, pari_err2str, pari_free, closure_func_err
 from .stack cimport clone_gen_noclear, reset_avma, after_resize
 
 
