@@ -58,7 +58,7 @@ jobs:
                 patch
                 sed
                 wget
-              pacboy: gcc:p
+                mingw-w64-ucrt-x86_64-gcc
         - name: Set up Python ${{ matrix.python-version }}
           uses: actions/setup-python@v4
           with:
