@@ -69,7 +69,7 @@ jobs:
         - name: Install pari
           run: |
               echo "${{ steps.msys2.outputs.msys2-location }}"
-              echo "$(cygpath -au "${{ steps.msys2.outputs.msys2-location }}")"
+              echo "$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")"
               bash -x .install-pari.sh
         - name: Build
           run: |
