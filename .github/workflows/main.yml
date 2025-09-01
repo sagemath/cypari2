@@ -76,7 +76,7 @@ jobs:
             echo $LIBRARY_PATH
             ls -l /usr/local/include/pari
             which python3 || which python
-            make install
+            python -m pip install -v .
         - name: Test
           run: |
             make check
