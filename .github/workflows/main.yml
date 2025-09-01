@@ -68,7 +68,11 @@ jobs:
               bash -x .install-pari.sh
         - name: Build
           run: |
+            echo $PATH
+            which python3 || which python
             make install
+          env:
+            PATH: ${{ env.pythonLocation }}${{ runner.os == 'Windows' && ';' || ':' }}${{ env.PATH }}
         - name: Test
           run: |
             make check
