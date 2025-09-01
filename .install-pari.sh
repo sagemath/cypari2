@@ -45,7 +45,22 @@ else
 fi
 
 echo "Building Pari ..."
-./Configure
+if [ "$(uname -s)" = "Linux" ]; then
+    ./Configure  --prefix=/usr
+else
+    ./Configure
+fi
+
+# On Windows, disable UNIX-specific code in language files
+# (not sure why UNIX is defined)
+lang_es="src/language/es.c"
+if [ -f "$lang_es" && -z "$MSYSTEM" ] ; then
+    sed -i.bak \
+        -e 's/#if[[:space:]]*defined(UNIX)/#if 0/' \
+        -e 's/#ifdef[[:space:]]*UNIX/#if 0/' \
+        "$lang_es"
+fi
+
 make gp
 sudo make install
 
