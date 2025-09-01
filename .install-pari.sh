@@ -82,7 +82,7 @@ fi
 
 if [ "$PLATFORM" = "msys" ]; then
     # Windows
-    make install-lib-sta
+    cd Omingw-x86_64
     make install-include
     make install-doc
     make install-cfg
