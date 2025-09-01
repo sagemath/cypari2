@@ -83,11 +83,12 @@ jobs:
             echo "Build failed, attempting to compile a simple test program"
             echo '#include <pari/pari.h>' > test.c
             echo 'int main() { pari_init(100000000,2); return 0; }' >> test.c
-            /ucrt64/bin/gcc test.c -o test -I/usr/local/include -L/usr/local/lib -lpari || true
-            export C_INCLUDE_PATH=/usr/local/include:$C_INCLUDE_PATH
-            export LIBRARY_PATH=/usr/local/bin:$LIBRARY_PATH
-            /ucrt64/bin/gcc test.c -o test -lpari || true
-            cc -o test test.c -lpari || true
+            /ucrt64/bin/gcc -v test.c -o test -I/usr/local/include -L/usr/local/bin -lpari || true
+            export C_INCLUDE_PATH=/usr/local/include
+            export LIBRARY_PATH=/usr/local/bin
+            /ucrt64/bin/gcc -v test.c -o test -lpari || true
+            export CPATH=/usr/local/include
+            cc -v -o test test.c -lpari || true
             ./test
         - name: Test
           run: |
