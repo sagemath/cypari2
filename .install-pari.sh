@@ -54,15 +54,26 @@ fi
 # On Windows, disable UNIX-specific code in language files
 # (not sure why UNIX is defined)
 lang_es="src/language/es.c"
-if [ -f "$lang_es" && -z "$MSYSTEM" ] ; then
+if [ -f "$lang_es" ] && [ -z "$MSYSTEM" ] ; then
     sed -i.bak \
         -e 's/#if[[:space:]]*defined(UNIX)/#if 0/' \
         -e 's/#ifdef[[:space:]]*UNIX/#if 0/' \
         "$lang_es"
 fi
 
-make gp
-sudo make install
+
+if [ -z "$MSYSTEM" ] ; then
+    # Windows
+    sudo make install-lib-sta
+    sudo make install-include
+    sudo make install-doc
+    sudo make install-cfg
+    sudo make install-bin-sta
+else
+    # Linux or macOS
+    make gp
+    sudo make install
+fi
 
 exit 0
 export DESTDIR=
