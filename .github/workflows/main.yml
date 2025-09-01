@@ -60,6 +60,7 @@ jobs:
                 wget
                 mingw-w64-ucrt-x86_64-gcc
                 mingw-w64-ucrt-x86_64-gmp
+              path-type: inherit
         - name: Set up Python ${{ matrix.python-version }}
           uses: actions/setup-python@v4
           with:
