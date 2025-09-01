@@ -82,11 +82,11 @@ fi
 
 if [ "$PLATFORM" = "msys" ]; then
     # Windows
-    sudo make install-lib-sta
-    sudo make install-include
-    sudo make install-doc
-    sudo make install-cfg
-    sudo make install-bin-sta
+    make install-lib-sta
+    make install-include
+    make install-doc
+    make install-cfg
+    make install-bin-sta
 else
     # Linux or macOS
     make gp
