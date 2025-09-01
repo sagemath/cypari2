@@ -69,13 +69,13 @@ jobs:
         - name: Install pari
           run: |
               echo "${{ steps.msys2.outputs.msys2-location }}"
-              echo "$(cygpath "${{ steps.msys2.outputs.msys2-location }}")"
+              echo "$(cygpath -au "${{ steps.msys2.outputs.msys2-location }}")"
               bash -x .install-pari.sh
         - name: Build
           run: |
             export PATH=$(cygpath "${{ env.pythonLocation }}"):$PATH
-            export C_INCLUDE_PATH=$(cygpath "${{ steps.msys2.outputs.msys2-location }}")/usr/local/include:$C_INCLUDE_PATH
-            export LIBRARY_PATH=$(cygpath "${{ steps.msys2.outputs.msys2-location }}")/usr/local/bin:$LIBRARY_PATH
+            export C_INCLUDE_PATH=$(cygpath -a "${{ steps.msys2.outputs.msys2-location }}")/usr/local/include:$C_INCLUDE_PATH
+            export LIBRARY_PATH=$(cygpath -a "${{ steps.msys2.outputs.msys2-location }}")/usr/local/bin:$LIBRARY_PATH
             echo $PATH
             echo $C_INCLUDE_PATH
             echo $LIBRARY_PATH
