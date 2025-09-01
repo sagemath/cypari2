@@ -91,6 +91,8 @@ jobs:
             export CPATH=/usr/local/include
             cc -v -o test test.c -lpari -lgmp || true
             ./test
+            meson setup builddir
+            meson compile -C builddir
         - name: Test
           run: |
             make check
