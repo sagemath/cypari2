@@ -69,7 +69,11 @@ jobs:
         - name: Build
           run: |
             export PATH=$(cygpath "${{ env.pythonLocation }}"):$PATH
+            export C_INCLUDE_PATH=/usr/local/include:$C_INCLUDE_PATH
+            export LIBRARY_PATH=/usr/local/bin:$LIBRARY_PATH
             echo $PATH
+            echo $C_INCLUDE_PATH
+            echo $LIBRARY_PATH
             which python3 || which python
             make install
         - name: Test
