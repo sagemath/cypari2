@@ -31,7 +31,7 @@ jobs:
                     pari-version: 'pari-2.17.2'
                   - os: windows-latest
                     python-version: '3.10'
-                    pari-version: 'pari-2.13.0'
+                    pari-version: 'pari-2.15.4'
                   - os: windows-latest
                     python-version: '3.13'
                     pari-version: 'pari-2.17.2'
