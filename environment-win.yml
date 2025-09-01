@@ -18,5 +18,7 @@ dependencies:
   - meson-python>=0.18
   - gcc_win-64
   - m2w64-sysroot_win-64
+  - m2-base # For running .install-pari.sh
+  - m2-make # For running .install-pari.sh
   # For docs
   - sphinx

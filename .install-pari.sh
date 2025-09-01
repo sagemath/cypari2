@@ -1,7 +1,23 @@
-# Helper script to install PARI for github workflows
+#!/bin/bash
+
+# Helper script to install PARI (e.g. for CI builds).
+# On macOS: the default system gcc is used
+# On Linux: the default system gcc is used
+# On Windows: uses the ucrt64 toolchain in Msys2
 
 # Exit on error
 set -e
+
+# Run the script again in UCRT64 system for msys
+if [ "$ucrt" != "0" ] && [ -z "$MSYSTEM" ]; then
+    MSYSTEM=UCRT64 MSYS2_PATH_TYPE=inherit bash --login -c "cd $pwd ; $self"
+fi
+
+# Windows conda prefix is not added to path automatically
+# thus mingw compiler is not found later
+if [ -n "$CONDA_PREFIX" ]; then
+    export PATH="$(cygpath "$CONDA_PREFIX")/Library/bin:$PATH"
+fi
 
 if [ "$PARI_VERSION" = "" ]; then
     PARI_VERSION=2.17.2
@@ -32,3 +48,36 @@ echo "Building Pari ..."
 ./Configure
 make gp
 sudo make install
+
+exit 0
+export DESTDIR=
+if [ $(uname) = "Darwin" ] ; then
+    rm -rf Odarwin*
+    export CFLAGS="-arch x86_64 -arch arm64 -mmacosx-version-min=10.9"
+# For debugging:
+#   export CFLAGS="-g -arch x86_64 -arch arm64 -mmacosx-version-min=10.9"
+    ./Configure --host=universal-darwin --prefix=${PARIPREFIX} --with-gmp=${GMPPREFIX}
+    cd Odarwin-universal
+    make install
+    make install-lib-sta
+    make clean
+elif [ `python -c "import sys; print(sys.platform)"` = 'win32' ] ; then
+#Windows
+    export PATH=/c/msys64/ucrt64/bin:$PATH
+    export MSYSTEM=UCRT64
+    export CC=/c/msys64/ucrt64/bin/gcc
+    # Disable avx and sse2.
+    export CFLAGS="-U HAS_AVX -U HAS_AVX512 -U HAS_SSE2"
+    ./Configure --prefix=${PARIPREFIX} --libdir=${PARILIBDIR} --without-readline --with-gmp=${GMPPREFIX}
+    cd Omingw-*
+    make install-lib-sta
+    make install-include
+    make install-doc
+    make install-cfg
+    make install-bin-sta
+else
+# linux
+    ./Configure --prefix=${PARIPREFIX} --libdir=${PARILIBDIR} --with-gmp=${GMPPREFIX}
+    make install
+    make install-lib-sta
+fi
