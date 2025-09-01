@@ -44,10 +44,6 @@ jobs:
         steps:
         - name: Set up the repository
           uses: actions/checkout@v4
-        - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v4
-          with:
-            python-version: ${{ matrix.python-version }}
         - name: Setup Mingw
           if: runner.os == 'Windows'
           uses: msys2/setup-msys2@v2
@@ -63,6 +59,10 @@ jobs:
                 sed
                 wget
               pacboy: gcc:p
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v4
+          with:
+            python-version: ${{ matrix.python-version }}
         - name: Install pari
           run: |
               bash -x .install-pari.sh
