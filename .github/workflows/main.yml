@@ -74,6 +74,7 @@ jobs:
             echo $PATH
             echo $C_INCLUDE_PATH
             echo $LIBRARY_PATH
+            ls -l /usr/local/include/pari
             which python3 || which python
             make install
         - name: Test
