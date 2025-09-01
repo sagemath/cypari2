@@ -68,7 +68,7 @@ jobs:
               bash -x .install-pari.sh
         - name: Build
           run: |
-            export PATH=${{ env.pythonLocation }}/bin:$PATH
+            export PATH=$(cygpath "${{ env.pythonLocation }}")/bin:$PATH
             echo $PATH
             which python3 || which python
             make install
