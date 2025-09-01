@@ -9,7 +9,7 @@
 set -e
 
 # Run the script again in UCRT64 system for msys
-if [ "$ucrt" != "0" ] && [ -z "$MSYSTEM" ]; then
+if [ "$ucrt" != "0" ] && [[ "$(uname -s)" == MSYS_NT* ]]; then
     MSYSTEM=UCRT64 MSYS2_PATH_TYPE=inherit bash --login -c "cd $pwd ; $self"
 fi
 
@@ -54,7 +54,7 @@ fi
 # On Windows, disable UNIX-specific code in language files
 # (not sure why UNIX is defined)
 lang_es="src/language/es.c"
-if [ -f "$lang_es" ] && [ -z "$MSYSTEM" ] ; then
+if [ -f "$lang_es" ] && [[ "$(uname -s)" == MSYS_NT* ]]; then
     sed -i.bak \
         -e 's/#if[[:space:]]*defined(UNIX)/#if 0/' \
         -e 's/#ifdef[[:space:]]*UNIX/#if 0/' \
@@ -62,7 +62,7 @@ if [ -f "$lang_es" ] && [ -z "$MSYSTEM" ] ; then
 fi
 
 
-if [ -z "$MSYSTEM" ] ; then
+if [[ "$(uname -s)" == MSYS_NT* ]]; then
     # Windows
     sudo make install-lib-sta
     sudo make install-include
