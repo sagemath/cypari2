@@ -86,7 +86,9 @@ if [ "$PLATFORM" = "msys" ]; then
     make install-include
     make install-doc
     make install-cfg
-    make install-bin-sta
+    # Currently fails with 
+    # dlltool ... [Makefile:1148: libpari_exe.def] Segmentation fault
+    # make install-bin-sta
 else
     # Linux or macOS
     make gp
