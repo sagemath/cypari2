@@ -74,8 +74,8 @@ jobs:
         - name: Build
           run: |
             export PATH=$(cygpath "${{ env.pythonLocation }}"):$PATH
-            export C_INCLUDE_PATH=$(cygpath -a "${{ steps.msys2.outputs.msys2-location }}")/usr/local/include:$C_INCLUDE_PATH
-            export LIBRARY_PATH=$(cygpath -a "${{ steps.msys2.outputs.msys2-location }}")/usr/local/bin:$LIBRARY_PATH
+            export C_INCLUDE_PATH=D:/a/_temp/msys64/usr/local/include:$C_INCLUDE_PATH
+            export LIBRARY_PATH=D:/a/_temp/msys64/usr/local/bin:$LIBRARY_PATH
             echo $PATH
             echo $C_INCLUDE_PATH
             echo $LIBRARY_PATH
