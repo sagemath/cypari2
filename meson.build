@@ -34,6 +34,7 @@ except Exception:
   check: true,
 ).stdout().strip()
 cysignals = declare_dependency(include_directories: inc_cysignals)
+run_command('cc','-v', check:true)
 # Cannot be found via pkg-config
 pari = cc.find_library('pari', has_headers: ['pari/pari.h'], required: false)
 if not pari.found()
