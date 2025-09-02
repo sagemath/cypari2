@@ -36,9 +36,9 @@ except Exception:
 cysignals = declare_dependency(include_directories: inc_cysignals)
 run_command(cc,'-v', check:true)
 cc.has_header('pari/pari.h', required: true, args: ['-v'])
-# GMP is dependency of Pari, but since Pari doesn't have a pkg-config file,
+# GMP may be a dependency of Pari, but since Pari doesn't have a pkg-config file,
 # we have to find it ourselves.
-gmp = dependency('gmp', required: true)
+gmp = dependency('gmp', required: false)
 # Cannot be found via pkg-config
 pari = cc.find_library('pari', has_headers: ['pari/pari.h'], required: false)
 if not pari.found()
