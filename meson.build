@@ -45,7 +45,7 @@ if not pari.found()
   # On Windows, the library is named libpari.dll
   pari = cc.find_library('libpari', has_headers: ['pari/pari.h'], required: true)
 endif
-pari = declare_dependency(link_with: pari, dependencies: [gmp])
+pari = declare_dependency(dependencies: [pari, gmp])
 # Get PARI version (mostly as smoke test)
 pari_version_code = '''
 #include <stdio.h>
