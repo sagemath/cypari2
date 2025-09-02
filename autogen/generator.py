@@ -82,10 +82,11 @@ class PariFunctionGenerator(object):
     are written as methods of either :class:`Gen` or
     :class:`Pari`.
     """
-    def __init__(self, output_dir: Path):
+    def __init__(self, pari_datadir: Path, output_dir: Path):
         self.gen_filename = output_dir / "auto_gen.pxi"
         self.instance_filename = output_dir / "auto_instance.pxi"
         self.decl_filename = output_dir / "auto_paridecl.pxd"
+        self.pari_datadir = pari_datadir
 
     def can_handle_function(self, function, cname="", **kwds):
         """
@@ -95,7 +96,7 @@ class PariFunctionGenerator(object):
 
             >>> from autogen.generator import PariFunctionGenerator
             >>> from pathlib import Path
-            >>> G = PariFunctionGenerator(Path("dummy"))
+            >>> G = PariFunctionGenerator(Path("test"), Path("dummy"))
             >>> G.can_handle_function("bnfinit", "bnfinit0", **{"class":"basic"})
             True
             >>> G.can_handle_function("_bnfinit", "bnfinit0", **{"class":"basic"})
@@ -136,7 +137,7 @@ class PariFunctionGenerator(object):
             >>> from autogen.parser import read_pari_desc
             >>> from autogen.generator import PariFunctionGenerator
             >>> from pathlib import Path
-            >>> G = PariFunctionGenerator(Path("dummy"))
+            >>> G = PariFunctionGenerator(Path("test"), Path("dummy"))
             >>> G.gen_file = sys.stdout
             >>> G.instance_file = sys.stdout
             >>> G.decl_file = sys.stdout
@@ -333,7 +334,7 @@ class PariFunctionGenerator(object):
         instance_file_tmp = self.instance_filename.with_suffix('.tmp')
         decl_file_tmp = self.decl_filename.with_suffix('.tmp')
 
-        D = read_pari_desc()
+        D = read_pari_desc(self.pari_datadir)
         D = sorted(D.values(), key=lambda d: d['function'])
         sys.stdout.write("Generating PARI functions:")
 

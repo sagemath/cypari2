@@ -67,6 +67,33 @@ pari_version = cc.run(
 )
 message('PARI Version: ' + pari_version.stdout())
 
+pari_datadir_code = '''
+#include <stdio.h>
+#include <pari/pari.h>
+int main(void) {
+  pari_init(1000000, 2);
+  pari_printf("%s", pari_datadir);
+  pari_close();
+  return 0;
+}
+'''
+pari_datadir = cc.run(
+  pari_datadir_code,
+  name: 'pari datadir',
+  dependencies: [pari],
+  required: true,
+).stdout()
+
+# In MSYS, convert to Windows path
+# (e.g /usr/share/pari -> C:\msys64\usr\share\pari)
+if host_machine.system() == 'windows'
+  pari_datadir = run_command(
+    'cygpath', '-am', pari_datadir,
+    check: true,
+  ).stdout().strip()
+endif
+message('PARI Datadir: ' + pari_datadir)
+
 # Run code generation step
 code_gen_result = run_command(
   py.full_path(), '-c',
@@ -74,7 +101,7 @@ code_gen_result = run_command(
 import sys
 sys.path.insert(0, ".")
 from autogen import rebuild
-rebuild(force=True, output=r"''' + meson.current_build_dir() + '''/cypari2")
+rebuild(r"''' + pari_datadir + '''", force=True, output=r"''' + meson.current_build_dir() + '''/cypari2")
 print("Code generation successful")
   ''',
   check: true
