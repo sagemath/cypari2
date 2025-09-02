@@ -34,14 +34,18 @@ except Exception:
   check: true,
 ).stdout().strip()
 cysignals = declare_dependency(include_directories: inc_cysignals)
-run_command('cc','-v', check:true)
+run_command(cc,'-v', check:true)
 cc.has_header('pari/pari.h', required: true, args: ['-v'])
+# GMP is dependency of Pari, but since Pari doesn't have a pkg-config file,
+# we have to find it ourselves.
+gmp = dependency('gmp', required: true)
 # Cannot be found via pkg-config
 pari = cc.find_library('pari', has_headers: ['pari/pari.h'], required: false)
 if not pari.found()
   # On Windows, the library is named libpari.dll
   pari = cc.find_library('libpari', has_headers: ['pari/pari.h'], required: true)
 endif
+pari = declare_dependency(link_with: pari, dependencies: [gmp])
 # Get PARI version (mostly as smoke test)
 pari_version_code = '''
 #include <stdio.h>
