@@ -62,17 +62,17 @@ from cpython.object cimport (Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, PyTypeObject)
 from cysignals.memory cimport sig_free, check_malloc
 from cysignals.signals cimport sig_check, sig_on, sig_off, sig_block, sig_unblock
 
-from .types cimport *
-from .string_utils cimport to_string, to_bytes
-from .paripriv cimport *
-from .convert cimport PyObject_AsGEN, gen_to_integer
-from .pari_instance cimport DEFAULT_BITPREC, get_var
-from .stack cimport (new_gen, new_gens2, new_gen_noclear,
+from cypari2.types cimport *
+from cypari2.string_utils cimport to_string, to_bytes
+from cypari2.paripriv cimport *
+from cypari2.convert cimport PyObject_AsGEN, gen_to_integer
+from cypari2.pari_instance cimport DEFAULT_BITPREC, get_var
+from cypari2.stack cimport (new_gen, new_gens2, new_gen_noclear,
                      clone_gen, clear_stack, reset_avma,
                      remove_from_pari_stack, move_gens_to_heap)
-from .closure cimport objtoclosure
+from cypari2.closure cimport objtoclosure
 
-from .paridecl cimport *
+from cypari2.paridecl cimport *
 
 include 'auto_gen.pxi'
 
@@ -1948,7 +1948,7 @@ cdef class Gen(Gen_base):
         >>> pari('389/17').python()
         Fraction(389, 17)
         """
-        from .convert import gen_to_python
+        from cypari2.convert import gen_to_python
         return gen_to_python(self)
 
     def sage(self, locals=None):

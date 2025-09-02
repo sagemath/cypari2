@@ -1,7 +1,7 @@
-from .types cimport *
+from cypari2.types cimport *
 cimport cython
 
-from .gen cimport Gen
+from cypari2.gen cimport Gen
 
 # DEPRECATED INTERNAL FUNCTION used (incorrectly) in sagemath < 10.5
 cpdef long prec_words_to_bits(long prec_in_words) noexcept

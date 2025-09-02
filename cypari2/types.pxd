@@ -23,7 +23,7 @@ cdef extern from *:
     #include "pari_compat.h"
     """
 
-from .pari_long cimport pari_longword, pari_ulongword
+from cypari2.pari_long cimport pari_longword, pari_ulongword
 
 cdef extern from "pari/pari.h":
     ctypedef unsigned long ulong "pari_ulong"

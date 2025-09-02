@@ -32,9 +32,9 @@ from __future__ import print_function
 from libc.stdio cimport FILE
 from cpython.getargs cimport va_list
 
-from .pari_long cimport pari_longword, pari_ulongword
+from cypari2.pari_long cimport pari_longword, pari_ulongword
 
-from .types cimport *
+from cypari2.types cimport *
 
 
 cdef extern from *:     # PARI headers already included by types.pxd
@@ -5339,7 +5339,7 @@ cdef inline int is_universal_constant(GEN x) noexcept:
 # Auto-generated declarations. There are taken from the PARI version
 # on the system, so they more up-to-date than the above. In case of
 # conflicting declarations, auto_paridecl should have priority.
-from .auto_paridecl cimport *
+from cypari2.auto_paridecl cimport *
 
 
 cdef inline int is_on_stack(GEN x) except -1:

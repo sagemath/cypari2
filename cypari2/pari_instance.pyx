@@ -290,14 +290,14 @@ cimport cython
 
 from cysignals.signals cimport sig_check, sig_on, sig_off, sig_error
 
-from .string_utils cimport to_string, to_bytes
-from .paridecl cimport *
-from .paripriv cimport GP_DATA, gpd_TEST
-from .gen cimport Gen, objtogen
-from .stack cimport (new_gen, new_gen_noclear, clear_stack,
+from cypari2.string_utils cimport to_string, to_bytes
+from cypari2.paridecl cimport *
+from cypari2.paripriv cimport GP_DATA, gpd_TEST
+from cypari2.gen cimport Gen, objtogen
+from cypari2.stack cimport (new_gen, new_gen_noclear, clear_stack,
                      set_pari_stack_size, before_resize, after_resize)
-from .handle_error cimport _pari_init_error_handling
-from .closure cimport _pari_init_closure
+from cypari2.handle_error cimport _pari_init_error_handling
+from cypari2.closure cimport _pari_init_closure
 
 
 #################################################################

@@ -1,5 +1,5 @@
-from .types cimport GEN, pari_sp
-from .gen cimport Gen_base, Gen
+from cypari2.types cimport GEN, pari_sp
+from cypari2.gen cimport Gen_base, Gen
 
 cdef extern from *:
     """
