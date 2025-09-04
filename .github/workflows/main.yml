@@ -74,11 +74,13 @@ jobs:
             python-version: ${{ matrix.python-version }}
         - name: Install pari
           run: |
-              echo "${{ steps.msys2.outputs.msys2-location }}"
-              echo "$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")"
-              bash -x .install-pari.sh
+            if [ ${{ runner.os }} = macos-latest ]; then
+              brew install gmp
+            fi
+          
+            bash -x .install-pari.sh
         - name: Smoke test PARI
-          run: | 
+          run: |
             gcc -v tests/test.c -o test -I/usr/local/include -L/usr/local/bin -lpari -lgmp
             expected="zeta(2) = 1.6449340668482264364
             p = x^3 + x^2 + x - 1
@@ -93,14 +95,14 @@ jobs:
             fi
         - name: Build
           run: |
-            # export PATH=$(cygpath "${{ env.pythonLocation }}"):$PATH
-            export C_INCLUDE_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/usr/local/include
-            export LIBRARY_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/usr/local/bin
+            if [ ${{ runner.os }} = Windows ]; then
+              export C_INCLUDE_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/ucrt64/include
+              export LIBRARY_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/ucrt64/lib
+            fi
             echo $PATH
             echo $C_INCLUDE_PATH
             echo $LIBRARY_PATH
-            ls -l /usr/local/include/pari
-            which python3 || which python
+            which python
             python -m pip install -v .
         - name: Test
           run: |
