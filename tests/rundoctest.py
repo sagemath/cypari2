@@ -7,9 +7,10 @@ import sys
 path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
 os.chdir(path)
 sys.path.append(path)
+import doctest
+
 import autogen
 import cypari2
-import doctest
 
 # The doctests assume utf-8 encoding
 cypari2.string_utils.encoding = "utf-8"
@@ -30,8 +31,7 @@ attempted = 0
 for mod in [cypari2.closure, cypari2.convert, cypari2.gen,
             cypari2.handle_error, cypari2.pari_instance, cypari2.stack,
             cypari2.string_utils,
-            autogen.doc, autogen.generator, autogen.parser,
-            autogen.paths]:
+            autogen.doc, autogen.generator, autogen.parser]:
 
     print("="*80)
     print("Testing {}".format(mod.__name__))
