@@ -74,15 +74,16 @@ jobs:
           with:
             python-version: ${{ matrix.python-version }}
         - name: Install pari
-          run: |
-            if [ ${{ runner.os }} = macOS ]; then
-              brew install gmp
-            fi
-          
+          run: |         
             bash -x .install-pari.sh
         - name: Smoke test PARI
           run: |
-            gcc -v tests/test.c -o test -I/usr/local/include -L/usr/local/bin -lpari -lgmp
+            if [ ${{ runner.os }} = macOS ]; then
+              # gmp is installed but cannot be found (and PARI is also not linking against it)
+              gcc -v tests/test.c -o test -I/usr/local/include -L/usr/local/bin -lpari
+            else
+              gcc -v tests/test.c -o test -I/usr/local/include -L/usr/local/bin -lpari -lgmp
+            fi
             expected="zeta(2) = 1.6449340668482264364
             p = x^3 + x^2 + x - 1
             modulus = y^3 + y^2 + y - 1
