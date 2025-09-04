@@ -101,11 +101,9 @@ jobs:
         - name: Build
           run: |
             if [ ${{ runner.os }} = Windows ]; then
-              export C_INCLUDE_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/ucrt64/include
-              export LIBRARY_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/ucrt64/lib
+              export C_INCLUDE_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/usr/local/include
+              export LIBRARY_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/usr/local/bin
             fi
-            export C_INCLUDE_PATH=${C_INCLUDE_PATH}:/usr/local/include
-            export LIBRARY_PATH=${LIBRARY_PATH}:/usr/local/bin
             echo $PATH
             echo $C_INCLUDE_PATH
             echo $LIBRARY_PATH
