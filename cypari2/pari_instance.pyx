@@ -288,7 +288,16 @@ import sys
 from libc.stdio cimport *
 cimport cython
 
-from cysignals.signals cimport sig_check, sig_on, sig_off, sig_error
+#from cysignals.signals cimport sig_check, sig_on, sig_off, sig_error
+# Dummy signal handling methods for debugging
+def sig_check():
+    print("sig_check called")
+def sig_on():
+    print("sig_on called")
+def sig_off():
+    print("sig_off called")
+def sig_error():
+    print("sig_error called")
 
 from cypari2.string_utils cimport to_string, to_bytes
 from cypari2.paridecl cimport *
