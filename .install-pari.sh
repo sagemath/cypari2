@@ -60,7 +60,7 @@ else
     wget --no-verbose "$PARI_URL/$PURE_VERSION.tar.gz" -O "pari-$PURE_VERSION.tgz" \
         || wget --no-verbose "$PARI_URL1/pari-$PURE_VERSION.tar.gz" -O "pari-$PURE_VERSION.tgz" \
         || wget --no-verbose "$PARI_URL2/pari-$PURE_VERSION.tar.gz" -O "pari-$PURE_VERSION.tgz" \
-        || wget --no-verbose "$PARI_URL/pari-$PURE_VERSION.tar.gz" -O "pari-$PURE_VERSION.tgz" \
+        || wget --no-verbose "$PARI_URL/pari-$PURE_VERSION.tar.gz" -O "pari-$PURE_VERSION.tgz"
     tar xzf "pari-$PURE_VERSION.tgz"
     cd "pari-$PURE_VERSION"
 fi
