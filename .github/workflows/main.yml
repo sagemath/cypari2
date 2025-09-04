@@ -118,6 +118,7 @@ jobs:
             (cd docs && make html)
 
     dist:
+        name: Build source distribution
         runs-on: ubuntu-latest
         steps:
           - name: Check out ${{ env.SPKG }}
@@ -131,7 +132,7 @@ jobs:
               sudo DEBIAN_FRONTEND=noninteractive apt-get update
               sudo DEBIAN_FRONTEND=noninteractive apt-get install $DIST_PREREQ
               python3 -m pip install build
-          - name: Run make dist, prepare upstream artifact
+          - name: Build dist, prepare upstream artifact
             run: |
               (cd build/pkgs/${{ env.SPKG }}/src && python3 -m build --sdist) \
               && mkdir -p upstream && cp build/pkgs/${{ env.SPKG }}/src/dist/*.tar.gz upstream/${{ env.SPKG }}-git.tar.gz \
@@ -144,6 +145,7 @@ jobs:
               name: upstream
 
     linux-sage:
+        name: Test with Sage
         uses: sagemath/sage/.github/workflows/docker.yml@develop
         with:
           targets:           SAGE_CHECK=no SAGE_CHECK_PACKAGES="cypari" cypari
