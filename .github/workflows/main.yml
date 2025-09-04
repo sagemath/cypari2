@@ -1,4 +1,4 @@
-name: Test
+name: CI
 
 on:
     pull_request:
@@ -15,26 +15,27 @@ concurrency:
 
 jobs:
     build:
+        name: Build and Test (${{ matrix.os }}, Python ${{ matrix.python-version }}, PARI ${{ matrix.pari-version }})
         runs-on: ${{ matrix.os }}
         strategy:
             fail-fast: false
             matrix:
                 os: [ubuntu-latest]
                 python-version: ['3.10', '3.11', '3.12', '3.13']
-                pari-version: ['pari-2.13.0', 'pari-2.15.4', 'pari-2.15.5', '2.17.2']
+                pari-version: ['2.13.0', '2.15.4', '2.15.5', '2.17.2']
                 include:
                   - os: macos-latest
                     python-version: '3.10'
-                    pari-version: 'pari-2.13.0'
+                    pari-version: '2.13.0'
                   - os: macos-latest
                     python-version: '3.13'
-                    pari-version: 'pari-2.17.2'
+                    pari-version: '2.17.2'
                   - os: windows-latest
                     python-version: '3.12' # Whatever comes with msys2
-                    pari-version: 'pari-2.15.4'
+                    pari-version: '2.15.4'
                   - os: windows-latest
                     python-version: '3.12' # Whatever comes with msys2
-                    pari-version: 'pari-2.17.2'
+                    pari-version: '2.17.2'
         env:
           LC_ALL: C
           PARI_VERSION: ${{ matrix.pari-version }}
