@@ -88,6 +88,9 @@ jobs:
             modulus = y^3 + y^2 + y - 1
             centerlift(lift(fq)) = [x - y, 1; x + (y^2 + y - 1), 1; x + (-y^2 - 1), 1]"
             output="$(./test)"
+            # Normalize newlines for comparison
+            output="$(echo "$output" | tr -d '\r')"
+            expected="$(echo "$expected" | tr -d '\r')"
             echo -e "Got:\n$output"
             if [ "$output" != "$expected" ]; then
               echo "Unexpected output from test.c"
