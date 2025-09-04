@@ -42,10 +42,30 @@ From source with pip
 
 Requirements:
 
-  PARI/GP >= 2.9.4 (header files and library); see
+- PARI/GP >= 2.9.4 (header files and library); see
   https://doc.sagemath.org/html/en/reference/spkg/pari#spkg-pari
   for availability in distributions (GNU/Linux, conda-forge, Homebrew, FreeBSD),
-  or install from source.
+  or install from source (e.g using the script ``.install-pari.sh`` provided in this
+  repository).
+- gmp (if PARI/GP was built with gmp)
+- A C compiler (GCC)
+- pkg-config
+- Python >= 3.9
+- pip
+
+On Windows, we recommend to use MSYS2, which can be installed from
+`Rtools <https://cran.r-project.org/bin/windows/Rtools/>`_.
+Afterwards, start the MSYS2 (UCRT64) terminal and install the above
+dependencies via
+::
+
+    $ pacman -Syu
+    $ pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-gmp mingw-w64-ucrt-x86_64-pkg-config mingw-w64-ucrt-x86_64-python mingw-w64-ucrt-x86_64-python-pip mingw-w64-ucrt-x86_64-meson-python mingw-w64-ucrt-x86_64-cython
+    $ pacman -S bison # for building pari from source
+    $ .install-pari.sh
+    $ export C_INCLUDE_PATH=/usr/local/include
+    $ export LIBRARY_PATH=/usr/local/bin
+
 
 Install cypari2 via the Python Package Index (PyPI) via
 
@@ -66,6 +86,22 @@ If you want to try the development version, use
 
     $ pip install git+https://github.com/sagemath/cypari2.git [--user]
 
+or clone the repository and run
+::
+
+    $ python -m venv venv
+    $ source venv/bin/activate
+    $ pip install "meson-python>=0.18.0" "cython>=3.0" "cysignals>=1.11.3" "ninja>=1.8.2"
+    $ pip install -e . --no-build-isolation
+
+If you run into certification issues on Windows, you can try to
+upgrade the certifi package via
+::
+
+    $ pip install --upgrade certifi
+    $ export SSL_CERT_FILE=$(python -m certifi)
+
+and then retry the installation.
 
 Usage
 -----
