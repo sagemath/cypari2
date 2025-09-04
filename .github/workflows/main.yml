@@ -77,6 +77,20 @@ jobs:
               echo "${{ steps.msys2.outputs.msys2-location }}"
               echo "$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")"
               bash -x .install-pari.sh
+        - name: Smoke test PARI
+          run: | 
+            gcc -v tests/test.c -o test -I/usr/local/include -L/usr/local/bin -lpari -lgmp
+            expected="zeta(2) = 1.6449340668482264364
+            p = x^3 + x^2 + x - 1
+            modulus = y^3 + y^2 + y - 1
+            centerlift(lift(fq)) = [x - y, 1; x + (y^2 + y - 1), 1; x + (-y^2 - 1), 1]"
+            output="$(./test)"
+            if [ "$output" != "$expected" ]; then
+              echo "Unexpected output from test.c"
+              echo "Got: $output"
+              echo "Expected: $expected"
+              exit 1
+            fi
         - name: Build
           run: |
             # export PATH=$(cygpath "${{ env.pythonLocation }}"):$PATH
@@ -88,21 +102,6 @@ jobs:
             ls -l /usr/local/include/pari
             which python3 || which python
             python -m pip install -v .
-        - name: Test compile
-          if: failure()
-          run: | 
-            echo "Build failed, attempting to compile a simple test program"
-            echo '#include <pari/pari.h>' > test.c
-            echo 'int main() { pari_init(100000000,2); return 0; }' >> test.c
-            /ucrt64/bin/gcc -v test.c -o test -I/usr/local/include -L/usr/local/bin -lpari -lgmp || true
-            export C_INCLUDE_PATH=/usr/local/include
-            export LIBRARY_PATH=/usr/local/bin
-            /ucrt64/bin/gcc -v test.c -o test -lpari -lgmp || true
-            export CPATH=/usr/local/include
-            cc -v -o test test.c -lpari -lgmp || true
-            ./test
-            meson setup builddir
-            meson compile -C builddir
         - name: Test
           run: |
             make check
