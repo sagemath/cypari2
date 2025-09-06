@@ -66,6 +66,12 @@ else
 fi
 
 echo "Building Pari ..."
+if [ "$PLATFORM" = "msys" ]; then
+    # Remove "export_file='$(LIBPARI).def';" line from config/Makefile.SH"
+    # Otherwise we get a Segmentation Fault during the resulting dlltool call
+    sed -i.bak "/export_file='\\\$(LIBPARI).def';/d" config/Makefile.SH
+fi
+export CFLAGS="-g"
 if [ "$PLATFORM" = "linux" ]; then
     ./Configure  --prefix=/usr
 else
@@ -85,8 +91,8 @@ fi
 
 if [ "$PLATFORM" = "msys" ]; then
     # Windows
-    make install-lib-sta
     cd Omingw-x86_64
+    make install-lib-dyn
     make install-include
     make install-doc
     make install-cfg
