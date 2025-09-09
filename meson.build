@@ -15,6 +15,8 @@ cc = meson.get_compiler('c')
 cython = meson.get_compiler('cython')
 # Workaround as described in https://cython.readthedocs.io/en/latest/src/userguide/special_methods.html#arithmetic-methods
 add_project_arguments('-X c_api_binop_methods=True', language: 'cython')
+# Compiler debug output
+run_command(cc, '-v', check:true)
 
 # Dependencies  
 inc_cysignals = run_command(
@@ -34,18 +36,18 @@ except Exception:
   check: true,
 ).stdout().strip()
 cysignals = declare_dependency(include_directories: inc_cysignals)
-run_command(cc,'-v', check:true)
+
+# Find PARI
+# Explicitly check for header to give better error message (using -v to show search paths)
 cc.has_header('pari/pari.h', required: true, args: ['-v'])
 # GMP may be a dependency of Pari, but since Pari doesn't have a pkg-config file,
 # we have to find it ourselves.
 gmp = dependency('gmp', required: false)
 # Cannot be found via pkg-config
-pari = cc.find_library('pari', has_headers: ['pari/pari.h'], required: false)
-if not pari.found()
-  # On Windows, the library is named libpari.dll
-  pari = cc.find_library('libpari', has_headers: ['pari/pari.h'], required: true)
-endif
+# Also require shared library, since otherwise every Cython extension would include it's own copy of pari leading to hard-to-debug segmentation faults at runtime
+pari = cc.find_library('pari', has_headers: ['pari/pari.h'], required: true, static: false)
 pari = declare_dependency(dependencies: [pari, gmp])
+
 # Get PARI version (mostly as smoke test)
 pari_version_code = '''
 #include <stdio.h>
@@ -61,6 +63,7 @@ int main(void) {
 '''
 pari_version = cc.run(
   pari_version_code,
+  args: ['-v'],
   name: 'pari version',
   dependencies: [pari],
   required: true,
