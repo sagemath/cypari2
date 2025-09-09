@@ -80,6 +80,8 @@ jobs:
           # We prefix the image name with the SPKG name ("cypari2-") to avoid the error
           # 'Package "sage-docker-..." is already associated with another repository.'
           docker_push_repository: ghcr.io/${{ github.repository }}/cypari2-
+          tox_packages_factors: >-
+            ["standard"]
         needs: [dist]
 
     linux-sage-incremental:
