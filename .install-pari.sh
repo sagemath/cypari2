@@ -71,12 +71,16 @@ if [ "$PLATFORM" = "msys" ]; then
     # Otherwise we get a Segmentation Fault during the resulting dlltool call
     sed -i.bak "/export_file='\\\$(LIBPARI).def';/d" config/Makefile.SH
 fi
-export CFLAGS="-g"
-if [ "$PLATFORM" = "linux" ]; then
-    ./Configure  --prefix=/usr
-else
-    ./Configure
+# For debugging:
+# export CFLAGS="-g"
+if [[ "$PLATFORM" = "msys" ]]; then
+  # If one installs in a non-default location, then one needs to call os.add_dll_directory
+  # in Python to find the DLLs.
+  CONFIG_ARGS="--without-readline --prefix=$MSYSTEM_PREFIX"
+elif [[ "$PLATFORM" = "linux" ]]; then
+  CONFIG_ARGS="--prefix=/usr"
 fi
+./Configure $CONFIG_ARGS
 
 # On Windows, disable UNIX-specific code in language files
 # (not sure why UNIX is defined)
@@ -96,44 +100,13 @@ if [ "$PLATFORM" = "msys" ]; then
     make install-include
     make install-doc
     make install-cfg
-    # Currently fails with 
-    # dlltool ... [Makefile:1148: libpari_exe.def] Segmentation fault
-    # make install-bin-sta
+
+    # Fix location of libpari.dll.a
+    if [ -f "$MSYSTEM_PREFIX/bin/libpari.dll.a" ]; then
+        cp "$MSYSTEM_PREFIX/bin/libpari.dll.a" "$MSYSTEM_PREFIX/lib/"
+    fi
 else
     # Linux or macOS
     make gp
     sudo make install
-fi
-
-exit 0
-export DESTDIR=
-if [ $(uname) = "Darwin" ] ; then
-    rm -rf Odarwin*
-    export CFLAGS="-arch x86_64 -arch arm64 -mmacosx-version-min=10.9"
-# For debugging:
-#   export CFLAGS="-g -arch x86_64 -arch arm64 -mmacosx-version-min=10.9"
-    ./Configure --host=universal-darwin --prefix=${PARIPREFIX} --with-gmp=${GMPPREFIX}
-    cd Odarwin-universal
-    make install
-    make install-lib-sta
-    make clean
-elif [ `python -c "import sys; print(sys.platform)"` = 'win32' ] ; then
-#Windows
-    export PATH=/c/msys64/ucrt64/bin:$PATH
-    export MSYSTEM=UCRT64
-    export CC=/c/msys64/ucrt64/bin/gcc
-    # Disable avx and sse2.
-    export CFLAGS="-U HAS_AVX -U HAS_AVX512 -U HAS_SSE2"
-    ./Configure --prefix=${PARIPREFIX} --libdir=${PARILIBDIR} --without-readline --with-gmp=${GMPPREFIX}
-    cd Omingw-*
-    make install-lib-sta
-    make install-include
-    make install-doc
-    make install-cfg
-    make install-bin-sta
-else
-# linux
-    ./Configure --prefix=${PARIPREFIX} --libdir=${PARILIBDIR} --with-gmp=${GMPPREFIX}
-    make install
-    make install-lib-sta
 fi
