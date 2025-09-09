@@ -60,9 +60,8 @@ jobs:
                 patch
                 sed
                 wget
-                mingw-w64-ucrt-x86_64-gcc
+                mingw-w64-ucrt-x86_64-toolchain
                 mingw-w64-ucrt-x86_64-gmp
-                mingw-w64-ucrt-x86_64-pkg-config
                 mingw-w64-ucrt-x86_64-python
                 mingw-w64-ucrt-x86_64-python-pip
                 mingw-w64-ucrt-x86_64-meson-python
