@@ -19,21 +19,10 @@ cimport cython
 from cpython.ref cimport PyObject
 from cpython.exc cimport PyErr_SetString
 
-#from cysignals.signals cimport (sig_on, sig_off, sig_block, sig_unblock,
-#                                sig_error)
-# Dummy signal handling methods for debugging
-def sig_on():
-    print("sig_on called")
-def sig_off():
-    print("sig_off called")
-def sig_error():
-    print("sig_error called")
-def sig_block():
-    print("sig_block called")
-def sig_unblock():
-    print("sig_unblock called")
+from cysignals.signals cimport (sig_on, sig_off, sig_block, sig_unblock,
+                                sig_error)
 
-
+from cypari2.paridecl cimport gnil
 from cypari2.gen cimport Gen, Gen_new
 from cypari2.paridecl cimport (avma, pari_mainstack, gnil, gcopy,
                         is_universal_constant, is_on_stack,
@@ -43,12 +32,9 @@ from cypari2.paridecl cimport (avma, pari_mainstack, gnil, gcopy,
 from warnings import warn
 
 
-#cdef extern from *:
-#    int sig_on_count "cysigs.sig_on_count"
-#    int block_sigint "cysigs.block_sigint"
-# For debugging, we define these variables here
-cdef int sig_on_count = 0
-cdef int block_sigint = 0
+cdef extern from *:
+    int sig_on_count "cysigs.sig_on_count"
+    int block_sigint "cysigs.block_sigint"
 
 
 # Singleton object to denote the top of the PARI stack
