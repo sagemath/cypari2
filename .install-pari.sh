@@ -77,7 +77,7 @@ if [[ "$PLATFORM" = "msys" ]]; then
   # If one installs in a non-default location, then one needs to call os.add_dll_directory
   # in Python to find the DLLs.
   CONFIG_ARGS="--without-readline --prefix=$MSYSTEM_PREFIX"
-elif [[ "$PLATFORM" = "linux" ]]; then
+else
   CONFIG_ARGS="--prefix=/usr"
 fi
 ./Configure $CONFIG_ARGS
