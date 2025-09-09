@@ -121,3 +121,4 @@ add_project_arguments('-I', meson.current_build_dir(), language: 'cython')
 
 
 subdir('cypari2')
+subdir('tests')
