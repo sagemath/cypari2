@@ -35,7 +35,7 @@ def read_pari_desc(pari_datadir: Path) -> dict[str, dict[str, str]]:
     EXAMPLES::
 
         >>> from autogen.parser import read_pari_desc
-        >>> D = read_pari_desc(Path("test"))
+        >>> D = read_pari_desc(Path("tests"))
         >>> Dcos = D["cos"]
         >>> if "description" in Dcos: _ = Dcos.pop("description")
         >>> Dcos.pop("doc").startswith('cosine of $x$.')
