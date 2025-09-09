@@ -103,20 +103,6 @@ jobs:
           docker_push_repository: ghcr.io/${{ github.repository }}/cypari2-
         needs: [linux-sage]
 
-    macos-sage:
-        uses: sagemath/sage/.github/workflows/macos.yml@develop
-        with:
-          osversion_xcodeversion_toxenv_tuples: >-
-            [["latest", "",           "homebrew-macos-usrlocal-minimal"],
-             ["latest", "",           "homebrew-macos-usrlocal-standard"],
-             ["latest", "",           "conda-forge-macos-standard"]]
-          targets:           SAGE_CHECK=no SAGE_CHECK_PACKAGES="cypari" cypari
-          # Standard setting: Test the current beta release of Sage
-          sage_repo:         sagemath/sage
-          sage_ref:          develop
-          upstream_artifact: upstream
-        needs: [dist]
-
 env:
     # Ubuntu packages to install so that the project's "setup.py sdist" can succeed
     DIST_PREREQ: libpari-dev pari-doc libbz2-dev bzip2
