@@ -84,10 +84,10 @@ jobs:
           run: |
             if [ ${{ runner.os }} = macOS ]; then
               HOMEBREW=`brew --prefix`
-              gcc -v tests/test.c -o test -I$HOMEBREW/include -L$HOMEBREW/lib -lpari -lgmp 
-              export C_INCLUDE_PATH=$HOMEBREW/include
-              export LIBRARY_PATH=$HOMEBREW/lib:$HOMEBREW/Cellar/pari/${{ matrix.pari-version }}/lib:$LIBRARY_PATH
-              gcc -v tests/test.c -o test -lpari -lgmp
+              clang -v tests/test.c -o test -I$HOMEBREW/include -L$HOMEBREW/lib -lpari -lgmp 
+ #             export C_INCLUDE_PATH=$HOMEBREW/include
+ #             export LIBRARY_PATH=$HOMEBREW/lib:$HOMEBREW/Cellar/pari/${{ matrix.pari-version }}/lib:$LIBRARY_PATH
+ #             gcc -v tests/test.c -o test -lpari -lgmp
             else
               gcc -v tests/test.c -o test -I/usr/local/include -L/usr/local/bin -lpari -lgmp
             fi
