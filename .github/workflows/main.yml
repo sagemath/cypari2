@@ -143,7 +143,7 @@ jobs:
               path: upstream
               name: upstream
 
-    linux-sage:
+    sage:
         name: Test with Sage
         uses: sagemath/sage/.github/workflows/docker.yml@develop
         with:
@@ -155,29 +155,9 @@ jobs:
           # We prefix the image name with the SPKG name ("cypari2-") to avoid the error
           # 'Package "sage-docker-..." is already associated with another repository.'
           docker_push_repository: ghcr.io/${{ github.repository }}/cypari2-
+          tox_packages_factors: >-
+            ["standard"]
         needs: [dist]
-
-    linux-sage-incremental:
-        uses: sagemath/sage/.github/workflows/docker.yml@develop
-        with:
-          # Build incrementally from published Docker image
-          incremental: true
-          free_disk_space: true
-          from_docker_repository: ghcr.io/sagemath/sage/
-          from_docker_target: "with-targets"
-          from_docker_tag: "dev"
-          docker_targets: "with-targets"
-          targets_pre:       build/make/Makefile
-          targets:           "cypari-uninstall build doc-html ptest"
-          targets_optional:  build/make/Makefile
-          sage_repo:         sagemath/sage
-          sage_ref:          develop
-          upstream_artifact: upstream
-          # We prefix the image name with the SPKG name ("cypari2-") to avoid the error
-          # 'Package "sage-docker-..." is already associated with another repository.'
-          docker_push_repository: ghcr.io/${{ github.repository }}/cypari2-
-        needs: [linux-sage]
-
 
 env:
     # Ubuntu packages to install so that building the sdist can succeed
