@@ -107,6 +107,10 @@ jobs:
             if [ ${{ runner.os }} = Windows ]; then
               export C_INCLUDE_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/usr/local/include
               export LIBRARY_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/usr/local/bin
+            elif [ ${{ runner.os }} = macOS ]; then
+              HOMEBREW=`brew --prefix`
+              export C_INCLUDE_PATH=$HOMEBREW/include
+              export LIBRARY_PATH=$HOMEBREW/lib
             fi
             echo $PATH
             echo $C_INCLUDE_PATH
