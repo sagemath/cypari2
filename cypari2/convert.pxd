@@ -1,6 +1,6 @@
-from .paridecl cimport (GEN, t_COMPLEX, dbltor, real_0_bit, stoi, cgetg,
+from cypari2.paridecl cimport (GEN, t_COMPLEX, dbltor, real_0_bit, stoi, cgetg,
                         set_gel, gen_0)
-from .gen cimport Gen
+from cypari2.gen cimport Gen
 from cpython.long cimport PyLong_AsLong
 from cpython.float cimport PyFloat_AS_DOUBLE
 from cpython.complex cimport PyComplex_RealAsDouble, PyComplex_ImagAsDouble

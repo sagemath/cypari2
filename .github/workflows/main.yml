@@ -1,4 +1,4 @@
-name: cypari2
+name: CI
 
 on:
     pull_request:
@@ -15,34 +15,122 @@ concurrency:
 
 jobs:
     build:
+        name: Build and Test (${{ matrix.os }}, Python ${{ matrix.python-version }}, PARI ${{ matrix.pari-version }})
         runs-on: ${{ matrix.os }}
         strategy:
             fail-fast: false
             matrix:
                 os: [ubuntu-latest]
                 python-version: ['3.10', '3.11', '3.12', '3.13']
-                pari-version: ['pari-2.13.0', 'pari-2.15.4', 'pari-2.15.5', '2.17.2']
+                pari-version: ['2.13.0', '2.15.4', '2.15.5', '2.17.2']
+                include:
+                  - os: macos-latest
+                    python-version: '3.10'
+                    pari-version: '2.17.2' # Whatever comes with homebrew
+                  - os: macos-latest
+                    python-version: '3.13'
+                    pari-version: '2.17.2' # Whatever comes with homebrew
+                  - os: windows-latest
+                    python-version: '3.12' # Whatever comes with msys2
+                    pari-version: '2.15.4'
+                  - os: windows-latest
+                    python-version: '3.12' # Whatever comes with msys2
+                    pari-version: '2.17.2'
         env:
           LC_ALL: C
           PARI_VERSION: ${{ matrix.pari-version }}
+        defaults:
+          run:
+            shell: ${{ matrix.os == 'windows-latest' && 'msys2 {0}' || 'bash' }}
         steps:
         - name: Set up the repository
           uses: actions/checkout@v4
+        - name: Setup MSYS2
+          if: runner.os == 'Windows'
+          id: msys2
+          uses: msys2/setup-msys2@v2
+          with:
+              msystem: UCRT64
+              update: true
+              install: >-
+                base-devel
+                m4
+                bison
+                make
+                patch
+                sed
+                wget
+                mingw-w64-ucrt-x86_64-toolchain
+                mingw-w64-ucrt-x86_64-gmp
+                mingw-w64-ucrt-x86_64-python
+                mingw-w64-ucrt-x86_64-python-pip
+                mingw-w64-ucrt-x86_64-meson-python
+                mingw-w64-ucrt-x86_64-cython
+              path-type: inherit
         - name: Set up Python ${{ matrix.python-version }}
+          if: runner.os != 'Windows'
           uses: actions/setup-python@v4
           with:
             python-version: ${{ matrix.python-version }}
-        - name: Install pari
+        - name: Install PARI
+          if: matrix.os != 'macos-latest'
+          run: |         
+            bash -x .install-pari.sh
+        - name: Install PARI
+          if: matrix.os == 'macos-latest'
           run: |
-              bash -x .install-pari.sh
-        - name: Local build
+            brew install pari
+        - name: Smoke test PARI
           run: |
-            make install
+            if [ ${{ runner.os }} = macOS ]; then
+              HOMEBREW=`brew --prefix`
+              clang -v tests/test.c -o test -I$HOMEBREW/include -L$HOMEBREW/lib -lpari -lgmp 
+ #             export C_INCLUDE_PATH=$HOMEBREW/include
+ #             export LIBRARY_PATH=$HOMEBREW/lib:$HOMEBREW/Cellar/pari/${{ matrix.pari-version }}/lib:$LIBRARY_PATH
+ #             gcc -v tests/test.c -o test -lpari -lgmp
+            else
+              gcc -v tests/test.c -o test -I/usr/local/include -L/usr/local/bin -lpari -lgmp
+            fi
+            expected="zeta(2) = 1.6449340668482264364
+            p = x^3 + x^2 + x - 1
+            modulus = y^3 + y^2 + y - 1
+            centerlift(lift(fq)) = [x - y, 1; x + (y^2 + y - 1), 1; x + (-y^2 - 1), 1]"
+            output="$(./test)"
+            # Normalize newlines for comparison
+            output="$(echo "$output" | tr -d '\r')"
+            expected="$(echo "$expected" | tr -d '\r')"
+            echo -e "Got:\n$output"
+            if [ "$output" != "$expected" ]; then
+              echo "Unexpected output from test.c"
+              echo -e "Expected:\n$expected"
+              exit 1
+            fi
+        - name: Build
+          run: |
+            if [ ${{ runner.os }} = Windows ]; then
+              export C_INCLUDE_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/usr/local/include
+              export LIBRARY_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/usr/local/bin
+            elif [ ${{ runner.os }} = macOS ]; then
+              HOMEBREW=`brew --prefix`
+              export C_INCLUDE_PATH=$HOMEBREW/include
+              ls -l $HOMEBREW/lib
+              export DYLD_LIBRARY_PATH=$HOMEBREW/lib:$HOMEBREW/Cellar/pari/${{ matrix.pari-version }}/lib:$LIBRARY_PATH
+            fi
+            echo $PATH
+            echo $C_INCLUDE_PATH
+            echo $LIBRARY_PATH
+            which python
+            python -m pip install -v .
+        - name: Test
+          run: |
             make check
+        - name: Build docs
+          run: |
             pip install sphinx
             (cd docs && make html)
 
     dist:
+        name: Build source distribution
         runs-on: ubuntu-latest
         steps:
           - name: Check out ${{ env.SPKG }}
@@ -56,7 +144,7 @@ jobs:
               sudo DEBIAN_FRONTEND=noninteractive apt-get update
               sudo DEBIAN_FRONTEND=noninteractive apt-get install $DIST_PREREQ
               python3 -m pip install build
-          - name: Run make dist, prepare upstream artifact
+          - name: Build dist, prepare upstream artifact
             run: |
               (cd build/pkgs/${{ env.SPKG }}/src && python3 -m build --sdist) \
               && mkdir -p upstream && cp build/pkgs/${{ env.SPKG }}/src/dist/*.tar.gz upstream/${{ env.SPKG }}-git.tar.gz \
@@ -69,6 +157,7 @@ jobs:
               name: upstream
 
     sage:
+        name: Test with Sage
         uses: sagemath/sage/.github/workflows/docker.yml@develop
         with:
           targets:           SAGE_CHECK=no SAGE_CHECK_PACKAGES="cypari" cypari

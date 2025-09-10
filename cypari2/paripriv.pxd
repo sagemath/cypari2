@@ -4,7 +4,7 @@ Declarations for private functions from PARI
 Ideally, we shouldn't use these, but for technical reasons, we have to.
 """
 
-from .types cimport *
+from cypari2.types cimport *
 
 cdef extern from "pari/paripriv.h":
     int t_FF_FpXQ, t_FF_Flxq, t_FF_F2xq

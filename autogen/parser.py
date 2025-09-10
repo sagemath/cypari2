@@ -15,17 +15,16 @@ Read and parse the file pari.desc
 from __future__ import absolute_import, unicode_literals
 
 import io
-import os
 import re
+from pathlib import Path
 
 from .args import pari_arg_types
-from .paths import pari_share
 from .ret import pari_ret_types
 
 paren_re = re.compile(r"[(](.*)[)]")
 argname_re = re.compile(r"[ {]*&?([A-Za-z_][A-Za-z0-9_]*)")
 
-def read_pari_desc():
+def read_pari_desc(pari_datadir: Path) -> dict[str, dict[str, str]]:
     """
     Read and parse the file ``pari.desc``.
 
@@ -36,7 +35,7 @@ def read_pari_desc():
     EXAMPLES::
 
         >>> from autogen.parser import read_pari_desc
-        >>> D = read_pari_desc()
+        >>> D = read_pari_desc(Path("tests"))
         >>> Dcos = D["cos"]
         >>> if "description" in Dcos: _ = Dcos.pop("description")
         >>> Dcos.pop("doc").startswith('cosine of $x$.')
@@ -49,16 +48,16 @@ def read_pari_desc():
         ...   'section': 'transcendental'}
         True
     """
-    pari_desc = os.path.join(pari_share(), 'pari.desc')
+    pari_desc = pari_datadir / 'pari.desc'
     with io.open(pari_desc, encoding="utf-8") as f:
         lines = f.readlines()
 
     n = 0
     N = len(lines)
 
-    functions = {}
+    functions: dict[str, dict[str, str]] = {}
     while n < N:
-        fun = {}
+        fun: dict[str, str] = {}
         while True:
             L = lines[n]; n += 1
             if L == "\n":

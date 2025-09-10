@@ -62,17 +62,17 @@ from cpython.object cimport (Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, PyTypeObject)
 from cysignals.memory cimport sig_free, check_malloc
 from cysignals.signals cimport sig_check, sig_on, sig_off, sig_block, sig_unblock
 
-from .types cimport *
-from .string_utils cimport to_string, to_bytes
-from .paripriv cimport *
-from .convert cimport PyObject_AsGEN, gen_to_integer
-from .pari_instance cimport DEFAULT_BITPREC, get_var
-from .stack cimport (new_gen, new_gens2, new_gen_noclear,
+from cypari2.types cimport *
+from cypari2.string_utils cimport to_string, to_bytes
+from cypari2.paripriv cimport *
+from cypari2.convert cimport PyObject_AsGEN, gen_to_integer
+from cypari2.pari_instance cimport DEFAULT_BITPREC, get_var
+from cypari2.stack cimport (new_gen, new_gens2, new_gen_noclear,
                      clone_gen, clear_stack, reset_avma,
                      remove_from_pari_stack, move_gens_to_heap)
-from .closure cimport objtoclosure
+from cypari2.closure cimport objtoclosure
 
-from .paridecl cimport *
+from cypari2.paridecl cimport *
 
 include 'auto_gen.pxi'
 
@@ -857,8 +857,8 @@ cdef class Gen(Gen_base):
         >>> pari.polcyclo(15).nfinit().nf_get_sign()
         [0, 4]
         """
-        cdef long r1
-        cdef long r2
+        cdef pari_longword r1
+        cdef pari_longword r2
         cdef GEN sign
         sig_on()
         sign = member_sign(self.g)
@@ -1115,7 +1115,7 @@ cdef class Gen(Gen_base):
         >>> K.idealprimedec(5)[0].pr_get_e()
         1
         """
-        cdef long e
+        cdef pari_longword e
         sig_on()
         e = pr_get_e(self.g)
         sig_off()
@@ -1717,7 +1717,7 @@ cdef class Gen(Gen_base):
         """
         cdef GEN x
         cdef long lx
-        cdef long *xp
+        cdef GEN xp
         cdef long w
         cdef char *s
         cdef char *sp
@@ -1760,27 +1760,27 @@ cdef class Gen(Gen_base):
         """
         cdef GEN x
         cdef long lx
-        cdef long *xp
+        cdef GEN xp
         cdef long w
         cdef char *s
         cdef char *sp
         cdef char *hexdigits = "0123456789abcdef"
         cdef int i, j
-        cdef int size
+        cdef pari_longword size
         x = self.g
         if typ(x) != t_INT:
             raise TypeError("gen must be of PARI type t_INT")
         if not signe(x):
             return "0x0"
         lx = lgefint(x) - 2  # number of words
-        size = lx*2*sizeof(long)
+        size = lx*2*sizeof(pari_ulongword)
         s = <char *>check_malloc(size+4)  # 1 char for sign, 2 chars for 0x, 1 char for '\0'
         sp = s + size + 4 - 1  # last character
         sp[0] = 0
         xp = int_LSW(x)
         for i from 0 <= i < lx:
             w = xp[0]
-            for j in range(2*sizeof(long)):
+            for j in range(2*sizeof(pari_longword)):
                 sp -= 1
                 sp[0] = hexdigits[w & 15]
                 w >>= 4
@@ -1948,7 +1948,7 @@ cdef class Gen(Gen_base):
         >>> pari('389/17').python()
         Fraction(389, 17)
         """
-        from .convert import gen_to_python
+        from cypari2.convert import gen_to_python
         return gen_to_python(self)
 
     def sage(self, locals=None):
@@ -2215,7 +2215,7 @@ cdef class Gen(Gen_base):
         False
         """
         sig_on()
-        cdef long t = ispseudoprime(self.g, flag)
+        cdef pari_longword t = ispseudoprime(self.g, flag)
         sig_off()
         return t != 0
 
@@ -2702,7 +2702,7 @@ cdef class Gen(Gen_base):
         >>> pari('(2.4*x^2 - 1.7)/x').truncate()
         2.40000000000000*x
         """
-        cdef long e
+        cdef pari_longword e
         cdef Gen y
         sig_on()
         if not estimate:
@@ -2830,7 +2830,7 @@ cdef class Gen(Gen_base):
         >>> pari('sin(x+O(x^10))').round()   # each coefficient has abs < 1
         x + O(x^10)
         """
-        cdef long e
+        cdef pari_longword e
         cdef Gen y
         sig_on()
         if not estimate:
@@ -3113,7 +3113,7 @@ cdef class Gen(Gen_base):
         ``find_root`` is given, also returns the exact square root.
         """
         cdef GEN G
-        cdef long t
+        cdef pari_longword t
         sig_on()
         if find_root:
             t = itos(gissquareall(x.g, &G))
@@ -4065,7 +4065,7 @@ cdef class Gen(Gen_base):
         cdef long t = typ(self.g)
         cdef Gen t0
         cdef GEN result
-        cdef long arity
+        cdef pari_longword arity
         cdef long nargs = len(args)
         cdef long nkwds = len(kwds)
 

@@ -32,7 +32,9 @@ from __future__ import print_function
 from libc.stdio cimport FILE
 from cpython.getargs cimport va_list
 
-from .types cimport *
+from cypari2.pari_long cimport pari_longword, pari_ulongword
+
+from cypari2.types cimport *
 
 
 cdef extern from *:     # PARI headers already included by types.pxd
@@ -92,7 +94,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     # _pari_err_handle() in handle_error.pyx
     int     (*cb_pari_err_handle)(GEN) except 0
     int     (*cb_pari_handle_exception)(long) except 0
-    void    (*cb_pari_err_recover)(long)
+    void    (*cb_pari_err_recover)(pari_longword)
 
     # kernel/gmp/int.h
 
@@ -2920,6 +2922,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN     closure_evalnobrk(GEN C)
     GEN     closure_evalres(GEN C)
     void    closure_evalvoid(GEN C)
+    const char * closure_func_err()
     GEN     closure_trapgen(GEN C, long numerr)
     GEN     copybin_unlink(GEN C)
     GEN     get_lex(long vn)
@@ -3204,7 +3207,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN     divrem(GEN x, GEN y, long v)
     GEN     floor_safe(GEN x)
     GEN     gceil(GEN x)
-    GEN     gcvtoi(GEN x, long *e)
+    GEN     gcvtoi(GEN x, pari_longword *e)
     GEN     gdeflate(GEN x, long v, long d)
     GEN     gdivent(GEN x, GEN y)
     GEN     gdiventgs(GEN x, long y)
@@ -3239,7 +3242,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     long    gprecision(GEN x)
     GEN     gpserprec(GEN x, long v)
     GEN     greal(GEN x)
-    GEN     grndtoi(GEN x, long *e)
+    GEN     grndtoi(GEN x, pari_longword *e)
     GEN     ground(GEN x)
     GEN     gshift(GEN x, long n)
     GEN     gsubst(GEN x, long v, GEN y)
@@ -4152,7 +4155,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN     gprimepi_upper_bound(GEN x)
     GEN     gprimepi_lower_bound(GEN x)
     long    isprime(GEN x)
-    long    ispseudoprime(GEN x, long flag)
+    pari_longword    ispseudoprime(GEN x, long flag)
     long    millerrabin(GEN n, long k)
     GEN     prime(long n)
     GEN     primepi(GEN x)
@@ -4566,7 +4569,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN    icopy_avma(GEN x, pari_sp av)
     ulong  int_bit(GEN x, long n)
     GEN    itor(GEN x, long prec)
-    long   itos(GEN x)
+    pari_longword   itos(GEN x)
     long   itos_or_0(GEN x)
     ulong  itou(GEN x)
     ulong  itou_or_0(GEN x)
@@ -4813,8 +4816,8 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN    nf_get_zk(GEN nf)
     GEN    nf_get_zkden(GEN nf)
     GEN    nf_get_zkprimpart(GEN nf)
-    long   pr_get_e(GEN pr)
-    long   pr_get_f(GEN pr)
+    pari_longword   pr_get_e(GEN pr)
+    pari_longword   pr_get_f(GEN pr)
     GEN    pr_get_gen(GEN pr)
     GEN    pr_get_p(GEN pr)
     GEN    pr_get_tau(GEN pr)
@@ -4845,7 +4848,7 @@ cdef extern from *:     # PARI headers already included by types.pxd
     GEN    znstar_get_pe(GEN G)
     GEN    znstar_get_Ui(GEN G)
 
-    long   closure_arity(GEN C)
+    pari_longword   closure_arity(GEN C)
     const char * closure_codestr(GEN C)
     GEN    closure_get_code(GEN C)
     GEN    closure_get_oper(GEN C)
@@ -5336,7 +5339,7 @@ cdef inline int is_universal_constant(GEN x) noexcept:
 # Auto-generated declarations. There are taken from the PARI version
 # on the system, so they more up-to-date than the above. In case of
 # conflicting declarations, auto_paridecl should have priority.
-from .auto_paridecl cimport *
+from cypari2.auto_paridecl cimport *
 
 
 cdef inline int is_on_stack(GEN x) except -1:
