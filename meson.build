@@ -45,7 +45,7 @@ cc.has_header('pari/pari.h', required: true, args: ['-v'])
 gmp = dependency('gmp', required: false)
 # Cannot be found via pkg-config
 # Also require shared library, since otherwise every Cython extension would include it's own copy of pari leading to hard-to-debug segmentation faults at runtime
-pari = cc.find_library('pari', has_headers: ['pari/pari.h'], required: true, static: false)
+pari = cc.find_library('pari', has_headers: ['pari/pari.h'], required: true)
 pari = declare_dependency(dependencies: [pari, gmp])
 
 # Get PARI version (mostly as smoke test)
