@@ -26,10 +26,10 @@ jobs:
                 include:
                   - os: macos-latest
                     python-version: '3.10'
-                    pari-version: '2.13.0'
+                    pari-version: '2.17.2' # Whatever comes with homebrew
                   - os: macos-latest
                     python-version: '3.13'
-                    pari-version: '2.17.2'
+                    pari-version: '2.17.2' # Whatever comes with homebrew
                   - os: windows-latest
                     python-version: '3.12' # Whatever comes with msys2
                     pari-version: '2.15.4'
@@ -72,9 +72,14 @@ jobs:
           uses: actions/setup-python@v4
           with:
             python-version: ${{ matrix.python-version }}
-        - name: Install pari
+        - name: Install PARI
+          if: matrix.os != 'macos-latest'
           run: |         
             bash -x .install-pari.sh
+        - name: Install PARI
+          if: matrix.os == 'macos-latest'
+          run: |
+            brew install pari
         - name: Smoke test PARI
           run: |
             if [ ${{ runner.os }} = macOS ]; then
