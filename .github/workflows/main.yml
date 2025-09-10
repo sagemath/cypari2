@@ -83,8 +83,8 @@ jobs:
         - name: Smoke test PARI
           run: |
             if [ ${{ runner.os }} = macOS ]; then
-              # gmp is installed but cannot be found (and PARI is also not linking against it)
-              gcc -v tests/test.c -o test -I/usr/local/include -L/usr/local/bin -lpari
+              HOMEBREW=`brew --prefix`
+              gcc -v tests/test.c -o test -I$HOMEBREW/include -L$HOMEBREW/lib -lpari -lgmp 
             else
               gcc -v tests/test.c -o test -I/usr/local/include -L/usr/local/bin -lpari -lgmp
             fi
