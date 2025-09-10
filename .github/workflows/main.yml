@@ -113,7 +113,8 @@ jobs:
             elif [ ${{ runner.os }} = macOS ]; then
               HOMEBREW=`brew --prefix`
               export C_INCLUDE_PATH=$HOMEBREW/include
-              export LIBRARY_PATH=$HOMEBREW/lib:$HOMEBREW/Cellar/pari/${{ matrix.pari-version }}/lib:$LIBRARY_PATH
+              ls -l $HOMEBREW/lib
+              export DYLD_LIBRARY_PATH=$HOMEBREW/lib:$HOMEBREW/Cellar/pari/${{ matrix.pari-version }}/lib:$LIBRARY_PATH
             fi
             echo $PATH
             echo $C_INCLUDE_PATH
