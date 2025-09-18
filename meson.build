@@ -43,8 +43,8 @@ cysignals = declare_dependency(include_directories: inc_cysignals)
 gmp = dependency('gmp', required: false)
 # Cannot be found via pkg-config
 # Also require shared library, since otherwise every Cython extension would include it's own copy of pari leading to hard-to-debug segmentation faults at runtime
-pari_header_include_dirs = []
-pari_lib_dirs = []
+pari_header_include_dirs = [] # additional dirs to search for PARI headers
+pari_lib_dirs = [] # additional dirs to search for the PARI library
 if host_machine.system() == 'darwin'
   brew = find_program('brew', required: false)
   if brew.found()
@@ -69,7 +69,8 @@ pari = cc.find_library(
   dirs: pari_lib_dirs,
   header_include_directories: pari_header_include_dirs,
 )
-pari = declare_dependency(dependencies: [pari, gmp])
+pari = declare_dependency(include_directories: pari_header_include_dirs,
+  dependencies: [pari, gmp])
 
 # Get PARI version (mostly as smoke test)
 pari_version_code = '''
