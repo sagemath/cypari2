@@ -43,22 +43,33 @@ cysignals = declare_dependency(include_directories: inc_cysignals)
 gmp = dependency('gmp', required: false)
 # Cannot be found via pkg-config
 # Also require shared library, since otherwise every Cython extension would include it's own copy of pari leading to hard-to-debug segmentation faults at runtime
+pari_header_include_dirs = []
+pari_lib_dirs = []
 if host_machine.system() == 'darwin'
-  brewdir = run_command('brew', '--prefix',  check: true).stdout().strip()
-  brewlibs = '/'.join([brewdir,'lib'])
-  brewinc = include_directories('/'.join([brewdir,'include']))
-# Explicitly check for header to give better error message (using -v to show search paths)
-  cc.has_header('pari/pari.h', required: true, args: ['-v'], include_directories: [brewinc])
-  pari = cc.find_library('pari', has_headers: ['pari/pari.h'], 
-    dirs: [brewlibs], header_include_directories: [brewinc], required: true)
-  pari = declare_dependency(include_directories: [brewinc],  dependencies: [pari, gmp])
-else
-# Explicitly check for header to give better error message (using -v to show search paths)
-  cc.has_header('pari/pari.h', required: true, args: ['-v'])
-  pari = cc.find_library('pari', has_headers: ['pari/pari.h'], required: true)
-  pari = declare_dependency(dependencies: [pari, gmp])
+  brew = find_program('brew', required: false)
+  if brew.found()
+    brew_prefix = run_command(brew, '--prefix', check: true).stdout().strip()
+    message('Homebrew prefix: ' + brew_prefix)
+    pari_header_include_dirs += include_directories(brew_prefix + '/include')
+    pari_lib_dirs += [brew_prefix + '/lib']
+  endif
 endif
 
+# Explicitly check for header to give better error message (using -v to show search paths)
+cc.has_header(
+  'pari/pari.h',
+  required: true,
+  args: ['-v'],
+  include_directories: pari_header_include_dirs,
+)
+pari = cc.find_library(
+  'pari',
+  has_headers: ['pari/pari.h'],
+  required: true,
+  dirs: pari_lib_dirs,
+  header_include_directories: pari_header_include_dirs,
+)
+pari = declare_dependency(dependencies: [pari, gmp])
 
 # Get PARI version (mostly as smoke test)
 pari_version_code = '''

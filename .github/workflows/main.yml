@@ -84,10 +84,7 @@ jobs:
           run: |
             if [ ${{ runner.os }} = macOS ]; then
               HOMEBREW=`brew --prefix`
-              clang -v tests/test.c -o test -I$HOMEBREW/include -L$HOMEBREW/lib -lpari -lgmp 
-              export C_INCLUDE_PATH=$HOMEBREW/include
-              export LIBRARY_PATH=$HOMEBREW/lib:$HOMEBREW/Cellar/pari/${{ matrix.pari-version }}/lib:$LIBRARY_PATH
-              clang -v tests/test.c -o test -lpari -lgmp
+              clang -v tests/test.c -o test -I$HOMEBREW/include -L$HOMEBREW/lib -lpari -lgmp
             else
               gcc -v tests/test.c -o test -I/usr/local/include -L/usr/local/bin -lpari -lgmp
             fi
@@ -110,11 +107,6 @@ jobs:
             if [ ${{ runner.os }} = Windows ]; then
               export C_INCLUDE_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/usr/local/include
               export LIBRARY_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/usr/local/bin
-            elif [ ${{ runner.os }} = macOS ]; then
-              HOMEBREW=`brew --prefix`
-              export C_INCLUDE_PATH=$HOMEBREW/include
-              ls -l $HOMEBREW/lib
-              export DYLD_LIBRARY_PATH=$HOMEBREW/lib:$HOMEBREW/Cellar/pari/${{ matrix.pari-version }}/lib:$LIBRARY_PATH
             fi
             echo $PATH
             echo $C_INCLUDE_PATH
