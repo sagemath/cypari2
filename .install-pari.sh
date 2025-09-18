@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # Helper script to install PARI (e.g. for CI builds).
-# On macOS: the default system gcc is used
+# On macOS: the default system fake gcc (clang) is used
 # On Linux: the default system gcc is used
 # On Windows: uses the ucrt64 toolchain in Msys2
+# On *BSD: should be clang; also make should be gmake
 
 # Exit on error
 set -e
@@ -19,6 +20,12 @@ case "$(uname -s)" in
         ;;
     Darwin)
         PLATFORM="macos"
+        ;;
+    FreeBSD)
+        PLATFORM="freebsd"
+        ;;
+    OpenBSD)
+        PLATFORM="openbsd"
         ;;
     *)
         echo "Unknown platform"
