@@ -12,7 +12,7 @@ maintainers = [
     { name = "SageMath developers", email = "sage-devel@googlegroups.com" },
 ]
 dependencies = ["cysignals>=1.11.3"]
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 readme = "README.rst"
 license = "GPL-2.0-or-later"
 license-files = ["LICENSE"]

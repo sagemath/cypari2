@@ -11,7 +11,7 @@ channels:
 
 dependencies:
   # Build backend and build tools
-  - python>=3.9
+  - python>=3.12
   - pari
   - cython>=3.0
   - cysignals>=1.11.3

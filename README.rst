@@ -24,7 +24,7 @@ From a pre-built wheel from PyPI
 
 Requirements:
 
-- Python >= 3.9
+- Python >= 3.12
 - pip
 
 Install cypari2 via the Python Package Index (PyPI) via
@@ -50,7 +50,7 @@ Requirements:
 - gmp (if PARI/GP was built with gmp)
 - A C compiler (GCC)
 - pkg-config
-- Python >= 3.9
+- Python >= 3.12
 - pip
 
 On Windows, we recommend to use MSYS2, which can be installed from
