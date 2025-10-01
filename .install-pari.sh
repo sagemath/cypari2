@@ -156,6 +156,8 @@ else
         elif command -v apt-get >/dev/null 2>&1; then
             apt-get update
             apt-get install -y sudo
+        elif command -v apk >/dev/null 2>&1; then
+            apk add sudo
         fi
     fi
     make gp
