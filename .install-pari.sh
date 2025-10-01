@@ -85,6 +85,23 @@ else
     cd "pari-$PURE_VERSION"
 fi
 
+# Install gmp if not present
+if ! ldconfig -p | grep libgmp >/dev/null 2>&1; then
+    echo "Installing GMP ..."
+    if [ "$PLATFORM" = "msys" ]; then
+        pacman -S --noconfirm mingw-w64-ucrt-x86_64-gmp
+        MSYSTEM_PREFIX="/ucrt64"
+    elif [ "$PLATFORM" = "linux" ]; then
+        dnf install -y gmp-devel
+    elif [ "$PLATFORM" = "macos" ]; then
+        brew install gmp
+    elif [ "$PLATFORM" = "freebsd" ]; then
+        pkg install -y gmp
+    elif [ "$PLATFORM" = "openbsd" ]; then
+        pkg_add gmp
+    fi
+fi
+
 echo "Building Pari ..."
 if [ "$PLATFORM" = "msys" ]; then
     # Remove "export_file='$(LIBPARI).def';" line from config/Makefile.SH"
