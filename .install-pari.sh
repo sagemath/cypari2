@@ -92,7 +92,9 @@ if ! ldconfig -p | grep libgmp >/dev/null 2>&1; then
         pacman -S --noconfirm mingw-w64-ucrt-x86_64-gmp
         MSYSTEM_PREFIX="/ucrt64"
     elif [ "$PLATFORM" = "linux" ]; then
-        dnf install -y gmp-devel
+        if command -v dnf >/dev/null 2>&1; then
+            dnf install -y gmp-devel
+        fi
     elif [ "$PLATFORM" = "macos" ]; then
         brew install gmp
     elif [ "$PLATFORM" = "freebsd" ]; then
