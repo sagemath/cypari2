@@ -132,7 +132,7 @@ else
     # Remove sudo provided by devtoolset since it doesn't work
     rm -f /opt/rh/gcc-toolset-14/root/usr/bin/sudo
     if ! command -v sudo >/dev/null 2>&1; then
-        dnf install sudo
+        dnf install -y sudo
     fi
     make gp
     sudo make install
