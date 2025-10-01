@@ -46,6 +46,7 @@ jobs:
         uses: pypa/cibuildwheel@v3.1
         env:
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.12, <3.14"
+          MACOSX_DEPLOYMENT_TARGET: "{{ matrix.os == 'macos-latest' && '15.0' || '13.0' }}"
       - uses: actions/upload-artifact@v4
         with:
           name: release-wheels-${{ matrix.os }}
