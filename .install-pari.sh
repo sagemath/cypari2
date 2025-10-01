@@ -71,14 +71,10 @@ else
         if [ "$PLATFORM" = "msys" ]; then
             pacman -S --noconfirm mingw-w64-ucrt-x86_64-wget
         elif [ "$PLATFORM" = "linux" ]; then
-            sudo apt-get update
-            sudo apt-get install -y wget
+            apt-get update
+            apt-get install -y wget
         elif [ "$PLATFORM" = "macos" ]; then
             brew install wget
-        elif [ "$PLATFORM" = "freebsd" ]; then
-            sudo pkg install -y wget
-        elif [ "$PLATFORM" = "openbsd" ]; then
-            sudo pkg_add wget
         fi
     fi
 
