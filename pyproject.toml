@@ -52,4 +52,4 @@ environment-pass = ["CI", "GITHUB_ACTIONS"]
 
 [tool.cibuildwheel.macos]
 before-all = "brew install pari"
-environment = { MACOSX_DEPLOYMENT_TARGET="13" }
+environment = { MACOSX_DEPLOYMENT_TARGET="13.0" }
