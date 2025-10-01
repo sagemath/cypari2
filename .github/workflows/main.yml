@@ -119,8 +119,8 @@ jobs:
             uv sync --frozen --inexact -v --no-build-isolation --no-editable --config-settings=builddir=builddir
         - name: Test
           run: |
-            make check
+            uv run make check
         - name: Build docs
           run: |
             pip install sphinx
-            (cd docs && make html)
+            (cd docs && uv run make html)
