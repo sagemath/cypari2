@@ -18,6 +18,13 @@ from PARI's include files.
 #                  https://www.gnu.org/licenses/
 # ****************************************************************************
 
+cdef extern from *:
+    """
+    #include "pari_compat.h"
+    """
+
+from cypari2.pari_long cimport pari_longword, pari_ulongword
+
 cdef extern from "pari/pari.h":
     ctypedef unsigned long ulong "pari_ulong"
 
@@ -82,7 +89,7 @@ cdef extern from "pari/pari.h":
     long    evaltyp(long x)
     long    evallg(long x)
     long    evalvarn(long x)
-    long    evalsigne(long x)
+    pari_longword evalsigne(long x)
     long    evalprecp(long x)
     long    evalvalp(long x)
     long    evalexpo(long x)

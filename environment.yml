@@ -1,0 +1,20 @@
+# Conda environment for cypari2 development
+#
+# Usage:
+#   mamba/conda env create -f environment.yml
+#   conda activate cypari2-dev
+#   pip install -e . --no-build-isolation
+name: cypari2-dev
+channels:
+  - conda-forge
+
+dependencies:
+  # Build backend and build tools
+  - python>=3.12
+  - pari
+  - cython>=3.0
+  - cysignals>=1.11.3
+  - meson-python>=0.18
+  - compilers
+  # For docs
+  - sphinx

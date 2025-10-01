@@ -24,7 +24,7 @@ From a pre-built wheel from PyPI
 
 Requirements:
 
-- Python >= 3.9
+- Python >= 3.12
 - pip
 
 Install cypari2 via the Python Package Index (PyPI) via
@@ -42,10 +42,30 @@ From source with pip
 
 Requirements:
 
-  PARI/GP >= 2.9.4 (header files and library); see
+- PARI/GP >= 2.9.4 (header files and library); see
   https://doc.sagemath.org/html/en/reference/spkg/pari#spkg-pari
   for availability in distributions (GNU/Linux, conda-forge, Homebrew, FreeBSD),
-  or install from source.
+  or install from source (e.g using the script ``.install-pari.sh`` provided in this
+  repository).
+- gmp (if PARI/GP was built with gmp)
+- A C compiler (GCC)
+- pkg-config
+- Python >= 3.12
+- pip
+
+On Windows, we recommend to use MSYS2, which can be installed from
+`Rtools <https://cran.r-project.org/bin/windows/Rtools/>`_.
+Afterwards, start the MSYS2 (UCRT64) terminal and install the above
+dependencies via
+::
+
+    $ pacman -Syu
+    $ pacman -S mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-gmp mingw-w64-ucrt-x86_64-python mingw-w64-ucrt-x86_64-python-pip mingw-w64-ucrt-x86_64-meson-python mingw-w64-ucrt-x86_64-cython mingw-w64-ucrt-x86_64-wget mingw-w64-ucrt-x86_64-uv
+    $ pacman -S bison # for building pari from source
+    $ .install-pari.sh
+    $ export C_INCLUDE_PATH=/usr/local/include
+    $ export LIBRARY_PATH=/usr/local/bin
+
 
 Install cypari2 via the Python Package Index (PyPI) via
 
@@ -66,6 +86,22 @@ If you want to try the development version, use
 
     $ pip install git+https://github.com/sagemath/cypari2.git [--user]
 
+or clone the repository and run
+::
+
+    $ python -m venv venv
+    $ source venv/bin/activate
+    $ pip install "meson-python>=0.18.0" "cython>=3.0" "cysignals>=1.11.3" "ninja>=1.8.2"
+    $ pip install -e . --no-build-isolation
+
+If you run into certification issues on Windows, you can try to
+upgrade the certifi package via
+::
+
+    $ pip install --upgrade certifi
+    $ export SSL_CERT_FILE=$(python -m certifi)
+
+and then retry the installation.
 
 Usage
 -----
@@ -143,14 +179,28 @@ CyPari 2 is maintained by the SageMath community.
 Open issues or submit pull requests at https://github.com/sagemath/cypari2
 and join https://groups.google.com/group/sage-devel to discuss.
 
-To get started with development, you can set up an environment using Conda 
-as follows:
+To get started with development, you can use the provided ``environment.yml`` 
+file to create the full development environment including build backend, 
+compilers, and documentation dependencies:
 
 ::
-    $ conda create -n cypari2-dev python cython pari=*=*_pthread ninja meson-python cysignals c-compiler
+
+    $ conda env create -f environment.yml
     $ conda activate cypari2-dev
+    $ pip install -e . --no-build-isolation
 
-Afterwards, you can build and install the package in editable mode: 
+On Windows, you can use ``environment-win.yml`` and you may also need to set a
+few environment variables:
 
 ::
+    $ conda env create -f environment-win.yml
+    $ conda activate cypari2-dev
+    $ set LIBRARY_PATH=%CONDA_PREFIX%\Library\lib;%LIBRARY_PATH%
+    $ set C_INCLUDE_PATH=%CONDA_PREFIX%\Library\include;%C_INCLUDE_PATH%
     $ pip install -e . --no-build-isolation
+
+To update an existing environment after changes to ``environment.yml``:
+
+::
+
+    $ conda env update -f environment.yml --prune

@@ -25,9 +25,8 @@ from cpython cimport PyErr_Occurred
 
 from cysignals.signals cimport sig_block, sig_unblock, sig_error
 
-from .paridecl cimport *
-from .paripriv cimport *
-from .stack cimport clone_gen_noclear, reset_avma, after_resize
+from cypari2.paridecl cimport cb_pari_err_recover, cb_pari_err_handle, e_STACK, pari_mainstack, pari_err2str, pari_free, closure_func_err
+from cypari2.stack cimport clone_gen_noclear, reset_avma, after_resize
 
 
 # We derive PariError from RuntimeError, for backward compatibility with
@@ -211,7 +210,7 @@ cdef int _pari_err_handle(GEN E) except 0:
     raise PariError(errnum, pari_error_string, clone_gen_noclear(E))
 
 
-cdef void _pari_err_recover(long errnum) noexcept:
+cdef void _pari_err_recover(pari_longword errnum) noexcept:
     """
     Reset the error string and jump back to ``sig_on()``, either to
     retry the code (in case of no error) or to make the already-raised

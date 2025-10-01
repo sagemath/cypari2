@@ -48,10 +48,10 @@ from cpython.longintrepr cimport (_PyLong_New,
 from libc.limits cimport LONG_MIN, LONG_MAX
 from libc.math cimport INFINITY
 
-from .paridecl cimport *
-from .stack cimport new_gen, reset_avma
-from .string_utils cimport to_string, to_bytes
-from .pycore_long cimport (ob_digit, _PyLong_IsZero, _PyLong_IsPositive,
+from cypari2.paridecl cimport *
+from cypari2.stack cimport new_gen, reset_avma
+from cypari2.string_utils cimport to_string, to_bytes
+from cypari2.pycore_long cimport (ob_digit, _PyLong_IsZero, _PyLong_IsPositive,
                            _PyLong_DigitCount, _PyLong_SetSignAndDigitCount)
 
 ########################################################################
@@ -458,7 +458,7 @@ cdef GEN PyLong_AS_GEN(py_long x) noexcept:
 
     # Size of the input
     cdef size_t sizedigits
-    cdef long sgn
+    cdef pari_longword sgn
     if _PyLong_IsZero(x):
         return gen_0
     elif _PyLong_IsPositive(x):

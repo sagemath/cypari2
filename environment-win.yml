@@ -1,0 +1,24 @@
+# Conda environment for cypari2 development on Windows
+# (using mingw-w64 toolchain)
+#
+# Usage:
+#   mamba/conda env create -f environment-win.yml
+#   conda activate cypari2-dev
+#   pip install -e . --no-build-isolation
+name: cypari2-dev
+channels:
+  - conda-forge
+
+dependencies:
+  # Build backend and build tools
+  - python>=3.12
+  - pari
+  - cython>=3.0
+  - cysignals>=1.11.3
+  - meson-python>=0.18
+  - gcc_win-64
+  - m2w64-sysroot_win-64
+  - m2-base # For running .install-pari.sh
+  - m2-make # For running .install-pari.sh
+  # For docs
+  - sphinx

@@ -37,9 +37,9 @@ from cpython.tuple cimport *
 from cpython.object cimport PyObject_Call
 from cpython.ref cimport Py_INCREF
 
-from .paridecl cimport *
-from .stack cimport new_gen, new_gen_noclear, clone_gen_noclear, DetachGen
-from .gen cimport objtogen
+from cypari2.paridecl cimport *
+from cypari2.stack cimport new_gen, new_gen_noclear, clone_gen_noclear, DetachGen
+from cypari2.gen cimport objtogen
 
 try:
     from inspect import getfullargspec as getargspec
