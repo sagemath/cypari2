@@ -87,6 +87,7 @@ if [[ "$PLATFORM" = "msys" ]]; then
 else
   CONFIG_ARGS="--prefix=/usr"
 fi
+chmod -R +x ./Configure ./config
 ./Configure $CONFIG_ARGS
 
 # On Windows, disable UNIX-specific code in language files

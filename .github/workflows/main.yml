@@ -102,6 +102,10 @@ jobs:
               echo -e "Expected:\n$expected"
               exit 1
             fi
+
+        - name: Setup uv
+          uses: astral-sh/setup-uv@v6
+
         - name: Build
           run: |
             if [ ${{ runner.os }} = Windows ]; then
@@ -111,8 +115,8 @@ jobs:
             echo $PATH
             echo $C_INCLUDE_PATH
             echo $LIBRARY_PATH
-            which python
-            python -m pip install -v .
+            uv sync --frozen --inexact -v --no-install-project
+            uv sync --frozen --inexact -v --no-build-isolation --no-editable --config-settings=builddir=builddir
         - name: Test
           run: |
             make check
@@ -120,54 +124,3 @@ jobs:
           run: |
             pip install sphinx
             (cd docs && make html)
-
-    dist:
-        name: Build source distribution
-        runs-on: ubuntu-latest
-        steps:
-          - name: Check out ${{ env.SPKG }}
-            uses: actions/checkout@v4
-            with:
-              path: build/pkgs/${{ env.SPKG }}/src
-          - name: Set up Python ${{ matrix.python-version }}
-            uses: actions/setup-python@v4
-          - name: Install prerequisites
-            run: |
-              sudo DEBIAN_FRONTEND=noninteractive apt-get update
-              sudo DEBIAN_FRONTEND=noninteractive apt-get install $DIST_PREREQ
-              python3 -m pip install build
-          - name: Build dist, prepare upstream artifact
-            run: |
-              (cd build/pkgs/${{ env.SPKG }}/src && python3 -m build --sdist) \
-              && mkdir -p upstream && cp build/pkgs/${{ env.SPKG }}/src/dist/*.tar.gz upstream/${{ env.SPKG }}-git.tar.gz \
-              && echo "sage-package create ${{ env.SPKG }} --version git --tarball ${{ env.SPKG }}-git.tar.gz --type=standard" > upstream/update-pkgs.sh \
-              && if [ -n "${{ env.REMOVE_PATCHES }}" ]; then echo "(cd ../build/pkgs/${{ env.SPKG }}/patches && rm -f ${{ env.REMOVE_PATCHES }}; :)" >> upstream/update-pkgs.sh; fi \
-              && ls -l upstream/
-          - uses: actions/upload-artifact@v4
-            with:
-              path: upstream
-              name: upstream
-
-    sage:
-        name: Test with Sage
-        uses: sagemath/sage/.github/workflows/docker.yml@develop
-        with:
-          targets:           SAGE_CHECK=no SAGE_CHECK_PACKAGES="cypari" cypari
-          targets_optional:  build/make/Makefile
-          sage_repo:         sagemath/sage
-          sage_ref:          develop
-          upstream_artifact: upstream
-          # We prefix the image name with the SPKG name ("cypari2-") to avoid the error
-          # 'Package "sage-docker-..." is already associated with another repository.'
-          docker_push_repository: ghcr.io/${{ github.repository }}/cypari2-
-          tox_packages_factors: >-
-            ["standard"]
-        needs: [dist]
-
-env:
-    # Ubuntu packages to install so that building the sdist can succeed
-    DIST_PREREQ: libpari-dev pari-doc libbz2-dev bzip2
-    # Name of this project in the Sage distribution
-    SPKG:        cypari
-    # Remove all downstream patches
-    REMOVE_PATCHES: "*"

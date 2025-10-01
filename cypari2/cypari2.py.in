@@ -1,0 +1,6 @@
+includedir=${pcfiledir}
+
+Name: cypari2
+Description: cypari2 library
+Version: @version@
+Cflags: -I${includedir}

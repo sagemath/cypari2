@@ -60,7 +60,7 @@ dependencies via
 ::
 
     $ pacman -Syu
-    $ pacman -S mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-gmp mingw-w64-ucrt-x86_64-python mingw-w64-ucrt-x86_64-python-pip mingw-w64-ucrt-x86_64-meson-python mingw-w64-ucrt-x86_64-cython mingw-w64-ucrt-x86_64-wget
+    $ pacman -S mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-gmp mingw-w64-ucrt-x86_64-python mingw-w64-ucrt-x86_64-python-pip mingw-w64-ucrt-x86_64-meson-python mingw-w64-ucrt-x86_64-cython mingw-w64-ucrt-x86_64-wget mingw-w64-ucrt-x86_64-uv
     $ pacman -S bison # for building pari from source
     $ .install-pari.sh
     $ export C_INCLUDE_PATH=/usr/local/include
