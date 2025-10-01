@@ -139,6 +139,7 @@ else
 
     # Diagnostic output
     ls -l /usr/lib | grep libpari || true
+    ls -L /usr/lib | grep libpari || true
     ls -l /usr/local/lib | grep libpari || true
     ldconfig -p | grep libpari || true
 fi
