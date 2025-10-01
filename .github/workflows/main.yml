@@ -122,5 +122,5 @@ jobs:
             uv run make check
         - name: Build docs
           run: |
-            uv sync --frozen --inexact -v --group docs
+            uv sync --frozen --inexact -v --group doc
             (cd docs && uv run make html)
