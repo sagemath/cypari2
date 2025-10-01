@@ -45,3 +45,6 @@ test-command = "python tests/rundoctest.py"
 build-frontend = "build[uv]"
 build-verbosity = 1
 before-all = "bash {package}/.install-pari.sh"
+
+[tool.cibuildwheel.macos]
+before-all = "brew install pari"
