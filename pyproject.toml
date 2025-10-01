@@ -47,7 +47,7 @@ test-sources = ["tests", "pyproject.toml"]
 test-command = "python tests/rundoctest.py"
 build-frontend = "build[uv]"
 build-verbosity = 1
-before-all = "bash {package}/.install-pari.sh"
+before-all = "bash -x {package}/.install-pari.sh"
 environment-pass = ["CI", "GITHUB_ACTIONS"]
 
 [tool.cibuildwheel.macos]

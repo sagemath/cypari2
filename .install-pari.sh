@@ -138,7 +138,7 @@ else
     sudo make install
 
     # Diagnostic output
-    ls -l /usr/lib | grep libpari
-    ls -l /usr/local/lib | grep libpari
-    ldconfig -p | grep libpari
+    ls -l /usr/lib | grep libpari || true
+    ls -l /usr/local/lib | grep libpari || true
+    ldconfig -p | grep libpari || true
 fi
