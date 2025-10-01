@@ -71,8 +71,7 @@ else
         if [ "$PLATFORM" = "msys" ]; then
             pacman -S --noconfirm mingw-w64-ucrt-x86_64-wget
         elif [ "$PLATFORM" = "linux" ]; then
-            apt-get update
-            apt-get install -y wget
+            dnf install -y wget
         elif [ "$PLATFORM" = "macos" ]; then
             brew install wget
         fi
