@@ -128,10 +128,9 @@ if [ "$PLATFORM" = "msys" ]; then
     fi
 else
     # Linux or macOS
-    make gp
-    if command -v sudo >/dev/null 2>&1; then
-        sudo make install
-    else
-        make install
+    if ! command -v sudo >/dev/null 2>&1; then
+        dnf install sudo
     fi
+    make gp
+    sudo make install
 fi
