@@ -122,5 +122,5 @@ jobs:
             uv run make check
         - name: Build docs
           run: |
-            pip install sphinx
+            uv sync --frozen --inexact -v --group docs
             (cd docs && uv run make html)
