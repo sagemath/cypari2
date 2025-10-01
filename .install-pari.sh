@@ -64,6 +64,24 @@ else
         mkdir build
     fi
     cd build
+    
+    # install wget if not present
+    if ! command -v wget &> /dev/null
+    then
+        if [ "$PLATFORM" = "msys" ]; then
+            pacman -S --noconfirm mingw-w64-ucrt-x86_64-wget
+        elif [ "$PLATFORM" = "linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y wget
+        elif [ "$PLATFORM" = "macos" ]; then
+            brew install wget
+        elif [ "$PLATFORM" = "freebsd" ]; then
+            sudo pkg install -y wget
+        elif [ "$PLATFORM" = "openbsd" ]; then
+            sudo pkg_add wget
+        fi
+    fi
+
     wget --no-verbose "$PARI_URL/$PURE_VERSION.tar.gz" -O "pari-$PURE_VERSION.tgz" \
         || wget --no-verbose "$PARI_URL1/pari-$PURE_VERSION.tar.gz" -O "pari-$PURE_VERSION.tgz" \
         || wget --no-verbose "$PARI_URL2/pari-$PURE_VERSION.tar.gz" -O "pari-$PURE_VERSION.tgz" \
