@@ -154,6 +154,12 @@ else
     make gp
     sudo make install
 
+    # Move libpari to usr/lib64 (on RHEL/CentOS/Fedora)
+    if [ -d /usr/lib64 ] && [ -f /usr/lib/libpari.so ]; then
+        sudo mv /usr/lib/libpari.so* /usr/lib64/
+        sudo ldconfig
+    fi
+
     # Diagnostic output
     ls -l /usr/lib | grep libpari || true
     ls -L /usr/lib | grep libpari || true
