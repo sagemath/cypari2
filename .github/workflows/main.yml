@@ -1,4 +1,4 @@
-name: cypari2
+name: CI
 
 on:
     pull_request:
@@ -15,78 +15,106 @@ concurrency:
 
 jobs:
     build:
+        name: Build and Test (${{ matrix.os }}, Python ${{ matrix.python-version }}, PARI ${{ matrix.pari-version }})
         runs-on: ${{ matrix.os }}
         strategy:
             fail-fast: false
             matrix:
                 os: [ubuntu-latest]
-                python-version: ['3.10', '3.11', '3.12', '3.13']
-                pari-version: ['pari-2.13.0', 'pari-2.15.4', 'pari-2.15.5', '2.17.2']
+                python-version: ['3.12', '3.13']
+                pari-version: ['2.13.0', '2.15.4', '2.15.5', '2.17.2']
+                include:
+                  - os: macos-latest
+                    python-version: '3.12'
+                    pari-version: '2.17.2' # Whatever comes with homebrew
+                  - os: macos-latest
+                    python-version: '3.13'
+                    pari-version: '2.17.2' # Whatever comes with homebrew
         env:
           LC_ALL: C
           PARI_VERSION: ${{ matrix.pari-version }}
+        defaults:
+          run:
+            shell: ${{ matrix.os == 'windows-latest' && 'msys2 {0}' || 'bash' }}
         steps:
         - name: Set up the repository
           uses: actions/checkout@v4
+        - name: Setup MSYS2
+          if: runner.os == 'Windows'
+          id: msys2
+          uses: msys2/setup-msys2@v2
+          with:
+              msystem: UCRT64
+              update: true
+              install: >-
+                base-devel
+                m4
+                bison
+                make
+                patch
+                sed
+                wget
+                mingw-w64-ucrt-x86_64-toolchain
+                mingw-w64-ucrt-x86_64-gmp
+                mingw-w64-ucrt-x86_64-python
+                mingw-w64-ucrt-x86_64-python-pip
+                mingw-w64-ucrt-x86_64-meson-python
+                mingw-w64-ucrt-x86_64-cython
+              path-type: inherit
         - name: Set up Python ${{ matrix.python-version }}
+          if: runner.os != 'Windows'
           uses: actions/setup-python@v4
           with:
             python-version: ${{ matrix.python-version }}
-        - name: Install pari
+        - name: Install PARI
+          if: matrix.os != 'macos-latest'
+          run: |         
+            bash -x .install-pari.sh
+        - name: Install PARI
+          if: matrix.os == 'macos-latest'
           run: |
-              bash -x .install-pari.sh
-        - name: Local build
+            brew install pari
+        - name: Smoke test PARI
           run: |
-            make install
-            make check
-            pip install sphinx
-            (cd docs && make html)
+            if [ ${{ runner.os }} = macOS ]; then
+              HOMEBREW=`brew --prefix`
+              clang -v tests/test.c -o test -I$HOMEBREW/include -L$HOMEBREW/lib -lpari -lgmp
+            else
+              gcc -v tests/test.c -o test -I/usr/local/include -L/usr/local/bin -lpari -lgmp
+            fi
+            expected="zeta(2) = 1.6449340668482264364
+            p = x^3 + x^2 + x - 1
+            modulus = y^3 + y^2 + y - 1
+            centerlift(lift(fq)) = [x - y, 1; x + (y^2 + y - 1), 1; x + (-y^2 - 1), 1]"
+            output="$(./test)"
+            # Normalize newlines for comparison
+            output="$(echo "$output" | tr -d '\r')"
+            expected="$(echo "$expected" | tr -d '\r')"
+            echo -e "Got:\n$output"
+            if [ "$output" != "$expected" ]; then
+              echo "Unexpected output from test.c"
+              echo -e "Expected:\n$expected"
+              exit 1
+            fi
 
-    dist:
-        runs-on: ubuntu-latest
-        steps:
-          - name: Check out ${{ env.SPKG }}
-            uses: actions/checkout@v4
-            with:
-              path: build/pkgs/${{ env.SPKG }}/src
-          - name: Set up Python ${{ matrix.python-version }}
-            uses: actions/setup-python@v4
-          - name: Install prerequisites
-            run: |
-              sudo DEBIAN_FRONTEND=noninteractive apt-get update
-              sudo DEBIAN_FRONTEND=noninteractive apt-get install $DIST_PREREQ
-              python3 -m pip install build
-          - name: Run make dist, prepare upstream artifact
-            run: |
-              (cd build/pkgs/${{ env.SPKG }}/src && python3 -m build --sdist) \
-              && mkdir -p upstream && cp build/pkgs/${{ env.SPKG }}/src/dist/*.tar.gz upstream/${{ env.SPKG }}-git.tar.gz \
-              && echo "sage-package create ${{ env.SPKG }} --version git --tarball ${{ env.SPKG }}-git.tar.gz --type=standard" > upstream/update-pkgs.sh \
-              && if [ -n "${{ env.REMOVE_PATCHES }}" ]; then echo "(cd ../build/pkgs/${{ env.SPKG }}/patches && rm -f ${{ env.REMOVE_PATCHES }}; :)" >> upstream/update-pkgs.sh; fi \
-              && ls -l upstream/
-          - uses: actions/upload-artifact@v4
-            with:
-              path: upstream
-              name: upstream
+        - name: Setup uv
+          uses: astral-sh/setup-uv@v6
 
-    sage:
-        uses: sagemath/sage/.github/workflows/docker.yml@develop
-        with:
-          targets:           SAGE_CHECK=no SAGE_CHECK_PACKAGES="cypari" cypari
-          targets_optional:  build/make/Makefile
-          sage_repo:         sagemath/sage
-          sage_ref:          develop
-          upstream_artifact: upstream
-          # We prefix the image name with the SPKG name ("cypari2-") to avoid the error
-          # 'Package "sage-docker-..." is already associated with another repository.'
-          docker_push_repository: ghcr.io/${{ github.repository }}/cypari2-
-          tox_packages_factors: >-
-            ["standard"]
-        needs: [dist]
-
-env:
-    # Ubuntu packages to install so that building the sdist can succeed
-    DIST_PREREQ: libpari-dev pari-doc libbz2-dev bzip2
-    # Name of this project in the Sage distribution
-    SPKG:        cypari
-    # Remove all downstream patches
-    REMOVE_PATCHES: "*"
+        - name: Build
+          run: |
+            if [ ${{ runner.os }} = Windows ]; then
+              export C_INCLUDE_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/usr/local/include
+              export LIBRARY_PATH=$(cygpath -am "${{ steps.msys2.outputs.msys2-location }}")/usr/local/bin
+            fi
+            echo $PATH
+            echo $C_INCLUDE_PATH
+            echo $LIBRARY_PATH
+            uv sync --frozen --inexact -v --no-install-project
+            uv sync --frozen --inexact -v --no-build-isolation --no-editable --config-settings=builddir=builddir
+        - name: Test
+          run: |
+            uv run make check
+        - name: Build docs
+          run: |
+            uv sync --frozen --inexact -v --group doc
+            (cd docs && uv run make html)
