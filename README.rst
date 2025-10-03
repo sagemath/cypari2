@@ -24,7 +24,7 @@ From a pre-built wheel from PyPI
 
 Requirements:
 
-- Python >= 3.9
+- Python >= 3.12
 - pip
 
 Install cypari2 via the Python Package Index (PyPI) via
@@ -42,10 +42,16 @@ From source with pip
 
 Requirements:
 
-  PARI/GP >= 2.9.4 (header files and library); see
+- PARI/GP >= 2.9.4 (header files and library); see
   https://doc.sagemath.org/html/en/reference/spkg/pari#spkg-pari
   for availability in distributions (GNU/Linux, conda-forge, Homebrew, FreeBSD),
-  or install from source.
+  or install from source (e.g using the script ``.install-pari.sh`` provided in this
+  repository).
+- gmp (if PARI/GP was built with gmp)
+- A C compiler (GCC)
+- pkg-config
+- Python >= 3.12
+- pip
 
 Install cypari2 via the Python Package Index (PyPI) via
 
