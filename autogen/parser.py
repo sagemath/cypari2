@@ -2,7 +2,7 @@
 Read and parse the file pari.desc
 """
 
-#*****************************************************************************
+# ***************************************************************************
 #       Copyright (C) 2015 Jeroen Demeyer <jdemeyer@cage.ugent.be>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@ Read and parse the file pari.desc
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
 #                  https://www.gnu.org/licenses/
-#*****************************************************************************
+# ***************************************************************************
 
 from __future__ import absolute_import, unicode_literals
 
@@ -23,6 +23,7 @@ from .ret import pari_ret_types
 
 paren_re = re.compile(r"[(](.*)[)]")
 argname_re = re.compile(r"[ {]*&?([A-Za-z_][A-Za-z0-9_]*)")
+
 
 def read_pari_desc(pari_datadir: Path) -> dict[str, dict[str, str]]:
     """
@@ -59,12 +60,14 @@ def read_pari_desc(pari_datadir: Path) -> dict[str, dict[str, str]]:
     while n < N:
         fun: dict[str, str] = {}
         while True:
-            L = lines[n]; n += 1
+            L = lines[n]
+            n += 1
             if L == "\n":
                 break
             # As long as the next lines start with a space, append them
             while lines[n].startswith(" "):
-                L += (lines[n])[1:]; n += 1
+                L += (lines[n])[1:]
+                n += 1
             key, value = L.split(":", 1)
             # Change key to an allowed identifier name
             key = key.lower().replace("-", "")
@@ -74,6 +77,7 @@ def read_pari_desc(pari_datadir: Path) -> dict[str, dict[str, str]]:
         functions[name] = fun
 
     return functions
+
 
 def parse_prototype(proto, help, initial_args=[]):
     """
@@ -136,18 +140,21 @@ def parse_prototype(proto, help, initial_args=[]):
     args = list(initial_args)
     have_default = False  # Have we seen any default argument?
     while n < len(proto):
-        c = proto[n]; n += 1
+        c = proto[n]
+        n += 1
 
         # Parse default value
         if c == "D":
             default = ""
             if proto[n] not in pari_arg_types:
                 while True:
-                    c = proto[n]; n += 1
+                    c = proto[n]
+                    n += 1
                     if c == ",":
                         break
                     default += c
-            c = proto[n]; n += 1
+            c = proto[n]
+            n += 1
         else:
             default = None
 
