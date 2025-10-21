@@ -21,7 +21,7 @@ jobs:
             fail-fast: false
             matrix:
                 os: [ubuntu-latest]
-                python-version: ['3.12', '3.13']
+                python-version: ['3.12', '3.13', '3.14']
                 pari-version: ['2.13.0', '2.15.4', '2.15.5', '2.17.2']
                 include:
                   - os: macos-latest
@@ -29,6 +29,9 @@ jobs:
                     pari-version: '2.17.2' # Whatever comes with homebrew
                   - os: macos-latest
                     python-version: '3.13'
+                    pari-version: '2.17.2' # Whatever comes with homebrew
+                  - os: macos-latest
+                    python-version: '3.14'
                     pari-version: '2.17.2' # Whatever comes with homebrew
         env:
           LC_ALL: C
