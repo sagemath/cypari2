@@ -49,6 +49,6 @@ build-frontend = "build[uv]"
 build-verbosity = 1
 before-all = "bash -x {package}/.install-pari.sh"
 environment-pass = ["CI", "GITHUB_ACTIONS"]
-
+skip = ["cp314t-*"]
 [tool.cibuildwheel.macos]
 before-all = "brew install pari"
