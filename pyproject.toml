@@ -36,12 +36,10 @@ dev = [
     "pkgconf>=2.4.3.post2",
     "pytest>=8.4.2",
 ]
-doc = [
-    "sphinx",
-]
+doc = ["sphinx"]
 
 [tool.cibuildwheel]
-skip = ["*-win32", "cp314t-*"]
+skip = ["*-win32"]
 test-groups = ["dev"]
 test-sources = ["tests", "pyproject.toml"]
 test-command = "python tests/rundoctest.py"
