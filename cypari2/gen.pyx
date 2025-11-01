@@ -154,13 +154,21 @@ cdef class Gen(Gen_base):
     def __init__(self):
         raise RuntimeError("PARI objects cannot be instantiated directly; use pari(x) to convert x to PARI")
 
+    def __del__(self):
+        if self.get_next() is not None:
+            # Python can deallocate Gen at any time even when it is not
+            # at the stack bottom. When self is not at the stack
+            # bottom, we need to move everything below it to heap
+            # before deallocation.
+            move_gens_to_heap(self.sp())
+
     def __dealloc__(self):
-        if self.next is not None:
+        if self.get_next() is not None:
             # stack
             remove_from_pari_stack(self)
         elif self.address is not NULL:
             # clone
-            gunclone_deep(self.address)
+            gunclone(self.address)
 
     cdef Gen new_ref(self, GEN g):
         """
@@ -191,7 +199,7 @@ cdef class Gen(Gen_base):
         >>> pari("[[1, 2], 3]")[0][1]  # indirect doctest
         2
         """
-        if self.next is not None:
+        if self.get_next() is not None:
             raise TypeError("cannot create reference to PARI stack (call fixGEN() first)")
         if is_on_stack(g):
             raise ValueError("new_ref() called with GEN which does not belong to parent")
@@ -205,8 +213,8 @@ cdef class Gen(Gen_base):
         Return the PARI ``GEN`` corresponding to ``self`` which is
         guaranteed not to change.
         """
-        if self.next is not None:
-            move_gens_to_heap(self.sp())
+        if self.get_next() is not None:
+            move_gens_to_heap((<Gen>self.get_next()).sp())
         return self.g
 
     cdef GEN ref_target(self) except NULL:
@@ -1532,7 +1540,7 @@ cdef class Gen(Gen_base):
                 raise IndexError("column j(=%s) must be between 0 and %s" % (j, self.ncols()-1))
 
             self.cache((i, j), x)
-            xt = x.ref_target()
+            xt = x.fixGEN()
             set_gcoeff(self.g, i+1, j+1, xt)
             return
 
@@ -1556,7 +1564,7 @@ cdef class Gen(Gen_base):
             raise IndexError("index (%s) must be between 0 and %s" % (i, glength(self.g)-1))
 
         self.cache(i, x)
-        xt = x.ref_target()
+        xt = x.fixGEN()
         if typ(self.g) == t_LIST:
             listput(self.g, xt, i+1)
         else:
@@ -4628,7 +4636,7 @@ cdef class Gen(Gen_base):
 cdef int Gen_clear(self) except -1:
     """
     Implementation of tp_clear() for Gen. We need to override Cython's
-    default since we do not want self.next to be cleared: it is crucial
+    default since we do not want self._next to be cleared: it is crucial
     that the next Gen stays alive until remove_from_pari_stack(self) is
     called by __dealloc__.
     """

@@ -1269,7 +1269,7 @@ cdef class Pari(Pari_auto):
                 for j in range(n):
                     sig_check()
                     x = objtogen(entries[k])
-                    set_gcoeff(A.g, i+1, j+1, x.ref_target())
+                    set_gcoeff(A.g, i+1, j+1, x.fixGEN())
                     A.cache((i, j), x)
                     k += 1
         return A
