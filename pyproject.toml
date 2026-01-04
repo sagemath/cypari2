@@ -20,7 +20,8 @@ keywords = ["PARI/GP number theory"]
 dynamic = ["version"]
 
 [project.entry-points.pkg_config]
-cysignals = 'cysignals'
+cypari2 = 'cypari2'
+pari = 'cypari2'
 
 [project.urls]
 Homepage = "https://github.com/sagemath/cypari2"

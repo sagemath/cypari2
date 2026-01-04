@@ -55,3 +55,13 @@ configure_file(
   install: true,
   install_dir: py.get_install_dir() / 'cypari2'
 )
+
+config_data_pari = configuration_data()
+config_data_pari.set('pari_version', pari_version_str)
+configure_file(
+  input: 'pari.pc.in',
+  output: 'pari.pc',
+  configuration: config_data_pari,
+  install: true,
+  install_dir: py.get_install_dir() / 'cypari2'
+)

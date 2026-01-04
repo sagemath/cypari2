@@ -92,7 +92,8 @@ pari_version = cc.run(
   dependencies: [pari],
   required: true,
 )
-message('PARI Version: ' + pari_version.stdout())
+pari_version_str = '.'.join(pari_version.stdout().strip().strip('[]').split(', '))
+message('PARI Version: ' + pari_version_str)
 
 pari_datadir_code = '''
 #include <stdio.h>
