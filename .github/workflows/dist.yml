@@ -20,7 +20,7 @@ jobs:
       - name: Install PARI
         run: ./.install-pari.sh
       - name: Build sdist
-        run: uv build --sdist
+        run: uv sync && uv build --sdist
       - uses: actions/upload-artifact@v4
         with:
           path: "dist/*.tar.*"
@@ -43,7 +43,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.2.1
         env:
-          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.os == 'macos-latest' && '15.0' || '13.0' }}
+          MACOSX_DEPLOYMENT_TARGET: '15.0'
       - uses: actions/upload-artifact@v4
         with:
           name: release-wheels-${{ matrix.os }}
