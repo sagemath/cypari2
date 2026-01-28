@@ -156,7 +156,11 @@ cdef class Gen(Gen_base):
 
     def __dealloc__(self):
         if self.next is not None:
-            # stack
+            # stack - may contain cloned references (from ref_target())
+            # We need to free those cloned references before removing from stack.
+            # gunclone_deep() recursively decrements refcounts on any cloned
+            # components inside self.g. This is safe to call on stack GENs.
+            gunclone_deep(self.g)
             remove_from_pari_stack(self)
         elif self.address is not NULL:
             # clone
