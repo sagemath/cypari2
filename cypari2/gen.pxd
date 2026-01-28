@@ -1,5 +1,6 @@
 cimport cython
 from cpython.object cimport PyObject
+from cpython.weakref cimport PyWeakref_NewRef, PyWeakref_GetObject
 from .types cimport GEN, pari_sp
 
 
@@ -28,14 +29,37 @@ cdef class Gen(Gen_base):
     cdef inline pari_sp sp(self) noexcept:
         return <pari_sp>self.address
 
+    # Enable weak references in Gen.
+    cdef object __weakref__
+
     # The Gen objects on the PARI stack form a linked list, from the
     # bottom to the top of the stack. This makes sense since we can only
     # deallocate a Gen which is on the bottom of the PARI stack. If this
     # is the last object on the stack, then next = top_of_stack
     # (a singleton object).
     #
+    # The connection between the list elements are implemented using the
+    # _next attribute. In order to not increase reference counts, the
+    # _next attribute is implemented as a weak reference.
     # In the clone and constant cases, this is None.
-    cdef Gen next
+    #
+    # Do not set or access _next directly. Please use the get_next() and
+    # set_next() methods.
+    cdef object _next
+
+    cdef inline object get_next(self):
+        if self._next is None:
+            return None
+        cdef PyObject* result_ptr = PyWeakref_GetObject(self._next)
+        if result_ptr == NULL or <object>result_ptr is None:
+            return None
+        return <object>result_ptr
+
+    cdef inline void set_next(self, Gen value):
+        if value is None:
+            self._next = None
+        else:
+            self._next = PyWeakref_NewRef(value, None)
 
     # A cache for __getitem__. Initially, this is None but it will be
     # turned into a dict when needed.
