@@ -1,0 +1,9 @@
+## Options for the Meson build system
+# https://mesonbuild.com/Build-options.html
+
+option(
+  'pari-prefix',
+  type: 'string',
+  value: '',
+  description: 'Path to a custom installation of pari-gp'
+)

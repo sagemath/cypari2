@@ -55,6 +55,14 @@ if host_machine.system() == 'darwin'
   endif
 endif
 
+pari_prefix = get_option('pari-prefix')
+if pari_prefix != ''
+   pari_header_include_dirs += include_directories(pari_prefix + '/include')
+   pari_libpath = pari_prefix + '/lib'
+   pari_lib_dirs += [pari_libpath]
+endif
+
+
 # Explicitly check for header to give better error message (using -v to show search paths)
 cc.has_header(
   'pari/pari.h',
@@ -62,7 +70,7 @@ cc.has_header(
   args: ['-v'],
   include_directories: pari_header_include_dirs,
 )
-pari = cc.find_library(
+lpari = cc.find_library(
   'pari',
   has_headers: ['pari/pari.h'],
   required: true,
@@ -70,7 +78,8 @@ pari = cc.find_library(
   header_include_directories: pari_header_include_dirs,
 )
 pari = declare_dependency(include_directories: pari_header_include_dirs,
-  dependencies: [pari, gmp])
+  link_args: '-Wl,-rpath=' + pari_libpath + ' -L' + pari_libpath + ' -lpari',
+  dependencies: [lpari, gmp])
 
 # Get PARI version (mostly as smoke test)
 pari_version_code = '''
@@ -85,9 +94,11 @@ int main(void) {
   return 0;
 }
 '''
+
 pari_version = cc.run(
   pari_version_code,
-  args: ['-v'],
+  args: ['-Wl,-rpath=' + pari_libpath + ' -L' + pari_libpath ],
+#  args: ['-v'],
   name: 'pari version',
   dependencies: [pari],
   required: true,
