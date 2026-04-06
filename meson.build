@@ -128,6 +128,7 @@ endif
 message('PARI Datadir: ' + pari_datadir)
 
 # Run code generation step
+message('Generating PARI functions ...')
 code_gen_result = run_command(
   py.full_path(), '-c',
   '''
@@ -139,6 +140,7 @@ print("Code generation successful")
   ''',
   check: true
 )
+message('                          ... DONE')
 py.install_sources(
   meson.current_build_dir() + '/cypari2/auto_paridecl.pxd',
   meson.current_build_dir() + '/cypari2/auto_gen.pxi',
