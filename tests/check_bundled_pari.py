@@ -27,7 +27,9 @@ def compiler_from_env(var_name: str, fallback: str) -> list[str]:
     return [compiler]
 
 
-def compile_and_run(compiler: list[str], source_path: Path, output_path: Path, flags: list[str]) -> None:
+def compile_and_run(
+    compiler: list[str], source_path: Path, output_path: Path, flags: list[str]
+) -> None:
     subprocess.run(
         [*compiler, os.fspath(source_path), "-o", os.fspath(output_path), *flags],
         check=True,
@@ -51,16 +53,22 @@ def main() -> None:
     lib_dirs = [Path(flag[2:]).resolve() for flag in flags if flag.startswith("-L")]
 
     if package_dir.resolve() not in include_dirs:
-        raise AssertionError(f"pkg-config did not resolve wheel-local headers: {include_dirs}")
+        raise AssertionError(
+            f"pkg-config did not resolve wheel-local headers: {include_dirs}"
+        )
 
     expected_lib_dirs = [
         (package_dir.parent / "cypari2.libs").resolve(),
         (package_dir / ".dylibs").resolve(),
     ]
     if not any(path in lib_dirs for path in expected_lib_dirs):
-        raise AssertionError(f"pkg-config did not resolve wheel-local libraries: {lib_dirs}")
-    
-    print("pkg-config correctly resolves bundled headers and libraries to the following paths:")
+        raise AssertionError(
+            f"pkg-config did not resolve wheel-local libraries: {lib_dirs}"
+        )
+
+    print(
+        "pkg-config correctly resolves bundled headers and libraries to the following paths:"
+    )
     for path in include_dirs:
         print(f"  - {path}")
     for path in lib_dirs:
@@ -98,8 +106,15 @@ int main() {
         c_path.write_text(c_source)
         cxx_path.write_text(cxx_source)
 
-        compile_and_run(compiler_from_env("CC", "cc"), c_path, tmpdir_path / "probe-c", flags)
-        compile_and_run(compiler_from_env("CXX", "c++"), cxx_path, tmpdir_path / "probe-cxx", flags)
+        # Ignore system-installed PARI, we want to test the bundled one
+        flags += ["-nostdinc", "-nostdinc++"]
+
+        compile_and_run(
+            compiler_from_env("CC", "cc"), c_path, tmpdir_path / "probe-c", flags
+        )
+        compile_and_run(
+            compiler_from_env("CXX", "c++"), cxx_path, tmpdir_path / "probe-cxx", flags
+        )
 
 
 if __name__ == "__main__":
