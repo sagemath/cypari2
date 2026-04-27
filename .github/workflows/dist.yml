@@ -21,6 +21,10 @@ jobs:
         run: ./.install-pari.sh
       - name: Build sdist
         run: uv sync && uv build --sdist
+        env:
+          # Enable pkgconf-pypi to fallback to system pkg-config
+          # https://github.com/pypackaging-native/pkgconf-pypi/pull/105
+          FORCE_PKGCONF_PYPI: 1
       - uses: actions/upload-artifact@v4
         with:
           path: "dist/*.tar.*"
