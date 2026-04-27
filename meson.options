@@ -1,0 +1,1 @@
+option('pari_datadir', type: 'string', value:  '', description: 'location of the share directory of PARI')

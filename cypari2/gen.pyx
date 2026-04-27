@@ -1532,6 +1532,9 @@ cdef class Gen(Gen_base):
                 raise IndexError("column j(=%s) must be between 0 and %s" % (j, self.ncols()-1))
 
             self.cache((i, j), x)
+            # Ensure self is on the heap before assigning a cloned reference
+            if not is_universal_constant(x.g):
+                self.fixGEN()
             xt = x.ref_target()
             set_gcoeff(self.g, i+1, j+1, xt)
             return
@@ -1556,6 +1559,9 @@ cdef class Gen(Gen_base):
             raise IndexError("index (%s) must be between 0 and %s" % (i, glength(self.g)-1))
 
         self.cache(i, x)
+        # Ensure self is on the heap before assigning a cloned reference
+        if not is_universal_constant(x.g):
+            self.fixGEN()
         xt = x.ref_target()
         if typ(self.g) == t_LIST:
             listput(self.g, xt, i+1)
@@ -2027,21 +2033,21 @@ cdef class Gen(Gen_base):
         clear_stack()
         return complex(re, im)
 
-    def __nonzero__(self):
+    def __bool__(self):
         """
         Examples:
 
         >>> from cypari2 import Pari
         >>> pari = Pari()
 
-        >>> pari('1').__nonzero__()
+        >>> pari('1').__bool__()
         True
-        >>> pari('x').__nonzero__()
+        >>> pari('x').__bool__()
         True
         >>> bool(pari(0))
         False
         >>> a = pari('Mod(0,3)')
-        >>> a.__nonzero__()
+        >>> a.__bool__()
         False
         """
         return not gequal0(self.g)
@@ -2180,26 +2186,29 @@ cdef class Gen(Gen_base):
 
     def ispseudoprime(self, long flag=0):
         """
-        ispseudoprime(x, flag=0): Returns True if x is a pseudo-prime
-        number, and False otherwise.
+        Returns ``True`` if ``x`` is a strong pseudo prime number, and 
+        ``False`` if it is not prime.
 
         INPUT:
 
 
-        -  ``flag`` - int 0 (default): checks whether x is a
+        -  ``flag`` - an ``int``. 
+           If ``flag`` is ``0``, checks whether ``x`` has no small prime 
+           divisors (up to 101 included) and is a 
            Baillie-Pomerance-Selfridge-Wagstaff pseudo prime (strong
            Rabin-Miller pseudo prime for base 2, followed by strong Lucas test
-           for the sequence (P,-1), P smallest positive integer such that
-           `P^2 - 4` is not a square mod x). 0: checks whether x is a
-           strong Miller-Rabin pseudo prime for flag randomly chosen bases
-           (with end-matching to catch square roots of -1).
+           for the sequence `(P, 1)`, where `P \geq 3` smallest positive 
+           integer such that `P^2 - 4` is not a square mod ``x``). 
+           If ``flag > 0``, checks whether ``x`` is a strong Miller-Rabin pseudo 
+           prime for ``flag`` randomly chosen bases (with end-matching to catch 
+           square roots of -1).
 
 
         OUTPUT:
 
 
-        -  ``bool`` - True or False, or when flag=1, either False or a tuple
-           (True, cert) where ``cert`` is a primality certificate.
+        -  ``bool`` - Returns ``True`` if ``x`` is a pseudo-prime number, 
+           and ``False`` otherwise.
 
 
         Examples:

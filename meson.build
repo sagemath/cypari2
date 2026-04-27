@@ -72,49 +72,53 @@ pari = cc.find_library(
 pari = declare_dependency(include_directories: pari_header_include_dirs,
   dependencies: [pari, gmp])
 
-# Get PARI version (mostly as smoke test)
-pari_version_code = '''
-#include <stdio.h>
-#include <pari/pari.h>
-int main(void) {
-  pari_init(1000000, 2);
-  GEN v = pari_version();
-  const char *version = GENtostr(pari_version());
-  pari_printf("%s",version);
-  pari_close();
-  return 0;
-}
-'''
-pari_version = cc.run(
-  pari_version_code,
-  args: ['-v'],
-  name: 'pari version',
-  dependencies: [pari],
-  required: true,
-)
-pari_version_str = '.'.join(pari_version.stdout().strip().strip('[]').split(', '))
-message('PARI Version: ' + pari_version_str)
+if meson.can_run_host_binaries()
+  # Get PARI version (mostly as smoke test)
+  pari_version_code = '''
+  #include <pari/pari.h>
+  int main(void) {
+    pari_init(1000000, 2);
+    GEN v = pari_version();
+    const char *version = GENtostr(pari_version());
+    pari_printf("%s",version);
+    pari_close();
+    return 0;
+  }
+  '''
+  pari_version = cc.run(
+    pari_version_code,
+    args: ['-v'],
+    name: 'pari version',
+    dependencies: [pari],
+    required: true,
+  )
+  pari_version_str = '.'.join(pari_version.stdout().strip().strip('[]').split(', '))
+  message('PARI Version: ' + pari_version_str)
+endif
 
-pari_datadir_code = '''
-#include <stdio.h>
-#include <pari/pari.h>
-int main(void) {
-  pari_init(1000000, 2);
-  pari_printf("%s", pari_datadir);
-  pari_close();
-  return 0;
-}
-'''
-pari_datadir = cc.run(
-  pari_datadir_code,
-  name: 'pari datadir',
-  dependencies: [pari],
-  required: true,
-).stdout()
+pari_datadir = get_option('pari_datadir')
+if pari_datadir == ''
+  pari_datadir_code = '''
+  #include <pari/pari.h>
+  int main(void) {
+    pari_init(1000000, 2);
+    pari_printf("%s", pari_datadir);
+    pari_close();
+    return 0;
+  }
+  '''
+  pari_datadir = cc.run(
+    pari_datadir_code,
+    name: 'pari datadir',
+    dependencies: [pari],
+    required: true,
+  ).stdout()
+endif
+message('PARI data dir: ' + pari_datadir)
 
 # In MSYS, convert to Windows path
 # (e.g /usr/share/pari -> C:\msys64\usr\share\pari)
-if host_machine.system() == 'windows'
+if host_machine.system() == 'windows' and pari_datadir.startswith('/')
   pari_datadir = run_command(
     'cygpath', '-am', pari_datadir,
     check: true,
