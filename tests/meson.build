@@ -8,7 +8,7 @@ foreach name, pyx : extension_data
     sources: pyx,
     subdir: 'cypari2',
     install: true,
-    dependencies: [cysignals, pari],
+    dependencies: [py.dependency(), cysignals, pari],
     include_directories: [inc_root, include_directories('./../cypari2')],
   )
 endforeach

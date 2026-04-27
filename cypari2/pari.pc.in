@@ -1,0 +1,12 @@
+# pcfiledir is <wheel root>/cypari2
+prefix=${pcfiledir}
+# shared library sits in <wheel root>/cypari2.libs (for linux) or <wheel root>/cypari2/.dylibs (for macOS)
+libdir=${prefix}/../cypari2.libs
+dylibdir=${prefix}/.dylibs
+includedir=${prefix}
+
+Name: pari
+Description: Bundled PARI/GP runtime (wheel-local)
+Version: @pari_version@
+Cflags: -I${includedir}
+Libs: -L${libdir} -L${dylibdir} -Wl,-rpath,${libdir} -Wl,-rpath,${dylibdir} -lpari

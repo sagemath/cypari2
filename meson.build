@@ -92,7 +92,8 @@ if meson.can_run_host_binaries()
     dependencies: [pari],
     required: true,
   )
-  message('PARI Version: ' + pari_version.stdout())
+  pari_version_str = '.'.join(pari_version.stdout().strip().strip('[]').split(', '))
+  message('PARI Version: ' + pari_version_str)
 endif
 
 pari_datadir = get_option('pari_datadir')
