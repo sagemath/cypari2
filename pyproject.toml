@@ -49,6 +49,10 @@ build-frontend = "build[uv]"
 build-verbosity = 1
 before-all = "bash -x {package}/.install-pari.sh"
 environment-pass = ["CI", "GITHUB_ACTIONS"]
+
+[tool.cibuildwheel.linux]
+test-command = "python tests/rundoctest.py && python tests/check_bundled_pari.py"
+
 [tool.cibuildwheel.macos]
 before-all = "brew install pari"
 
