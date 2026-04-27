@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import shlex
 import shutil
 import subprocess
 import tempfile
+from pathlib import Path
+
+import pkgconf
 
 import cypari2
-import pkgconf
 
 
 def run_pkgconf(*args: str) -> str:
@@ -32,6 +33,7 @@ def compile_and_run(compiler: list[str], source_path: Path, output_path: Path, f
         check=True,
     )
     subprocess.run([os.fspath(output_path)], check=True)
+    print(f"Successfully compiled and ran {source_path.name} with {compiler[0]}")
 
 
 def main() -> None:
@@ -57,6 +59,12 @@ def main() -> None:
     ]
     if not any(path in lib_dirs for path in expected_lib_dirs):
         raise AssertionError(f"pkg-config did not resolve wheel-local libraries: {lib_dirs}")
+    
+    print("pkg-config correctly resolves bundled headers and libraries to the following paths:")
+    for path in include_dirs:
+        print(f"  - {path}")
+    for path in lib_dirs:
+        print(f"  - {path}")
 
     c_source = """\
 #include <pari/pari.h>
