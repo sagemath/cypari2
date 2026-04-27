@@ -107,7 +107,7 @@ int main() {
         cxx_path.write_text(cxx_source)
 
         # Ignore system-installed PARI, we want to test the bundled one
-        flags += ["-nostdinc", "-nostdinc++"]
+        # flags += ["-nostdinc", "-nostdinc++"]
 
         compile_and_run(
             compiler_from_env("CC", "cc"), c_path, tmpdir_path / "probe-c", flags
