@@ -55,3 +55,8 @@ configure_file(
   install: true,
   install_dir: py.get_install_dir() / 'cypari2'
 )
+configure_file(
+  input: '__init__.py',
+  output: '__init__.py',
+  copy: true,
+)
