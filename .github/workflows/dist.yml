@@ -36,7 +36,8 @@ jobs:
           - ubuntu-latest
           - ubuntu-24.04-arm
           - macos-15-intel
-          - macos-latest
+          # Pin arm64 so Homebrew libraries support the 15.0 wheel target.
+          - macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
