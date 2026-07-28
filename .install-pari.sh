@@ -45,7 +45,7 @@ if [ -n "$CONDA_PREFIX" ]; then
 fi
 
 if [ "$PARI_VERSION" = "" ]; then
-    PARI_VERSION=2.17.3
+    PARI_VERSION=2.17.4
 fi
 
 PURE_VERSION=${PARI_VERSION/pari-}
