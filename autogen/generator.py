@@ -74,9 +74,9 @@ function_blacklist = {"O",            # O(p^e) needs special parser support
                       "my",           # idem
                       }
 
-# Functions that return a reference to internal PARI state
-# and need gcopy() to avoid double-free bugs
-gcopy_return_functions = {"addprimes", "removeprimes"}
+# Functions that return borrowed references instead of new stack values
+# and need gcopy() before wrapping the result
+gcopy_return_functions = {"addprimes", "idealfrobenius", "removeprimes"}
 
 
 class PariFunctionGenerator(object):
