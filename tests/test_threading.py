@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import contextvars
 import gc
 import os
 import signal
@@ -9,16 +10,23 @@ import tempfile
 import threading
 import unittest
 import warnings
+import weakref
 from concurrent.futures import ThreadPoolExecutor
 
 import cypari2
 from cypari2.convert import gen_to_python, integer_to_gen
+from cypari2.test import pari_mt_engine
 
 
 class TestThreadSafety(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.pari = cypari2.Pari()
+
+    def require_pari_pthread_workers(self):
+        engine = pari_mt_engine()
+        if engine != "pthread":
+            self.skipTest(f"requires PARI pthread engine, found {engine!r}")
 
     def test_original_issue_without_executor_initializer(self):
         with ThreadPoolExecutor(max_workers=1) as executor:
@@ -132,7 +140,7 @@ from cypari2._thread_runtime import runtime
 
 pari = Pari()
 value = pari(123)
-# Advance the owner loop so that its local request no longer retains value.
+# Ensure that owner-side bookkeeping for the result has completed.
 pari(0)
 with runtime._queue_lock:
     del value
@@ -180,6 +188,152 @@ print(pari(42))
             future = executor.submit(self.pari, "1/0")
             with self.assertRaises(cypari2.PariError):
                 future.result(timeout=10)
+
+    def test_context_variables_cross_thread_boundary(self):
+        from cypari2._thread_runtime import runtime
+
+        marker = contextvars.ContextVar("cypari2_test_marker")
+
+        def read_and_mutate():
+            value = marker.get()
+            marker.set(f"owner:{value}")
+            return value
+
+        def call_from_context(value):
+            token = marker.set(value)
+            try:
+                return runtime.call(read_and_mutate), marker.get()
+            finally:
+                marker.reset(token)
+
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            results = list(executor.map(
+                call_from_context, (f"caller:{i}" for i in range(64))))
+
+        self.assertEqual(
+            results,
+            [(f"caller:{i}", f"caller:{i}") for i in range(64)],
+        )
+        self.assertEqual(
+            runtime.call(lambda: marker.get("unset")), "unset")
+
+        class Payload:
+            pass
+
+        payload = Payload()
+        payload_ref = weakref.ref(payload)
+        token = marker.set(payload)
+        try:
+            runtime.call(lambda: None)
+        finally:
+            marker.reset(token)
+        del payload
+        gc.collect()
+        self.assertIsNone(payload_ref())
+
+    def test_call_completes_after_request_context_exits(self):
+        from cypari2._thread_runtime import _PariThreadRuntime
+
+        request_finished = threading.Event()
+        release_context = threading.Event()
+
+        class PausingRuntime(_PariThreadRuntime):
+            def _run_request(inner_self, request):
+                super()._run_request(request)
+                request_finished.set()
+                release_context.wait()
+
+        runtime = PausingRuntime()
+        runtime.install_initializer(lambda: None)
+        try:
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(runtime.call, lambda: 42)
+                self.assertTrue(request_finished.wait(timeout=10))
+                try:
+                    self.assertFalse(future.done())
+                finally:
+                    release_context.set()
+                self.assertEqual(future.result(timeout=10), 42)
+        finally:
+            release_context.set()
+            runtime.shutdown()
+
+    @unittest.skipIf(
+        sys.version_info < (3, 14),
+        "context-aware warnings require Python 3.14",
+    )
+    def test_context_aware_warnings_cross_thread_boundary(self):
+        code = r'''
+import sys
+import warnings
+
+from cypari2 import Pari
+
+assert sys.flags.context_aware_warnings
+pari = Pari()
+with warnings.catch_warnings(record=True) as caught:
+    warnings.simplefilter("always")
+    pari("[2,1;2,1]").matkerint(1)
+assert len(caught) == 1, caught
+assert issubclass(caught[0].category, DeprecationWarning)
+'''
+        completed = subprocess.run(
+            [sys.executable, "-X", "context_aware_warnings=1", "-c", code],
+            cwd=os.getcwd(),
+            env=os.environ.copy(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=10,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+
+    @unittest.skipIf(
+        sys.version_info < (3, 14),
+        "explicit thread contexts require Python 3.14",
+    )
+    def test_owner_thread_does_not_retain_creator_context(self):
+        code = r'''
+import contextvars
+import gc
+import sys
+import weakref
+
+from cypari2._thread_runtime import _PariThreadRuntime
+
+assert sys.flags.thread_inherit_context
+runtime = _PariThreadRuntime()
+runtime.install_initializer(lambda: None)
+
+class Payload:
+    pass
+
+marker = contextvars.ContextVar("cypari2_test_creator_marker")
+payload = Payload()
+payload_ref = weakref.ref(payload)
+token = marker.set(payload)
+runtime.call(lambda: None)
+marker.reset(token)
+del payload
+
+# Advance the owner loop so neither its local request nor its per-request
+# context can retain the payload.  Its Thread bootstrap context must not do so.
+runtime.call(lambda: None)
+for _ in range(3):
+    gc.collect()
+assert payload_ref() is None, payload_ref()
+runtime.shutdown()
+'''
+        completed = subprocess.run(
+            [sys.executable, "-X", "thread_inherit_context=1", "-c", code],
+            cwd=os.getcwd(),
+            env=os.environ.copy(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=10,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
 
     def test_python_callback_is_reentrant_on_owner(self):
         closure = self.pari(lambda value: value + 1)
@@ -318,11 +472,10 @@ print(pari(42))
         self.assertEqual(result, 100)
 
     def test_python_callback_in_pari_worker_fails_safely(self):
+        self.require_pari_pthread_workers()
         old_threads = int(self.pari.default("nbthreads"))
         try:
             self.pari.default("nbthreads", 2)
-            if int(self.pari.default("nbthreads")) < 2:
-                self.skipTest("PARI was built without pthread workers")
 
             with self.assertRaisesRegex(
                     cypari2.PariError, "set nbthreads to 1"):
@@ -344,11 +497,10 @@ print(pari(42))
             self.pari.default("nbthreads", old_threads)
 
     def test_stack_resize_callback_in_pari_worker_fails_safely(self):
+        self.require_pari_pthread_workers()
         old_threads = int(self.pari.default("nbthreads"))
         try:
             self.pari.default("nbthreads", 2)
-            if int(self.pari.default("nbthreads")) < 2:
-                self.skipTest("PARI was built without pthread workers")
 
             for setting in ("parisize", "parisizemax"):
                 expression = (
@@ -361,8 +513,8 @@ print(pari(42))
         finally:
             self.pari.default("nbthreads", old_threads)
 
-    @unittest.skipIf(os.name == "nt", "PARI pthread test")
     def test_pari_worker_output_does_not_enter_python(self):
+        self.require_pari_pthread_workers()
         code = r'''
 from cypari2 import Pari
 pari = Pari()
