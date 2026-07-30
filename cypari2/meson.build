@@ -1,5 +1,6 @@
 py.install_sources(
   '__init__.py',
+  '_thread_runtime.py',
   'closure.pxd',
   'convert.pxd',
   'gen.pxd',
@@ -10,6 +11,7 @@ py.install_sources(
   'pycore_long.pxd',
   'stack.pxd',
   'string_utils.pxd',
+  'thread_support.pxd',
   'types.pxd',
   'cypari.h',
   'pycore_long.h',
@@ -41,7 +43,7 @@ foreach name, pyx : extension_data
     sources: pyx,
     subdir: 'cypari2',
     install: true,
-    dependencies: [cysignals, pari],
+    dependencies: [cysignals, pari, threads],
     include_directories: [inc_root, inc_src],
   )
 endforeach
@@ -58,5 +60,10 @@ configure_file(
 configure_file(
   input: '__init__.py',
   output: '__init__.py',
+  copy: true,
+)
+configure_file(
+  input: '_thread_runtime.py',
+  output: '_thread_runtime.py',
   copy: true,
 )
