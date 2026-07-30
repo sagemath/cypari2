@@ -2,11 +2,18 @@
 # to compute zeta(2) and factor a polynomial over a finite field, as in the README.
 
 from cypari2.paridecl cimport pari_printf, pari_init, pari_close, DEFAULTPREC, szeta, stoi, pol_x, gpow, gadd, factorff, lift, centerlift, setvarn, gen_2, gen_m1, gen_0, INIT_DFTm, pari_init_opts, pari_mainstack
+from cypari2.paridecl cimport paricfg_mt_engine
 from cypari2.types cimport GEN
 from cypari2.closure cimport _pari_init_closure
 from cypari2.stack cimport (new_gen, new_gen_noclear, clear_stack,
                      set_pari_stack_size, before_resize, after_resize)
 from libc.stdio cimport printf
+
+
+def pari_mt_engine():
+    """Return the threading engine selected when PARI was built."""
+    return paricfg_mt_engine.decode("ascii")
+
 
 def main():
 

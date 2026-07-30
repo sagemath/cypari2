@@ -117,10 +117,19 @@ if [[ "$PLATFORM" = "msys" ]]; then
   # in Python to find the DLLs.
   CONFIG_ARGS="--without-readline --prefix=$MSYSTEM_PREFIX"
 else
-  CONFIG_ARGS="--prefix=/usr"
+  CONFIG_ARGS="--mt=pthread --prefix=/usr"
 fi
 chmod -R +x ./Configure ./config
 ./Configure $CONFIG_ARGS
+if [[ "$PLATFORM" != "msys" ]]; then
+  PARI_CONFIG_HEADER="$(./config/objdir)/paricfg.h"
+  if ! grep -q '^#define PARI_MT_ENGINE "pthread"$' \
+      "$PARI_CONFIG_HEADER"; then
+    echo "PARI Configure did not select the requested pthread engine"
+    grep 'PARI_MT_ENGINE' "$PARI_CONFIG_HEADER" || true
+    exit 1
+  fi
+fi
 
 # On Windows, disable UNIX-specific code in language files
 # (not sure why UNIX is defined)

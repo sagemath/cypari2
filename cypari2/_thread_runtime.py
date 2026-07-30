@@ -13,9 +13,11 @@ initialized and cannot introduce an import cycle.
 from __future__ import annotations
 
 import atexit
+import contextvars
 import functools
 import os
 import queue
+import sys
 import threading
 
 
@@ -36,11 +38,11 @@ def owner_method(method):
 class _Request:
     __slots__ = (
         "callable", "args", "kwargs", "done", "result", "exc_info",
-        "stabilize", "activity",
+        "stabilize", "activity", "context",
     )
 
     def __init__(self, callable_, args, kwargs, *, wait=True,
-                 stabilize=True, activity=True):
+                 stabilize=True, activity=True, context=None):
         self.callable = callable_
         self.args = args
         self.kwargs = kwargs
@@ -49,6 +51,7 @@ class _Request:
         self.exc_info = None
         self.stabilize = stabilize
         self.activity = activity
+        self.context = context
 
 
 class _OwnerIterator:
@@ -125,11 +128,29 @@ class _PariThreadRuntime:
                 thread = self._thread
                 if thread is None:
                     self._ready.clear()
-                    thread = threading.Thread(
-                        target=self._run,
-                        name="cypari2-pari-owner",
-                        daemon=True,
-                    )
+                    # Free-threaded Python builds inherit the creating
+                    # thread's Context by default.  The owner is long-lived,
+                    # so inheriting the first caller's context would leak it
+                    # into unrelated later requests.  Start from an empty
+                    # context and enter a fresh caller snapshot per request.
+                    empty_context = contextvars.Context()
+                    if sys.version_info >= (3, 14):
+                        # Passing the Context to Thread also prevents its
+                        # bootstrap code from retaining an inherited creator
+                        # context for the lifetime of the Thread object.
+                        thread = threading.Thread(
+                            target=self._run,
+                            name="cypari2-pari-owner",
+                            daemon=True,
+                            context=empty_context,
+                        )
+                    else:
+                        thread = threading.Thread(
+                            target=empty_context.run,
+                            args=(self._run,),
+                            name="cypari2-pari-owner",
+                            daemon=True,
+                        )
                     self._thread = thread
                     thread.start()
         self._ready.wait()
@@ -141,7 +162,8 @@ class _PariThreadRuntime:
         if self.is_owner():
             return callable_(*args, **kwargs)
         self.ensure_started()
-        request = _Request(callable_, args, kwargs)
+        request = _Request(
+            callable_, args, kwargs, context=contextvars.copy_context())
         # Serialize the final liveness check and enqueue with shutdown's stop
         # marker.  Otherwise a late request could land behind the marker and
         # wait forever after the owner exits.
@@ -212,6 +234,44 @@ class _PariThreadRuntime:
         """Finish callback tracking and return whether PARI reset state."""
         return self._callback_error_stack.pop()
 
+    def _run_request(self, request):
+        """Execute one request inside its submitting Python context."""
+        try:
+            if request.activity:
+                self._request_activity(True)
+            if not self._initialized:
+                if self._initializer is None:
+                    raise RuntimeError("cypari2 runtime is not fully initialized")
+                self._initializer()
+                self._initialized = True
+            request.result = request.callable(*request.args, **request.kwargs)
+        except BaseException as exc:
+            # Preserve the original traceback while transferring the
+            # exception to the submitting thread.
+            request.exc_info = (exc, exc.__traceback__)
+        finally:
+            if self._initialized and request.stabilize:
+                try:
+                    # Also run this after an exception: arbitrary Python
+                    # conversion code may have retained a stack Gen by a
+                    # side effect even though the request has no result.
+                    request.result = self._stabilize(request.result)
+                except BaseException as exc:
+                    if request.exc_info is not None:
+                        exc.__context__ = request.exc_info[0]
+                    request.exc_info = (exc, exc.__traceback__)
+            request.callable = None
+            request.args = None
+            request.kwargs = None
+            if request.activity:
+                try:
+                    self._request_activity(False)
+                except BaseException as exc:
+                    # Never strand a caller if the internal signal hook
+                    # itself fails while a request is being torn down.
+                    if request.exc_info is None:
+                        request.exc_info = (exc, exc.__traceback__)
+
     def _run(self):
         self._owner_ident = threading.get_ident()
         self._ready.set()
@@ -219,43 +279,33 @@ class _PariThreadRuntime:
             request = self._queue.get()
             if request is self._STOP:
                 break
+            context = request.context
             try:
-                if request.activity:
-                    self._request_activity(True)
-                if not self._initialized:
-                    if self._initializer is None:
-                        raise RuntimeError("cypari2 runtime is not fully initialized")
-                    self._initializer()
-                    self._initialized = True
-                request.result = request.callable(*request.args, **request.kwargs)
+                if context is None:
+                    self._run_request(request)
+                else:
+                    context.run(self._run_request, request)
             except BaseException as exc:
-                # Preserve the original traceback while transferring the
-                # exception to the submitting thread.
+                # _run_request normally transfers every failure itself.  Do
+                # the same for failures entering or leaving Context.run so a
+                # waiting caller can never be stranded.
+                if request.exc_info is not None:
+                    exc.__context__ = request.exc_info[0]
                 request.exc_info = (exc, exc.__traceback__)
-            finally:
-                if self._initialized and request.stabilize:
-                    try:
-                        # Also run this after an exception: arbitrary Python
-                        # conversion code may have retained a stack Gen by a
-                        # side effect even though the request has no result.
-                        request.result = self._stabilize(request.result)
-                    except BaseException as exc:
-                        if request.exc_info is not None:
-                            exc.__context__ = request.exc_info[0]
-                        request.exc_info = (exc, exc.__traceback__)
                 request.callable = None
                 request.args = None
                 request.kwargs = None
-                if request.activity:
-                    try:
-                        self._request_activity(False)
-                    except BaseException as exc:
-                        # Never strand a caller if the internal signal hook
-                        # itself fails while a request is being torn down.
-                        if request.exc_info is None:
-                            request.exc_info = (exc, exc.__traceback__)
-                if request.done is not None:
-                    request.done.set()
+            finally:
+                request.context = None
+                # Release the caller's Context before publishing completion.
+                # This makes return from call() a lifetime boundary even on a
+                # free-threaded Python build.
+                context = None
+                done = request.done
+                request = None
+                if done is not None:
+                    done.set()
+                done = None
         self._owner_ident = None
 
     def _after_fork_child(self):
