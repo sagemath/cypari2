@@ -31,15 +31,19 @@ Examples:
 #                  https://www.gnu.org/licenses/
 # ****************************************************************************
 
-from cysignals.signals cimport sig_on, sig_off, sig_block, sig_unblock, sig_error
+from cysignals.signals cimport sig_on, sig_off, sig_block, sig_unblock
 
 from cpython.tuple cimport *
 from cpython.object cimport PyObject_Call
 from cpython.ref cimport Py_INCREF
 
 from .paridecl cimport *
-from .stack cimport new_gen, new_gen_noclear, clone_gen_noclear, DetachGen
+from .stack cimport (new_gen, new_gen_noclear, clone_gen_noclear, DetachGen,
+                     move_gens_above_to_heap)
 from .gen cimport objtogen
+from ._thread_runtime import runtime as _pari_thread_runtime
+from .thread_support cimport (sig_error_local, callback_signal_push,
+                              callback_signal_pop)
 
 try:
     from inspect import getfullargspec as getargspec
@@ -55,8 +59,15 @@ cdef inline GEN call_python_func_impl "call_python_func"(GEN* args, object py_fu
     The arguments are converted from ``GEN`` to a cypari ``gen`` before
     calling ``py_func``. The result is converted back to a PARI ``GEN``.
     """
-    # We need to ensure that nothing above avma is touched
-    avmaguard = new_gen_noclear(<GEN>avma)
+    # We need to ensure that nothing above avma is touched.  When all
+    # externally visible Gens have already been moved to the heap, avma can
+    # equal pari_mainstack.top.  That address is the first byte *outside* the
+    # stack and cannot be wrapped as a synthetic Gen, so allocate a minimal
+    # real stack object for the guard in that case.
+    cdef GEN guard = <GEN>avma
+    if avma == pari_mainstack.top:
+        guard = cgetg(1, t_VEC)
+    avmaguard = new_gen_noclear(guard)
 
     # How many arguments are there?
     cdef Py_ssize_t n = 0
@@ -71,21 +82,55 @@ cdef inline GEN call_python_func_impl "call_python_func"(GEN* args, object py_fu
         Py_INCREF(a)  # Need to increase refcount because the tuple steals it
         PyTuple_SET_ITEM(t, i, a)
 
-    # Call the Python function
-    r = PyObject_Call(py_func, t, <dict>NULL)
+    # Call the Python function.  Give PARI operations made by the callback a
+    # nested cysignals jump target, so their errors return through Python
+    # normally instead of jumping across the callback's Python frames.
+    cdef void *signal_state = NULL
+    cdef bint callback_had_pari_error = False
+    cdef GEN res = gnil
+    converted = None
+    _pari_thread_runtime.enter_python_callback()
+    try:
+        signal_state = callback_signal_push()
+        try:
+            r = PyObject_Call(py_func, t, <dict>NULL)
+            if _pari_thread_runtime.callback_pari_error_seen():
+                raise RuntimeError(
+                    "a PARI error cannot be caught and suppressed inside a "
+                    "Python callback; the enclosing PARI evaluation was aborted"
+                )
+            if r is not None:
+                converted = objtogen(r)
+                if _pari_thread_runtime.callback_pari_error_seen():
+                    raise RuntimeError(
+                        "a PARI error cannot be caught and suppressed while "
+                        "converting a Python callback result; the enclosing "
+                        "PARI evaluation was aborted"
+                    )
+        finally:
+            # A callback or its result conversion can retain a Gen through a
+            # side effect instead of returning it.  Clone every stack Gen
+            # created since the guard while the nested signal target is
+            # still active.
+            move_gens_above_to_heap(avmaguard)
 
-    # Convert the result to a GEN and copy it to the PARI stack
-    # (with a special case for None)
-    if r is None:
-        return gnil
+        if r is not None:
+            d = DetachGen(converted)
+            del converted
+            del r
+            res = d.detach()
+        d = DetachGen(avmaguard)
+        del avmaguard
+        d.detach()
+    finally:
+        callback_signal_pop(signal_state)
+        callback_had_pari_error = _pari_thread_runtime.leave_python_callback()
 
-    # Safely delete r and avmaguard
-    d = DetachGen(objtogen(r))
-    del r
-    res = d.detach()
-    d = DetachGen(avmaguard)
-    del avmaguard
-    d.detach()
+    if callback_had_pari_error:
+        raise RuntimeError(
+            "a PARI error cannot be caught and suppressed inside a Python "
+            "callback; the enclosing PARI evaluation was aborted"
+        )
 
     return res
 
@@ -94,7 +139,42 @@ cdef inline GEN call_python_func_impl "call_python_func"(GEN* args, object py_fu
 # signature. In particular, we want manual exception handling and we
 # implicitly convert py_func from a PyObject* to an object.
 cdef extern from *:
+    """
+    #ifndef _WIN32
+    #include <pthread.h>
+    static pthread_t cypari2_python_callback_owner;
+    static int cypari2_python_callback_owner_ready;
+
+    static void cypari2_set_python_callback_owner(void)
+    {
+        cypari2_python_callback_owner = pthread_self();
+        cypari2_python_callback_owner_ready = 1;
+    }
+
+    static int cypari2_python_callback_on_owner(void)
+    {
+        return cypari2_python_callback_owner_ready &&
+               pthread_equal(pthread_self(), cypari2_python_callback_owner);
+    }
+    #else
+    #include <windows.h>
+    static DWORD cypari2_python_callback_owner;
+    static int cypari2_python_callback_owner_ready;
+    static void cypari2_set_python_callback_owner(void)
+    {
+        cypari2_python_callback_owner = GetCurrentThreadId();
+        cypari2_python_callback_owner_ready = 1;
+    }
+    static int cypari2_python_callback_on_owner(void)
+    {
+        return cypari2_python_callback_owner_ready &&
+               GetCurrentThreadId() == cypari2_python_callback_owner;
+    }
+    #endif
+    """
     GEN call_python_func(GEN* args, PyObject* py_func)
+    void cypari2_set_python_callback_owner() noexcept nogil
+    int cypari2_python_callback_on_owner() noexcept nogil
 
 
 cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5,
@@ -107,8 +187,17 @@ cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5,
     specifying how many arguments are valid and one ``ulong``, which is
     actually a Python callable object cast to ``ulong``.
     """
+    # PARI's pthread workers do not own the Python GIL and cannot safely
+    # enter this callback.  Report the condition through PARI's worker error
+    # channel without touching the Python C API.  Users can still use a
+    # Python callback with parallel APIs after setting ``nbthreads`` to 1;
+    # native PARI closures remain fully parallel.
+    if not cypari2_python_callback_on_owner():
+        pari_err(e_MISC, "Python callbacks cannot run in PARI worker threads; set nbthreads to 1")
+        return NULL
+
     if nargs > 5:
-        sig_error()
+        sig_error_local()
 
     # Convert arguments to a NULL-terminated array.
     cdef GEN args[6]
@@ -127,7 +216,7 @@ cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5,
     cdef GEN r = call_python_func(args, <PyObject*>py_func)
     sig_unblock()
     if not r:  # An exception was raised
-        sig_error()
+        sig_error_local()
     return r
 
 
@@ -138,6 +227,7 @@ cdef int _pari_init_closure() except -1:
     sig_on()
     global ep_call_python
     ep_call_python = install(<void*>call_python, "call_python", 'DGDGDGDGDGD5,U,U')
+    cypari2_set_python_callback_owner()
     sig_off()
 
 
@@ -209,6 +299,9 @@ cpdef Gen objtoclosure(f):
     ...
     PariError: call_python: ...
     """
+    if not _pari_thread_runtime.is_owner():
+        return _pari_thread_runtime.call(objtoclosure, f)
+
     if not callable(f):
         raise TypeError("argument to objtoclosure() must be callable")
 
