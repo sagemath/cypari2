@@ -288,7 +288,7 @@ import sys
 from libc.stdio cimport *
 cimport cython
 
-from cysignals.signals cimport sig_check, sig_on, sig_off, sig_error
+from cysignals.signals cimport sig_check, sig_on, sig_off
 
 from .string_utils cimport to_string, to_bytes
 from .paridecl cimport *
@@ -298,6 +298,11 @@ from .stack cimport (new_gen, new_gen_noclear, clear_stack,
                      set_pari_stack_size, before_resize, after_resize)
 from .handle_error cimport _pari_init_error_handling
 from .closure cimport _pari_init_closure
+from .thread_support cimport (install_signal_router, set_signal_owner_active,
+                              is_signal_owner)
+from ._thread_runtime import (owner_method as _owner_method,
+                              runtime as _pari_thread_runtime)
+from .thread_support cimport sig_error_local
 
 
 #################################################################
@@ -412,8 +417,11 @@ def prec_words_to_dec(long prec_in_words):
 # Callbacks from PARI to print stuff using sys.stdout.write() instead
 # of C library functions like puts().
 cdef PariOUT python_pariOut
+cdef extern from "pari/pari.h":
+    void pari_err_nogil "pari_err"(int, ...) noexcept nogil
+    void pari_set_last_newline_nogil "pari_set_last_newline"(int) noexcept nogil
 
-cdef void python_putchar(char c) noexcept:
+cdef void python_putchar_owner(char c) noexcept:
     cdef char s[2]
     s[0] = c
     s[1] = 0
@@ -424,18 +432,41 @@ cdef void python_putchar(char c) noexcept:
         sys.stdout.write(to_string(s))
     # Let PARI think the last character was a newline,
     # so it doesn't print one when an error occurs.
-    pari_set_last_newline(1)
+    pari_set_last_newline_nogil(1)
 
-cdef void python_puts(const char* s) noexcept:
+cdef void python_puts_owner(const char* s) noexcept:
     try:
         # avoid string conversion if possible
         sys.stdout.buffer.write(s)
     except AttributeError:
         sys.stdout.write(to_string(s))
-    pari_set_last_newline(1)
+    pari_set_last_newline_nogil(1)
 
-cdef void python_flush() noexcept:
+cdef void python_flush_owner() noexcept:
     sys.stdout.flush()
+
+cdef void python_putchar(char c) noexcept nogil:
+    if not is_signal_owner():
+        fputc(c, stdout)
+        pari_set_last_newline_nogil(1)
+        return
+    with gil:
+        python_putchar_owner(c)
+
+cdef void python_puts(const char* s) noexcept nogil:
+    if not is_signal_owner():
+        fputs(s, stdout)
+        pari_set_last_newline_nogil(1)
+        return
+    with gil:
+        python_puts_owner(s)
+
+cdef void python_flush() noexcept nogil:
+    if not is_signal_owner():
+        fflush(stdout)
+        return
+    with gil:
+        python_flush_owner()
 
 include 'auto_instance.pxi'
 
@@ -453,6 +484,10 @@ cdef class Pari(Pari_auto):
         >>> pari = Pari()
         >>> pari("print('hello')")
         """
+        if not _pari_thread_runtime.is_owner():
+            _pari_thread_runtime.ensure_initialized()
+            return
+
         # PARI is already initialized, nothing to do...
         if avma:
             return
@@ -469,6 +504,7 @@ cdef class Pari(Pari_auto):
 
         _pari_init_error_handling()
         _pari_init_closure()
+        install_signal_router()
 
         # Set printing functions
         global pariOut, pariErr
@@ -564,12 +600,16 @@ cdef class Pari(Pari_auto):
 
         .. NOTE::
 
-           Normally, all results from PARI computations end up on the
-           PARI stack. CyPari2 tries to keep everything on the PARI
-           stack. However, if over half of the PARI stack space is used,
-           all live objects on the PARI stack are copied to the PARI
-           heap (they become so-called clones).
+           Results may live on the PARI stack while an owner-thread request
+           is running. Before that request returns to another Python thread,
+           all live stack objects are copied to the PARI heap (they become
+           so-called clones).
         """
+        if not _pari_thread_runtime.is_owner():
+            _pari_thread_runtime.call_type_method(
+                Pari, "__init__", (self, size, sizemax, maxprime))
+            return
+
         # Increase (but don't decrease) size and sizemax to the
         # requested value
         size = max(size, pari_mainstack.rsize)
@@ -590,6 +630,7 @@ cdef class Pari(Pari_auto):
             if "IPython" in sys.modules:
                 pari_set_plot_engine(get_plot_ipython)
 
+    @_owner_method
     def debugstack(self):
         r"""
         Print the internal PARI variables ``top`` (top of stack), ``avma``
@@ -612,18 +653,21 @@ cdef class Pari(Pari_auto):
     def __hash__(self):
         return 907629390
 
+    @_owner_method
     def set_debug_level(self, level):
         """
         Set the debug PARI C library variable.
         """
         self.default('debug', int(level))
 
+    @_owner_method
     def get_debug_level(self):
         """
         Set the debug PARI C library variable.
         """
         return int(self.default('debug'))
 
+    @_owner_method
     def set_real_precision_bits(self, n):
         """
         Sets the PARI default real precision in bits.
@@ -653,6 +697,7 @@ cdef class Pari(Pari_auto):
         sd_realbitprecision(strn, d_SILENT)
         clear_stack()
 
+    @_owner_method
     def get_real_precision_bits(self):
         """
         Return the current PARI default real precision in bits.
@@ -680,6 +725,7 @@ cdef class Pari(Pari_auto):
         clear_stack()
         return r
 
+    @_owner_method
     def set_real_precision(self, long n):
         """
         Sets the PARI default real precision in decimal digits.
@@ -711,6 +757,7 @@ cdef class Pari(Pari_auto):
         self.set_real_precision_bits(prec_dec_to_bits(n))
         return old
 
+    @_owner_method
     def get_real_precision(self):
         """
         Returns the current PARI default real precision.
@@ -738,13 +785,16 @@ cdef class Pari(Pari_auto):
         sig_off()
         return r
 
+    @_owner_method
     def set_series_precision(self, long n):
         global precdl
         precdl = n
 
+    @_owner_method
     def get_series_precision(self):
         return precdl
 
+    @_owner_method
     def version(self):
         """
         Return the PARI version as tuple with 3 or 4 components:
@@ -758,6 +808,7 @@ cdef class Pari(Pari_auto):
         """
         return tuple(Pari_auto.version(self))
 
+    @_owner_method
     def complex(self, re, im):
         """
         Create a new complex number, initialized from re and im.
@@ -797,6 +848,10 @@ cdef class Pari(Pari_auto):
 
         See :func:`objtogen` for more examples.
         """
+        if not _pari_thread_runtime.is_owner():
+            return _pari_thread_runtime.call_type_method(
+                Pari, "__call__", (self, s))
+
         cdef Gen g = objtogen(s)
         if g.g is gnil:
             return None
@@ -811,6 +866,9 @@ cdef class Pari(Pari_auto):
         >>> pari.zero()
         0
         """
+        if not _pari_thread_runtime.is_owner():
+            return _pari_thread_runtime.call_type_method(
+                Pari, "zero", (self,))
         return self.PARI_ZERO
 
     cpdef Gen one(self):
@@ -822,8 +880,12 @@ cdef class Pari(Pari_auto):
         >>> pari.one()
         1
         """
+        if not _pari_thread_runtime.is_owner():
+            return _pari_thread_runtime.call_type_method(
+                Pari, "one", (self,))
         return self.PARI_ONE
 
+    @_owner_method
     def new_with_bits_prec(self, s, long precision):
         r"""
         pari.new_with_bits_prec(self, s, precision) creates s as a PARI
@@ -844,6 +906,7 @@ cdef class Pari(Pari_auto):
     # Initialization
     ############################################################
 
+    @_owner_method
     def stacksize(self):
         r"""
         Return the current size of the PARI stack, which is `10^6`
@@ -868,6 +931,7 @@ cdef class Pari(Pari_auto):
         """
         return pari_mainstack.size
 
+    @_owner_method
     def stacksizemax(self):
         r"""
         Return the maximum size of the PARI stack, which is determined
@@ -891,6 +955,7 @@ cdef class Pari(Pari_auto):
         """
         return pari_mainstack.vsize
 
+    @_owner_method
     def allocatemem(self, size_t s=0, size_t sizemax=0, *, silent=False):
         r"""
         Change the PARI stack space to the given size ``s`` (or double
@@ -1006,6 +1071,7 @@ cdef class Pari(Pari_auto):
         """
         return to_string(PARIVERSION)
 
+    @_owner_method
     def init_primes(self, unsigned long M):
         """
         Recompute the primes table including at least all primes up to M
@@ -1034,6 +1100,7 @@ cdef class Pari(Pari_auto):
         initprimetable(M)
         sig_off()
 
+    @_owner_method
     def primes(self, n=None, end=None):
         """
         Return a pari vector containing the first `n` primes, the primes
@@ -1109,6 +1176,7 @@ cdef class Pari(Pari_auto):
     euler = Pari_auto.Euler
     pi = Pari_auto.Pi
 
+    @_owner_method
     def polchebyshev(self, long n, v=None):
         """
         Chebyshev polynomial of the first kind of degree `n`,
@@ -1128,6 +1196,7 @@ cdef class Pari(Pari_auto):
         sig_on()
         return new_gen(polchebyshev1(n, get_var(v)))
 
+    @_owner_method
     def factorial_int(self, long n):
         """
         Return the factorial of the integer n as a PARI gen.
@@ -1149,6 +1218,7 @@ cdef class Pari(Pari_auto):
         sig_on()
         return new_gen(mpfact(n))
 
+    @_owner_method
     def polsubcyclo(self, long n, long d, v=None):
         r"""
         polsubcyclo(n, d, v=x): return the pari list of polynomial(s)
@@ -1178,6 +1248,7 @@ cdef class Pari(Pari_auto):
         else:
             return plist
 
+    @_owner_method
     def setrand(self, seed):
         """
         Sets PARI's current random number seed.
@@ -1211,6 +1282,7 @@ cdef class Pari(Pari_auto):
         setrand(t0.g)
         sig_off()
 
+    @_owner_method
     def vector(self, long n, entries=None):
         """
         vector(long n, entries=None): Create and return the length n PARI
@@ -1244,6 +1316,7 @@ cdef class Pari(Pari_auto):
         v = new_gen(zerovec(n))
         return v
 
+    @_owner_method
     def matrix(self, long m, long n, entries=None):
         """
         matrix(long m, long n, entries=None): Create and return the m x n
@@ -1276,6 +1349,7 @@ cdef class Pari(Pari_auto):
                     k += 1
         return A
 
+    @_owner_method
     def genus2red(self, P, p=None):
         r"""
         Let `P` be a polynomial with integer coefficients.
@@ -1306,6 +1380,7 @@ cdef class Pari(Pari_auto):
         sig_on()
         return new_gen(genus2red(t0.g, t1.g))
 
+    @_owner_method
     def List(self, x=None):
         """
         Create an empty list or convert `x` to a list.
@@ -1334,6 +1409,16 @@ cdef class Pari(Pari_auto):
         cdef Gen t0 = objtogen(x)
         sig_on()
         return new_gen(gtolist(t0.g))
+
+
+def _initialize_pari_owner():
+    """Initialize libpari from its permanent owner thread."""
+    Pari()
+
+
+def _set_owner_request_active(active):
+    """Tell the signal router whether the owner is servicing a request."""
+    set_signal_owner_active(bool(active))
 
 
 cdef long get_var(v) except -2:
@@ -1406,16 +1491,22 @@ cdef long get_var(v) except -2:
 # which call before_resize() and after_resize().
 # The monkey-patching is set up in PariInstance.__cinit__
 cdef GEN patched_parisize(const char* v, long flag) noexcept:
+    if not is_signal_owner():
+        pari_err(e_MISC, "PARI stack resizing cannot run in a PARI worker thread")
+        return NULL
     # Cast to `int(*)() noexcept` to avoid exception handling
     if (<int(*)() noexcept>before_resize)():
-        sig_error()
+        sig_error_local()
     return sd_parisize(v, flag)
 
 
 cdef GEN patched_parisizemax(const char* v, long flag) noexcept:
+    if not is_signal_owner():
+        pari_err(e_MISC, "PARI stack resizing cannot run in a PARI worker thread")
+        return NULL
     # Cast to `int(*)() noexcept` to avoid exception handling
     if (<int(*)() noexcept>before_resize)():
-        sig_error()
+        sig_error_local()
     return sd_parisizemax(v, flag)
 
 
@@ -1431,10 +1522,22 @@ IF HAVE_PLOT_SVG:
 
         T.draw = draw_ipython
 
-    cdef void draw_ipython(PARI_plot *T, GEN w, GEN x, GEN y) noexcept:
+    cdef void draw_ipython_owner(PARI_plot *T, GEN w, GEN x, GEN y) noexcept:
         global avma
         cdef pari_sp av = avma
         cdef char* svg = rect2svg(w, x, y, T)
-        from IPython.core.display import SVG, display
-        display(SVG(svg))
-        avma = av
+        try:
+            from IPython.core.display import SVG, display
+            display(SVG(svg))
+        finally:
+            avma = av
+
+    cdef void draw_ipython(PARI_plot *T, GEN w, GEN x, GEN y) noexcept nogil:
+        if not is_signal_owner():
+            pari_err_nogil(
+                e_MISC,
+                "IPython plotting cannot run in a PARI worker thread",
+            )
+            return
+        with gil:
+            draw_ipython_owner(T, w, x, y)
