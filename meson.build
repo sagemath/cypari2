@@ -19,22 +19,7 @@ add_project_arguments('-X c_api_binop_methods=True', language: 'cython')
 run_command(cc, '-v', check:true)
 
 # Dependencies  
-inc_cysignals = run_command(
-  py,
-  [
-    '-c',
-    '''
-from os.path import relpath
-import cysignals
-path = cysignals.__file__.replace('__init__.py', '')
-try:
-  print(relpath(path))
-except Exception:
-  print(path)
-    '''.strip(),
-  ],
-  check: true,
-).stdout().strip()
+inc_cysignals = join_paths(py.get_install_dir(), 'cysignals')
 cysignals = declare_dependency(include_directories: inc_cysignals)
 
 # Find PARI
