@@ -1,1 +1,2 @@
+option('pari_prefix', type: 'string', value:  '', description: 'location of the PARI installation to build against; takes precedence over any system location')
 option('pari_datadir', type: 'string', value:  '', description: 'location of the share directory of PARI')
