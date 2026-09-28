@@ -299,6 +299,17 @@ from .stack cimport (new_gen, new_gen_noclear, clear_stack,
 from .handle_error cimport _pari_init_error_handling
 from .closure cimport _pari_init_closure
 
+# Compatibility wrappers
+cdef extern from *:
+    """
+    #include <pari/pari.h>
+    #if PARI_VERSION_CODE >= PARI_VERSION(2,18,1)
+    #define cypari2_initprimetable(M) initprimetable(M, 1UL << 20)
+    #else
+    #define cypari2_initprimetable(M) initprimetable(M)
+    #endif
+    """
+    void cypari2_initprimetable(ulong maxnum)
 
 #################################################################
 # conversions between various real precision models
@@ -1031,7 +1042,7 @@ cdef class Pari(Pari_auto):
         if M <= maxprime():
             return
         sig_on()
-        initprimetable(M)
+        cypari2_initprimetable(M)
         sig_off()
 
     def primes(self, n=None, end=None):
