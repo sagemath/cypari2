@@ -279,7 +279,7 @@ assert issubclass(caught[0].category, DeprecationWarning)
 '''
         completed = subprocess.run(
             [sys.executable, "-X", "context_aware_warnings=1", "-c", code],
-            cwd=os.getcwd(),
+            cwd=os.path.dirname(os.path.abspath(__file__)),
             env=os.environ.copy(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -326,7 +326,7 @@ runtime.shutdown()
 '''
         completed = subprocess.run(
             [sys.executable, "-X", "thread_inherit_context=1", "-c", code],
-            cwd=os.getcwd(),
+            cwd=os.path.dirname(os.path.abspath(__file__)),
             env=os.environ.copy(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
