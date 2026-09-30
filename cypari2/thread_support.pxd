@@ -17,7 +17,8 @@ cdef extern from *:
     static pthread_t cypari2_signal_owner;
     static cysigs_t *cypari2_signal_state;
     static volatile sig_atomic_t cypari2_signal_owner_ready;
-    static volatile sig_atomic_t cypari2_signal_owner_active;
+    /* Owner requests write this while another thread's handler reads it. */
+    static cy_atomic_int cypari2_signal_owner_active;
     static volatile sig_atomic_t cypari2_signal_router_ready;
     static const int cypari2_routed_signals[] = { SIGINT, SIGALRM, SIGHUP };
     static struct sigaction cypari2_original_actions[3];
