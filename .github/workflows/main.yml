@@ -21,18 +21,27 @@ jobs:
             fail-fast: false
             matrix:
                 os: [ubuntu-latest]
-                python-version: ['3.12', '3.13', '3.14']
-                pari-version: ['2.15.5', '2.17.2', '2.17.3']
+                python-version: ['3.13', '3.14', '3.15']
+                pari-version: ['2.17.4', '2.19.0']
                 include:
                   - os: macos-latest
-                    python-version: '3.12'
-                    pari-version: '2.17.3' # Whatever comes with homebrew
-                  - os: macos-latest
                     python-version: '3.13'
-                    pari-version: '2.17.3' # Whatever comes with homebrew
+                    pari-version: 'homebrew'
                   - os: macos-latest
                     python-version: '3.14'
-                    pari-version: '2.17.3' # Whatever comes with homebrew
+                    pari-version: 'homebrew'
+                  - os: macos-latest
+                    python-version: '3.15'
+                    pari-version: 'homebrew'
+                  - os: darwin-27
+                    python-version: '3.13'
+                    pari-version: 'homebrew'
+                  - os: darwin-27
+                    python-version: '3.14'
+                    pari-version: 'homebrew'
+                  - os: darwin-27
+                    python-version: '3.15'
+                    pari-version: 'homebrew'
         env:
           LC_ALL: C
           PARI_VERSION: ${{ matrix.pari-version }}
@@ -66,17 +75,19 @@ jobs:
               path-type: inherit
         - name: Set up Python ${{ matrix.python-version }}
           if: runner.os != 'Windows'
-          uses: actions/setup-python@v4
+          uses: actions/setup-python@v6
           with:
             python-version: ${{ matrix.python-version }}
+            allow-prereleases: true
         - name: Install PARI
-          if: matrix.os != 'macos-latest'
+          if: runner.os != 'macOS'
           run: |         
             bash -x .install-pari.sh
         - name: Install PARI
-          if: matrix.os == 'macos-latest'
+          if: runner.os == 'macOS'
           run: |
             brew install pari
+            brew list --versions pari
         - name: Smoke test PARI
           run: |
             if [ ${{ runner.os }} = macOS ]; then
@@ -116,8 +127,8 @@ jobs:
             uv sync --frozen --inexact -v --no-build-isolation --no-editable --config-settings=builddir=builddir
         - name: Test
           run: |
-            uv run make check
+            uv run --no-sync make check
         - name: Build docs
           run: |
-            uv sync --frozen --inexact -v --group doc
-            (cd docs && uv run make html)
+            uv sync --frozen --inexact -v --no-build-isolation --no-editable --config-settings=builddir=builddir --group doc
+            (cd docs && uv run --no-sync make html)

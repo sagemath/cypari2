@@ -1,5 +1,5 @@
 [build-system]
-requires = ["meson-python>=0.18.0", "cython>=3.0", "cysignals>=1.11.3"]
+requires = ["meson-python>=0.18.0", "cython>=3.0", "cysignals>=1.13.0"]
 build-backend = "mesonpy"
 
 [project]
@@ -11,8 +11,8 @@ authors = [
 maintainers = [
     { name = "SageMath developers", email = "sage-devel@googlegroups.com" },
 ]
-dependencies = ["cysignals>=1.11.3"]
-requires-python = ">=3.12"
+dependencies = ["cysignals>=1.13.0"]
+requires-python = ">=3.13"
 readme = "README.rst"
 license = "GPL-2.0-or-later"
 license-files = ["LICENSE"]
@@ -39,7 +39,7 @@ dev = [
 doc = ["sphinx"]
 
 [tool.cibuildwheel]
-skip = ["*-win32"]
+skip = ["*-win32", "cp312-*"]
 test-groups = ["dev"]
 test-sources = ["tests", "pyproject.toml"]
 test-command = "python tests/rundoctest.py"
