@@ -4,6 +4,7 @@ build-backend = "mesonpy"
 
 [project]
 name = "cypari2"
+version = "2.2.5"
 description = "A Python interface to the number theory library PARI/GP"
 authors = [
     { name = "Luca De Feo, Vincent Delecroix, Jeroen Demeyer, Vincent Klein" },
@@ -17,7 +18,6 @@ readme = "README.rst"
 license = "GPL-2.0-or-later"
 license-files = ["LICENSE"]
 keywords = ["PARI/GP number theory"]
-dynamic = ["version"]
 
 [project.entry-points.pkg_config]
 cysignals = 'cysignals'
