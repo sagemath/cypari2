@@ -24,6 +24,9 @@ cypari2.handle_error.PariError.__module__ = "__main__"
 # Disable stack size warning messages
 pari = cypari2.Pari()
 pari.default("debugmem", 0)
+assert pari.get_real_precision_bits() == 128
+# Most existing doctest output was recorded at 15 decimal digits.
+pari.set_real_precision_bits(53)
 
 modules = [cypari2.closure, cypari2.convert, cypari2.gen,
             cypari2.handle_error, cypari2.pari_instance, cypari2.stack,
