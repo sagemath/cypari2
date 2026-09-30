@@ -341,6 +341,21 @@ runtime.shutdown()
             result = executor.submit(closure, 41).result(timeout=10)
         self.assertEqual(result, 42)
 
+    def test_python_callback_uses_callers_context(self):
+        marker = contextvars.ContextVar("cypari2_callback_marker")
+        closure = self.pari(lambda: marker.get())
+
+        def invoke(value):
+            token = marker.set(value)
+            try:
+                return int(closure())
+            finally:
+                marker.reset(token)
+
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            results = list(executor.map(invoke, range(32)))
+        self.assertEqual(results, list(range(32)))
+
     def test_method_captured_on_owner_remains_safe(self):
         captured = []
         value = self.pari(17)

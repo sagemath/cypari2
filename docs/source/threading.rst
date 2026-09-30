@@ -38,8 +38,8 @@ resets its evaluator when reporting an error, so a callback cannot catch a
 nested :class:`~cypari2.handle_error.PariError` and continue its enclosing PARI
 evaluation.  CyPari2 detects that case and aborts the outer evaluation with a
 :class:`RuntimeError` instead of returning into the reset evaluator.
-The callback runs with the owner thread's Python thread-local and
-:mod:`contextvars` state, not the submitting thread's state.  It must not
+The callback runs with the owner's Python thread-local state and a snapshot
+of the submitting thread's :mod:`contextvars` context.  It must not
 synchronously wait for another thread to finish a CyPari2 call, since that
 call is queued behind the callback itself; make a nested CyPari2 call directly
 in the callback instead.  Output emitted by a native PARI worker is written
