@@ -130,5 +130,5 @@ jobs:
             uv run --no-sync make check
         - name: Build docs
           run: |
-            uv sync --frozen --inexact -v --no-build-isolation --no-editable --config-settings=builddir=builddir --group doc
+            uv sync --frozen --inexact -v --no-build-isolation-package cypari2 --no-editable --config-settings=builddir=builddir --group doc
             (cd docs && uv run --no-sync make html)
