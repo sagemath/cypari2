@@ -124,7 +124,7 @@ jobs:
             echo $C_INCLUDE_PATH
             echo $LIBRARY_PATH
             uv sync --frozen --inexact -v --no-install-project
-            uv sync --frozen --inexact -v --no-build-isolation --no-editable --config-settings=builddir=builddir
+            uv sync --frozen --inexact -v --no-build-isolation --no-editable --reinstall-package cypari2 --config-settings=builddir=builddir
         - name: Test
           run: |
             uv run --no-sync make check
