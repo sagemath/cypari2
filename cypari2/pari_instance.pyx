@@ -134,8 +134,10 @@ in PARI:
 
 >>> pi = pari.pi(precision=1024)
 
-The default precision is 15 digits:
+The default precision is 128 bits. For the following examples, use a
+15-digit display precision:
 
+>>> pari.set_real_precision_bits(53)
 >>> pi
 3.14159265358979
 
@@ -146,7 +148,7 @@ affect the object ``pi`` at all, it only affects how it is printed:
 >>> pi
 3.1415926535897932384626433832795028841971693993751
 
-Back to the default:
+Back to the 15-digit display precision:
 
 >>> _ = pari.set_real_precision(15)
 >>> pi
@@ -180,7 +182,7 @@ In the first case, the relevant precision is the one set by the methods
 0.841470984807897
 
 In the second case, the precision can be given as the argument
-``precision`` in the function call, with a default of 53 bits.
+``precision`` in the function call, with a default of 128 bits.
 The real precision set by
 :meth:`Pari.set_real_precision_bits` or
 :meth:`Pari.set_real_precision` does not affect the call
@@ -200,12 +202,12 @@ wordsize (and you should not assume that the extra bits are meaningful):
 >>> c = pari.sin(1); c
 0.841470984807897
 >>> c.bitprecision()
-64
+128
 >>> pari.set_real_precision_bits(90)
 >>> print(a); print(b); print(c)
 0.841470984807896506652502322
 0.8414709848078965067
-0.8414709848078965067
+0.841470984807896506652502322
 
 In the third case, the precision is determined only by the inexact
 inputs and the ``precision`` argument is ignored:
@@ -386,7 +388,15 @@ cpdef long default_bitprec() noexcept:
 
     >>> from cypari2.pari_instance import default_bitprec
     >>> default_bitprec()
-    64
+    128
+
+    The default precision is sufficient for the L-function calculation
+    from issue #221:
+
+    >>> from cypari2 import Pari
+    >>> pari = Pari()
+    >>> E = pari.ellinit([0,0,0,1,2]); abs(pari.lfun(E, 100) - 1) < pari('1e-30')
+    True
     """
     return DEFAULT_BITPREC
 
@@ -489,8 +499,8 @@ cdef class Pari(Pari_auto):
         pariOut.puts = python_puts
         pariOut.flush = python_flush
 
-        # Use 53 bits as default precision
-        self.set_real_precision_bits(53)
+        # Match the 128-bit default precision of GP.
+        self.set_real_precision_bits(DEFAULT_BITPREC)
 
         # Disable pretty-printing
         GP_DATA.fmt.prettyp = 0
