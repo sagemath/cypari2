@@ -59,7 +59,11 @@ author = 'Many people'
 # built documents.
 #
 # The short X.Y version.
-version = open("../../VERSION").read().strip()
+from pathlib import Path
+import tomllib
+
+with (Path(__file__).resolve().parents[2] / "pyproject.toml").open("rb") as metadata:
+    version = tomllib.load(metadata)["project"]["version"]
 # The full version, including alpha/beta/rc tags.
 release = version
 

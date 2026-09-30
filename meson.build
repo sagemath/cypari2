@@ -1,6 +1,11 @@
 project('cypari2', 
   ['c', 'cython'],
-  version: files('VERSION'),
+  version: run_command(
+    'python3', '-c',
+    'import pathlib, sys, tomllib; print(tomllib.loads(pathlib.Path(sys.argv[1]).read_text())["project"]["version"])',
+    'pyproject.toml',
+    check: true,
+  ).stdout().strip(),
   license: 'GPL v2+',
   default_options: ['c_std=c17', 'python.install_env=auto'],
   meson_version: '>=1.5.0',

@@ -136,6 +136,7 @@ wheels = [
 
 [[package]]
 name = "cypari2"
+version = "2.2.5"
 source = { editable = "." }
 dependencies = [
     { name = "cysignals" },
