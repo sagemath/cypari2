@@ -4,7 +4,7 @@ build-backend = "mesonpy"
 
 [project]
 name = "cypari2"
-version = "2.2.5"
+version = "2.2.6"
 description = "A Python interface to the number theory library PARI/GP"
 authors = [
     { name = "Luca De Feo, Vincent Delecroix, Jeroen Demeyer, Vincent Klein" },
