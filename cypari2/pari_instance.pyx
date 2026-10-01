@@ -188,7 +188,9 @@ The real precision set by
 :meth:`Pari.set_real_precision` does not affect the call
 (but it still affects printing).
 
-As explained before, the precision increases to a multiple of the
+With PARI 2.19, the requested bit precision is passed unchanged to the
+library; older versions require rounding to a multiple of the wordsize.
+The precision of the returned real object is still a multiple of the
 wordsize (and you should not assume that the extra bits are meaningful):
 
 >>> a = pari.sin(1, precision=180); a
@@ -292,6 +294,7 @@ cimport cython
 
 from cysignals.signals cimport sig_check, sig_on, sig_off, sig_error
 
+from .types cimport prec_bits_to_pari
 from .string_utils cimport to_string, to_bytes
 from .paridecl cimport *
 from .paripriv cimport *
@@ -396,6 +399,19 @@ cpdef long default_bitprec() noexcept:
     >>> from cypari2 import Pari
     >>> pari = Pari()
     >>> E = pari.ellinit([0,0,0,1,2]); abs(pari.lfun(E, 100) - 1) < pari('1e-30')
+    True
+
+    Explicit precision must not be rounded up before calling PARI 2.19.
+    In issue #232, rounding 15 bits up to 64 made this computation
+    overflow the default stack:
+
+    >>> E = pari.ellinit([1, 1, 0, -63900, -1964465932632])
+    >>> stacksize = pari.stacksize()
+    >>> abs(float(pari.lfun(E, 2, precision=15)) - 0.830902950937342) < 0.001
+    True
+    >>> abs(float(E.lfun(2, precision=15)) - 0.830902950937342) < 0.001
+    True
+    >>> pari.stacksize() == stacksize
     True
     """
     return DEFAULT_BITPREC
