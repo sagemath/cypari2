@@ -6,6 +6,8 @@ v2.2.6
 ------
 
 - Support PARI 2.19, and test against PARI 2.17.4 and 2.19.0.
+- Preserve exact requested bit precision with PARI 2.19, fixing the
+  low-precision L-function stack overflow reported in issue #232.
 - Use 128-bit PARI real precision by default. Call
   ``pari.set_real_precision_bits(53)`` to restore the previous default.
 - Require Python >= 3.13 and cysignals >= 1.13.0.
