@@ -18,7 +18,7 @@ end_paren = re.compile(r"(@\[end[a-z]*\])([(])")
 
 begin_verb = re.compile(r"@1")
 end_verb = re.compile(r"@[23] *@\[endcode\]")
-verb_loop = re.compile("^(    .*)@\[[a-z]*\]", re.MULTILINE)
+verb_loop = re.compile(r"^(    .*)@\[[a-z]*\]", re.MULTILINE)
 
 dollars = re.compile(r"@\[dollar\]\s*(.*?)\s*@\[dollar\]", re.DOTALL)
 doubledollars = re.compile(r"@\[doubledollar\]\s*(.*?)\s*@\[doubledollar\] *", re.DOTALL)
