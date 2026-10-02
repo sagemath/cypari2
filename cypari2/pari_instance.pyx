@@ -190,6 +190,8 @@ The real precision set by
 
 With PARI 2.19, the requested bit precision is passed unchanged to the
 library; older versions require rounding to a multiple of the wordsize.
+The ``mateigen`` wrapper retains wordsize rounding to work around a
+PARI 2.19 eigenvector failure at non-word-aligned working precisions.
 The precision of the returned real object is still a multiple of the
 wordsize (and you should not assume that the extra bits are meaningful):
 
@@ -413,6 +415,21 @@ cpdef long default_bitprec() noexcept:
     True
     >>> pari.stacksize() == stacksize
     True
+
+    PARI 2.19's ``mateigen`` needs word-aligned working precision for
+    this matrix. Both wrappers retain the previous rounding behavior::
+
+    >>> M = pari.matrix(2, 2, [0, 1, -2, 0])
+    >>> eigenvalues, eigenvectors = M.mateigen(flag=1, precision=53)
+    >>> all(abs(e**2 + 2) < 1e-14 for e in eigenvalues)
+    True
+    >>> (M * eigenvectors - eigenvectors * eigenvalues.matdiagonal()).norml2() < 1e-14
+    True
+    >>> eigenvalues, eigenvectors = pari.mateigen(M, flag=1, precision=53)
+    >>> all(abs(e**2 + 2) < 1e-14 for e in eigenvalues)
+    True
+    >>> M.mateigen(precision=53).ncols()
+    2
     """
     return DEFAULT_BITPREC
 
