@@ -20,7 +20,7 @@ import re
 import sys
 from pathlib import Path
 
-from .args import PariArgumentGEN, PariInstanceArgument
+from .args import PariArgumentGEN, PariArgumentPrec, PariInstanceArgument
 from .doc import get_rest_doc
 from .parser import parse_prototype, read_pari_desc
 from .ret import PariReturnmGEN
@@ -330,7 +330,13 @@ class PariFunctionGenerator(object):
             s += a.convert_code()
         s += "        sig_on()\n"
         for a in args:
-            s += a.c_convert_code()
+            if function == "mateigen" and isinstance(a, PariArgumentPrec):
+                # PARI 2.19's eigenvector computation can fail at low
+                # working precision. Restore the rounding used before
+                # #233 (e.g. 53 bits becomes 64 bits on a 64-bit host).
+                s += "        {0} = nbits2prec({0})\n".format(a.name)
+            else:
+                s += a.c_convert_code()
         s += ret.assign_code("{cname}({callargs})")
         s += ret.return_code()
 
