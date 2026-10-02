@@ -331,9 +331,9 @@ class PariFunctionGenerator(object):
         s += "        sig_on()\n"
         for a in args:
             if function == "mateigen" and isinstance(a, PariArgumentPrec):
-                # PARI 2.19's eigenvector computation can fail when its
-                # working precision is not a multiple of the word size.
-                # Retain the rounding used before exact bit precision.
+                # PARI 2.19's eigenvector computation can fail at low
+                # working precision. Restore the rounding used before
+                # #233 (e.g. 53 bits becomes 64 bits on a 64-bit host).
                 s += "        {0} = nbits2prec({0})\n".format(a.name)
             else:
                 s += a.c_convert_code()

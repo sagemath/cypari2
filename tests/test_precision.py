@@ -30,7 +30,7 @@ class TestPrecision(unittest.TestCase):
         # mateigen's wrapper retained word-aligned working precision.
         for matrix in ('[0,1;-2,0]', '[1,2;2,1]'):
             M = self.pari(matrix)
-            for bits in PRECISIONS:
+            for bits in (15, 32, 48) + PRECISIONS:
                 for call in (M.mateigen, lambda **kw: self.pari.mateigen(M, **kw)):
                     with self.subTest(matrix=matrix, bits=bits, call=call):
                         values, vectors = call(flag=1, precision=bits)
