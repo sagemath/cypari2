@@ -31,7 +31,6 @@ def owner_method(method):
     def owner_call(*args, **kwargs):
         return runtime.call(method, *args, **kwargs)
 
-    owner_call._cypari2_owner_method = True
     return owner_call
 
 
@@ -89,6 +88,7 @@ class _PariThreadRuntime:
         self._initialized = False
         self._stabilize = lambda value: value
         self._request_activity = lambda active: None
+        self._request_guard = _noop
         self._callback_error_stack = []
         self._forked_with_owner = False
         self._shutting_down = False
@@ -106,6 +106,10 @@ class _PariThreadRuntime:
     def install_request_activity_hook(self, hook):
         """Install the hook used by the asynchronous signal router."""
         self._request_activity = hook
+
+    def install_request_guard(self, guard):
+        """Check foreign signal state before entering a PARI request."""
+        self._request_guard = guard
 
     def is_owner(self):
         """Return whether the current OS thread owns the PARI context."""
@@ -208,10 +212,16 @@ class _PariThreadRuntime:
         return True
 
     def call_type_method(self, cls, name, args, kwargs=None):
-        """Invoke a special method whose lookup bypasses ``__getattribute__``."""
+        """Invoke an extension type's special method on the owner."""
         if kwargs is None:
             kwargs = {}
         return self.call(getattr(cls, name), *args, **kwargs)
+
+    def call_binary_method(self, cls, name, left, right, *extra):
+        """Dispatch the selected slot without repeating operator resolution."""
+        if isinstance(left, cls):
+            return self.call(getattr(cls, name), left, right, *extra)
+        return self.call(getattr(cls, "__r" + name[2:]), right, left, *extra)
 
     def protect_iterator(self, iterator):
         """Return an iterator whose advancement is confined to the owner."""
@@ -236,6 +246,11 @@ class _PariThreadRuntime:
 
     def _run_request(self, request):
         """Execute one request inside its submitting Python context."""
+        # A foreign sig_on() frame must never become the owner's jump target.
+        # Check before the try/finally: rejection must also skip stabilization,
+        # which may itself enter sig_on(). The outer loop transfers this error.
+        if request.activity:
+            self._request_guard()
         try:
             if request.activity:
                 self._request_activity(True)
@@ -309,7 +324,9 @@ class _PariThreadRuntime:
         self._owner_ident = None
 
     def _after_fork_child(self):
-        had_owner = self._thread is not None
+        # Further forks must preserve the first child's unusable PARI state,
+        # even though that child no longer has a Python owner Thread object.
+        had_owner = self._forked_with_owner or self._thread is not None
         try:
             self._request_activity(False)
         except Exception:

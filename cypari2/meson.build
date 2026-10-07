@@ -23,6 +23,7 @@ extension_data = {
   'closure': files('closure.pyx'),
   'stack': files('stack.pyx'),
   'custom_block': files('custom_block.pyx'),
+  'thread_support': files('thread_support.pyx'),
   'convert': files('convert.pyx'),
   'string_utils': files('string_utils.pyx'),
   'handle_error': files('handle_error.pyx'),

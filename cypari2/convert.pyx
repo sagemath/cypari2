@@ -571,13 +571,27 @@ cdef GEN PyObject_AsGEN(x) except? NULL:
 ####################################
 
 cdef Gen new_gen_from_double(double x):
+    if not _pari_thread_runtime.is_owner():
+        return _pari_thread_runtime.call(_new_gen_from_double, x)
     sig_on()
     return new_gen(double_to_REAL(x))
 
 
 cdef Gen new_t_COMPLEX_from_double(double re, double im):
+    if not _pari_thread_runtime.is_owner():
+        return _pari_thread_runtime.call(_new_t_COMPLEX_from_double, re, im)
     sig_on()
     return new_gen(doubles_to_COMPLEX(re, im))
+
+
+def _new_gen_from_double(double x):
+    """Python-callable target for the legacy Cython conversion helper."""
+    return new_gen_from_double(x)
+
+
+def _new_t_COMPLEX_from_double(double re, double im):
+    """Python-callable target for the legacy Cython conversion helper."""
+    return new_t_COMPLEX_from_double(re, im)
 
 
 def integer_to_gen(x):

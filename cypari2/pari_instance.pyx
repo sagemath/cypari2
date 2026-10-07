@@ -642,6 +642,25 @@ cdef class Pari(Pari_auto):
                 pari_set_plot_engine(get_plot_ipython)
 
     @_owner_method
+    def run_on_owner(self, callable_, *args, **kwargs):
+        """Run a complete computation on the PARI owner thread.
+
+        This can batch Python calls or invoke a Cython function that uses
+        raw PARI operations. Such a function must manage its own signal and
+        stack scopes, and return Python objects or ``Gen`` objects, never
+        raw stack pointers. Returned ``Gen`` objects remain usable on the
+        calling thread.
+
+        EXAMPLES:
+
+        >>> from cypari2 import Pari
+        >>> pari = Pari()
+        >>> pari.run_on_owner(lambda value: pari(value) ** 2, 7)
+        49
+        """
+        return callable_(*args, **kwargs)
+
+    @_owner_method
     def debugstack(self):
         r"""
         Print the internal PARI variables ``top`` (top of stack), ``avma``
