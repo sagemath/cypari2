@@ -298,8 +298,7 @@ from .stack cimport (new_gen, new_gen_noclear, clear_stack,
                      set_pari_stack_size, before_resize, after_resize)
 from .handle_error cimport _pari_init_error_handling
 from .closure cimport _pari_init_closure
-from .thread_support cimport (install_signal_router, set_signal_owner_active,
-                              is_signal_owner)
+from .thread_support cimport install_signal_router, is_signal_owner
 from ._thread_runtime import (owner_method as _owner_method,
                               runtime as _pari_thread_runtime)
 from .thread_support cimport sig_error_local
@@ -1445,16 +1444,6 @@ cdef class Pari(Pari_auto):
         cdef Gen t0 = objtogen(x)
         sig_on()
         return new_gen(gtolist(t0.g))
-
-
-def _initialize_pari_owner():
-    """Initialize libpari from its permanent owner thread."""
-    Pari()
-
-
-def _set_owner_request_active(active):
-    """Tell the signal router whether the owner is servicing a request."""
-    set_signal_owner_active(bool(active))
 
 
 cdef long get_var(v) except -2:

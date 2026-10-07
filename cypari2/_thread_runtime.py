@@ -37,19 +37,17 @@ def owner_method(method):
 class _Request:
     __slots__ = (
         "callable", "args", "kwargs", "done", "result", "exc_info",
-        "stabilize", "activity", "context",
+        "cleanup", "context",
     )
 
-    def __init__(self, callable_, args, kwargs, *, wait=True,
-                 stabilize=True, activity=True, context=None):
+    def __init__(self, callable_, args, kwargs, *, cleanup=False, context=None):
         self.callable = callable_
         self.args = args
         self.kwargs = kwargs
-        self.done = threading.Event() if wait else None
+        self.done = None if cleanup else threading.Event()
         self.result = None
         self.exc_info = None
-        self.stabilize = stabilize
-        self.activity = activity
+        self.cleanup = cleanup
         self.context = context
 
 
@@ -86,7 +84,7 @@ class _PariThreadRuntime:
         self._ready = threading.Event()
         self._initializer = None
         self._initialized = False
-        self._stabilize = lambda value: value
+        self._stabilize = _noop
         self._request_activity = lambda active: None
         self._request_guard = _noop
         self._callback_error_stack = []
@@ -95,8 +93,8 @@ class _PariThreadRuntime:
         if hasattr(os, "register_at_fork"):
             os.register_at_fork(after_in_child=self._after_fork_child)
 
-    def install_result_stabilizer(self, stabilizer):
-        """Install the owner-side hook that detaches results from the stack."""
+    def install_stack_stabilizer(self, stabilizer):
+        """Install the owner-side hook that detaches all live stack values."""
         self._stabilize = stabilizer
 
     def install_initializer(self, initializer):
@@ -206,8 +204,7 @@ class _PariThreadRuntime:
             # release as a full public request would repeatedly stabilize an
             # already-empty stack and can create a large shutdown backlog.
             self._queue.put(_Request(
-                callable_, args, kwargs,
-                wait=False, stabilize=False, activity=False,
+                callable_, args, kwargs, cleanup=True,
             ))
         return True
 
@@ -249,10 +246,10 @@ class _PariThreadRuntime:
         # A foreign sig_on() frame must never become the owner's jump target.
         # Check before the try/finally: rejection must also skip stabilization,
         # which may itself enter sig_on(). The outer loop transfers this error.
-        if request.activity:
+        if not request.cleanup:
             self._request_guard()
         try:
-            if request.activity:
+            if not request.cleanup:
                 self._request_activity(True)
             if not self._initialized:
                 if self._initializer is None:
@@ -265,12 +262,12 @@ class _PariThreadRuntime:
             # exception to the submitting thread.
             request.exc_info = (exc, exc.__traceback__)
         finally:
-            if self._initialized and request.stabilize:
+            if self._initialized and not request.cleanup:
                 try:
                     # Also run this after an exception: arbitrary Python
                     # conversion code may have retained a stack Gen by a
                     # side effect even though the request has no result.
-                    request.result = self._stabilize(request.result)
+                    self._stabilize()
                 except BaseException as exc:
                     if request.exc_info is not None:
                         exc.__context__ = request.exc_info[0]
@@ -278,7 +275,7 @@ class _PariThreadRuntime:
             request.callable = None
             request.args = None
             request.kwargs = None
-            if request.activity:
+            if not request.cleanup:
                 try:
                     self._request_activity(False)
                 except BaseException as exc:

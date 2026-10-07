@@ -5070,7 +5070,7 @@ def _free_owner_clone(size_t address):
         gunclone_deep(<GEN>address)
 
 
-def _stabilize_thread_result(value):
+def _stabilize_stack():
     """Move every live stack ``Gen`` to the heap before a request ends.
 
     Moving the full tracked stack also covers a Gen retained through a side
@@ -5082,4 +5082,3 @@ def _stabilize_thread_result(value):
     # thread during a callback.  That thread unlinks the wrapper but cannot
     # touch PARI's thread-local ``avma``; reclaim any such gap here.
     reset_avma()
-    return value

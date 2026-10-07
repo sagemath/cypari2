@@ -128,6 +128,21 @@ cdef void clear_stack() noexcept:
     reset_avma()
 
 
+cdef inline int _move_stack_bottom_to_heap() except -1:
+    # Keep the wrapper alive while removing its stack-list reference.
+    cdef Gen current = <Gen>stackbottom
+    sig_on()
+    current.g = gclone(current.g)
+    sig_block()
+    remove_from_pari_stack(current)
+    sig_unblock()
+    sig_off()
+    # Removal needs the old stack address.  The updated .g remains usable
+    # throughout the move; replace .address only after unlinking the wrapper.
+    current.address = current.g
+    return 0
+
+
 cdef int move_gens_to_heap(pari_sp lim) except -1:
     """
     Move some/all Gens from the PARI stack to the heap.
@@ -136,22 +151,7 @@ cdef int move_gens_to_heap(pari_sp lim) except -1:
     avma <= lim.
     """
     while avma <= lim and stackbottom is not <PyObject*>top_of_stack:
-        current = <Gen>stackbottom
-        sig_on()
-        current.g = gclone(current.g)
-        sig_block()
-        remove_from_pari_stack(current)
-        sig_unblock()
-        sig_off()
-        # The .address attribute can only be updated now because it is
-        # needed in remove_from_pari_stack(). This means that the object
-        # is temporarily in an inconsistent state but this does not
-        # matter since .address is normally not used.
-        #
-        # The more important .g attribute is updated correctly before
-        # remove_from_pari_stack(). Therefore, the object can be used
-        # normally regardless of what happens to the PARI stack.
-        current.address = current.g
+        _move_stack_bottom_to_heap()
 
 
 cdef int move_gens_above_to_heap(Gen boundary) except -1:
@@ -161,14 +161,7 @@ cdef int move_gens_above_to_heap(Gen boundary) except -1:
     # callback may have created more Gens after that move.
     while (stackbottom is not <PyObject*>boundary and
            stackbottom is not <PyObject*>top_of_stack):
-        current = <Gen>stackbottom
-        sig_on()
-        current.g = gclone(current.g)
-        sig_block()
-        remove_from_pari_stack(current)
-        sig_unblock()
-        sig_off()
-        current.address = current.g
+        _move_stack_bottom_to_heap()
 
 
 cdef int before_resize() except -1:
