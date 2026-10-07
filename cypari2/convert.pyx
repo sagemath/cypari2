@@ -39,7 +39,7 @@ some bit shuffling.
 #                  https://www.gnu.org/licenses/
 # ****************************************************************************
 
-from cysignals.signals cimport sig_on, sig_off, sig_error
+from cysignals.signals cimport sig_on, sig_off
 
 from cpython.version cimport PY_MAJOR_VERSION
 from cpython.long cimport PyLong_AsLong, PyLong_FromLong
@@ -53,6 +53,8 @@ from .stack cimport new_gen, reset_avma
 from .string_utils cimport to_string, to_bytes
 from .pycore_long cimport (ob_digit, _PyLong_IsZero, _PyLong_IsPositive,
                            _PyLong_DigitCount, _PyLong_SetSignAndDigitCount)
+from ._thread_runtime import runtime as _pari_thread_runtime
+from .thread_support cimport sig_error_local
 
 ########################################################################
 # Conversion PARI -> Python
@@ -221,6 +223,8 @@ cpdef gen_to_python(Gen z):
     ...
     NotImplementedError: conversion not implemented for t_PADIC
     """
+    if not _pari_thread_runtime.is_owner():
+        return _pari_thread_runtime.call(gen_to_python, z)
     return PyObject_FromGEN(z.g)
 
 
@@ -299,6 +303,8 @@ cpdef gen_to_integer(Gen x):
     ...             if type(N1) is not type(N2):
     ...                 print(N1, type(N1), N2, type(N2))
     """
+    if not _pari_thread_runtime.is_owner():
+        return _pari_thread_runtime.call(gen_to_integer, x)
     return PyInt_FromGEN(x.g)
 
 
@@ -394,7 +400,7 @@ cdef GEN gtoi(GEN g0) except NULL:
             g = gel(g, 2)
         g = trunc_safe(g)
         if typ(g) != t_INT:
-            sig_error()
+            sig_error_local()
         sig_off()
     except RuntimeError:
         s = to_string(stack_sprintf(
@@ -565,13 +571,27 @@ cdef GEN PyObject_AsGEN(x) except? NULL:
 ####################################
 
 cdef Gen new_gen_from_double(double x):
+    if not _pari_thread_runtime.is_owner():
+        return _pari_thread_runtime.call(_new_gen_from_double, x)
     sig_on()
     return new_gen(double_to_REAL(x))
 
 
 cdef Gen new_t_COMPLEX_from_double(double re, double im):
+    if not _pari_thread_runtime.is_owner():
+        return _pari_thread_runtime.call(_new_t_COMPLEX_from_double, re, im)
     sig_on()
     return new_gen(doubles_to_COMPLEX(re, im))
+
+
+def _new_gen_from_double(double x):
+    """Python-callable target for the legacy Cython conversion helper."""
+    return new_gen_from_double(x)
+
+
+def _new_t_COMPLEX_from_double(double re, double im):
+    """Python-callable target for the legacy Cython conversion helper."""
+    return new_t_COMPLEX_from_double(re, im)
 
 
 def integer_to_gen(x):
@@ -605,6 +625,8 @@ def integer_to_gen(x):
     ...     if pari(long(x)) != pari(x) or pari(int(x)) != pari(x):
     ...         print(x)
     """
+    if not _pari_thread_runtime.is_owner():
+        return _pari_thread_runtime.call(integer_to_gen, x)
     if isinstance(x, int):
         sig_on()
         return new_gen(PyLong_AS_GEN(x))
