@@ -56,7 +56,6 @@ AUTHORS:
 # ****************************************************************************
 
 cimport cython
-import operator as _operator
 
 from cpython.object cimport (Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, Py_GT,
                             PyTypeObject)
@@ -539,7 +538,8 @@ cdef class Gen(Gen_base):
         1
         """
         if not _pari_thread_runtime.is_owner():
-            return _pari_thread_runtime.call(_operator.add, left, right)
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__add__", left, right)
 
         cdef Gen t0, t1
         try:
@@ -569,7 +569,8 @@ cdef class Gen(Gen_base):
         -5
         """
         if not _pari_thread_runtime.is_owner():
-            return _pari_thread_runtime.call(_operator.sub, left, right)
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__sub__", left, right)
 
         cdef Gen t0, t1
         try:
@@ -582,7 +583,8 @@ cdef class Gen(Gen_base):
 
     def __mul__(left, right):
         if not _pari_thread_runtime.is_owner():
-            return _pari_thread_runtime.call(_operator.mul, left, right)
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__mul__", left, right)
 
         cdef Gen t0, t1
         try:
@@ -595,7 +597,8 @@ cdef class Gen(Gen_base):
 
     def __div__(left, right):
         if not _pari_thread_runtime.is_owner():
-            return _pari_thread_runtime.call(_operator.truediv, left, right)
+            return _pari_thread_runtime.call_type_method(
+                Gen, "__div__", (left, right))
 
         # Python 2 old-style division: same implementation as __truediv__
         cdef Gen t0, t1
@@ -618,7 +621,8 @@ cdef class Gen(Gen_base):
         (x^2 + 2*x + 3)/x
         """
         if not _pari_thread_runtime.is_owner():
-            return _pari_thread_runtime.call(_operator.truediv, left, right)
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__truediv__", left, right)
 
         cdef Gen t0, t1
         try:
@@ -640,7 +644,8 @@ cdef class Gen(Gen_base):
         x + 2
         """
         if not _pari_thread_runtime.is_owner():
-            return _pari_thread_runtime.call(_operator.floordiv, left, right)
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__floordiv__", left, right)
 
         cdef Gen t0, t1
         try:
@@ -670,7 +675,8 @@ cdef class Gen(Gen_base):
         1
         """
         if not _pari_thread_runtime.is_owner():
-            return _pari_thread_runtime.call(_operator.mod, left, right)
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__mod__", left, right)
 
         cdef Gen t0, t1
         try:
@@ -703,7 +709,8 @@ cdef class Gen(Gen_base):
         1/32
         """
         if not _pari_thread_runtime.is_owner():
-            return _pari_thread_runtime.call(pow, left, right, m)
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__pow__", left, right, m)
 
         cdef Gen t0, t1
         try:
@@ -723,7 +730,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(gneg(self.g))
 
-    def __rshift__(self, long n):
+    def __rshift__(self, n):
         """
         Divide ``self`` by `2^n` (truncating or not, depending on the
         input type).
@@ -745,13 +752,15 @@ cdef class Gen(Gen_base):
         8
         """
         if not _pari_thread_runtime.is_owner():
-            return _pari_thread_runtime.call(_operator.rshift, self, n)
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__rshift__", self, n)
 
+        cdef long shift = n
         cdef Gen t0 = objtogen(self)
         sig_on()
-        return new_gen(gshift(t0.g, -n))
+        return new_gen(gshift(t0.g, -shift))
 
-    def __lshift__(self, long n):
+    def __lshift__(self, n):
         """
         Multiply ``self`` by `2^n`.
 
@@ -772,11 +781,13 @@ cdef class Gen(Gen_base):
         132
         """
         if not _pari_thread_runtime.is_owner():
-            return _pari_thread_runtime.call(_operator.lshift, self, n)
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__lshift__", self, n)
 
+        cdef long shift = n
         cdef Gen t0 = objtogen(self)
         sig_on()
-        return new_gen(gshift(t0.g, n))
+        return new_gen(gshift(t0.g, shift))
 
     def __invert__(self):
         if not _pari_thread_runtime.is_owner():
@@ -1750,17 +1761,8 @@ cdef class Gen(Gen_base):
         True
         """
         if not _pari_thread_runtime.is_owner():
-            if op == Py_LT:
-                return _pari_thread_runtime.call(_operator.lt, self, right)
-            if op == Py_LE:
-                return _pari_thread_runtime.call(_operator.le, self, right)
-            if op == Py_EQ:
-                return _pari_thread_runtime.call(_operator.eq, self, right)
-            if op == Py_NE:
-                return _pari_thread_runtime.call(_operator.ne, self, right)
-            if op == Py_GT:
-                return _pari_thread_runtime.call(_operator.gt, self, right)
-            return _pari_thread_runtime.call(_operator.ge, self, right)
+            method = ("__lt__", "__le__", "__eq__", "__ne__", "__gt__", "__ge__")[op]
+            return _pari_thread_runtime.call_type_method(Gen, method, (self, right))
 
         cdef Gen t1
         try:

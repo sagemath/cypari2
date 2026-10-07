@@ -155,10 +155,12 @@ cdef int move_gens_to_heap(pari_sp lim) except -1:
 
 
 cdef int move_gens_above_to_heap(Gen boundary) except -1:
-    """Move stack Gens created after ``boundary`` to the clone heap."""
-    while stackbottom is not <PyObject*>boundary:
-        if stackbottom is <PyObject*>top_of_stack:
-            raise SystemError("PARI stack boundary is no longer linked")
+    """Move stack Gens above ``boundary`` (or all if it was cloned)."""
+    # fixGEN() or an automatic heap move can already have unlinked the
+    # boundary.  In that case, stabilize the remaining stack too: the
+    # callback may have created more Gens after that move.
+    while (stackbottom is not <PyObject*>boundary and
+           stackbottom is not <PyObject*>top_of_stack):
         current = <Gen>stackbottom
         sig_on()
         current.g = gclone(current.g)

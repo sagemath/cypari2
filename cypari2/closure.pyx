@@ -43,7 +43,7 @@ from .stack cimport (new_gen, new_gen_noclear, clone_gen_noclear, DetachGen,
 from .gen cimport objtogen
 from ._thread_runtime import runtime as _pari_thread_runtime
 from .thread_support cimport (sig_error_local, callback_signal_push,
-                              callback_signal_pop)
+                              callback_signal_pop, is_signal_owner)
 
 try:
     from inspect import getfullargspec as getargspec
@@ -110,8 +110,9 @@ cdef inline GEN call_python_func_impl "call_python_func"(GEN* args, object py_fu
         finally:
             # A callback or its result conversion can retain a Gen through a
             # side effect instead of returning it.  Clone every stack Gen
-            # created since the guard while the nested signal target is
-            # still active.
+            # above the guard while the nested signal target is still active.
+            # If the guard was already cloned, this also handles Gens created
+            # after that move.
             move_gens_above_to_heap(avmaguard)
 
         if r is not None:
@@ -139,42 +140,7 @@ cdef inline GEN call_python_func_impl "call_python_func"(GEN* args, object py_fu
 # signature. In particular, we want manual exception handling and we
 # implicitly convert py_func from a PyObject* to an object.
 cdef extern from *:
-    """
-    #ifndef _WIN32
-    #include <pthread.h>
-    static pthread_t cypari2_python_callback_owner;
-    static int cypari2_python_callback_owner_ready;
-
-    static void cypari2_set_python_callback_owner(void)
-    {
-        cypari2_python_callback_owner = pthread_self();
-        cypari2_python_callback_owner_ready = 1;
-    }
-
-    static int cypari2_python_callback_on_owner(void)
-    {
-        return cypari2_python_callback_owner_ready &&
-               pthread_equal(pthread_self(), cypari2_python_callback_owner);
-    }
-    #else
-    #include <windows.h>
-    static DWORD cypari2_python_callback_owner;
-    static int cypari2_python_callback_owner_ready;
-    static void cypari2_set_python_callback_owner(void)
-    {
-        cypari2_python_callback_owner = GetCurrentThreadId();
-        cypari2_python_callback_owner_ready = 1;
-    }
-    static int cypari2_python_callback_on_owner(void)
-    {
-        return cypari2_python_callback_owner_ready &&
-               GetCurrentThreadId() == cypari2_python_callback_owner;
-    }
-    #endif
-    """
     GEN call_python_func(GEN* args, PyObject* py_func)
-    void cypari2_set_python_callback_owner() noexcept nogil
-    int cypari2_python_callback_on_owner() noexcept nogil
 
 
 cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5,
@@ -192,7 +158,7 @@ cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5,
     # channel without touching the Python C API.  Users can still use a
     # Python callback with parallel APIs after setting ``nbthreads`` to 1;
     # native PARI closures remain fully parallel.
-    if not cypari2_python_callback_on_owner():
+    if not is_signal_owner():
         pari_err(e_MISC, "Python callbacks cannot run in PARI worker threads; set nbthreads to 1")
         return NULL
 
@@ -227,7 +193,6 @@ cdef int _pari_init_closure() except -1:
     sig_on()
     global ep_call_python
     ep_call_python = install(<void*>call_python, "call_python", 'DGDGDGDGDGD5,U,U')
-    cypari2_set_python_callback_owner()
     sig_off()
 
 

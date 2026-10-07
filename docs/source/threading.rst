@@ -50,6 +50,40 @@ PARI worker.  On POSIX, asynchronous cysignals interrupts such as ``SIGINT``
 and ``SIGALRM`` are routed to the owner while it is inside a request, then
 re-raised in the calling Python thread.
 
+Cython integration
+------------------
+
+The deprecated Cython conversion helpers ``new_gen_from_double`` and
+``new_t_COMPLEX_from_double`` also dispatch to the owner and return stable
+``Gen`` objects.  Other Cython code that reads or creates raw ``GEN`` values
+must run its whole PARI computation on the owner.  Use
+:meth:`~cypari2.pari_instance.Pari.run_on_owner` as the entry point::
+
+    # compute_in_cython is a Python-callable Cython function. Its PARI stack
+    # allocations and sig_on()/sig_off() region all execute on the owner.
+    result = pari.run_on_owner(compute_in_cython, argument)
+
+Return Python values or managed ``Gen`` objects from that function, never
+raw stack pointers.  Direct access to raw ``GEN`` values on the submitting
+thread is not supported: constructing ``Pari()`` no longer initializes that
+thread's PARI stack.  Existing Cython consumers must migrate such operations
+to the owner entry point.
+
+The cysignals jump state is shared between threads.  A caller must leave its
+own ``sig_on()`` region before waiting for an owner request; the request raises
+``RuntimeError`` if it finds an existing foreign signal frame.  Move the
+entire protected computation into ``run_on_owner`` instead.  External Cython
+code must also avoid running an independent cysignals-protected operation
+concurrently with the owner.  Routing a signal cannot make it safe to jump
+between two threads' C stacks.
+
+``run_on_owner`` can also batch several Python API operations into one
+request, reducing the cost of thread dispatch.  The same callback rules
+apply: the callable must not wait for another thread to make a CyPari2 call.
+
+Process lifecycle
+-----------------
+
 Forking a process after CyPari2 has initialized libpari cannot preserve the
 vanished owner thread or its PARI context.  A child in that state raises
 ``RuntimeError`` on use.  With :mod:`multiprocessing`, use the ``spawn`` start
@@ -57,7 +91,5 @@ method, or fork before the first CyPari2 operation, including module-level
 conversion helpers.
 
 This guarantee covers the public Python API, including direct unbound method
-calls on the extension types.  Cython code which ``cimport``s CyPari2's
-``.pxd`` files and dereferences a raw ``GEN`` bypasses Python dispatch; such
-code must arrange to run in the owner context and must not transfer raw stack
-pointers between threads.
+calls on the extension types.  The Cython integration requirements above
+also apply to libraries embedding those calls inside their own signal frames.

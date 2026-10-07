@@ -56,10 +56,9 @@ measure("larger PARI call", larger_pari_call, 100)
 
 if runtime is not None:
     # Private diagnostics: an empty request measures most of the queue/event
-    # round trip; batching shows how much of the x + 1 cost is per-request.
-    # These are not suggested public API patterns and should not be used as a
-    # workaround for thread-safety restrictions.
+    # round trip. The public batching API shows how much of the x + 1 cost
+    # is per-request without exposing raw PARI values to the caller.
     measure("owner no-op", lambda: runtime.call(lambda: None), 10_000)
     measure("owner integer", lambda: runtime.call(lambda: 6), 10_000)
-    measure("one batched owner call", lambda: runtime.call(batched_additions),
+    measure("one batched owner call", lambda: pari.run_on_owner(batched_additions),
             1, units_per_call=10_000)
