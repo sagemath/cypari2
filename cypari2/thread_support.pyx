@@ -231,8 +231,9 @@ cdef int install_signal_router() except -1:
     return 0
 
 
-cdef void set_signal_owner_active(bint active) noexcept:
-    cypari2_set_signal_owner_active(active)
+def _set_owner_request_active(active):
+    """Tell the signal router whether the owner is servicing a request."""
+    cypari2_set_signal_owner_active(bool(active))
 
 
 cdef bint is_signal_owner() noexcept nogil:

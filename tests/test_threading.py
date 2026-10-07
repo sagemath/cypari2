@@ -2,20 +2,17 @@
 
 import contextvars
 import gc
-import os
 import signal
-import subprocess
 import sys
-import tempfile
 import threading
 import unittest
-import warnings
 import weakref
 from concurrent.futures import ThreadPoolExecutor
 
 import cypari2
 from cypari2.convert import gen_to_python, integer_to_gen
 from cypari2.test import pari_mt_engine
+from subprocess_helpers import run_in_fresh_process
 
 
 class TestThreadSafety(unittest.TestCase):
@@ -147,18 +144,7 @@ with runtime._queue_lock:
     gc.collect()
 print(pari(42))
 '''
-        with tempfile.TemporaryDirectory() as directory:
-            completed = subprocess.run(
-                [sys.executable, "-c", code],
-                cwd=directory,
-                env=os.environ.copy(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                timeout=10,
-            )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertEqual(completed.stdout.strip(), "42")
+        self.assertEqual(run_in_fresh_process(code).strip(), "42")
 
     def test_clone_heap_is_reclaimed_after_worker_use(self):
         from cypari2._thread_runtime import runtime
@@ -277,16 +263,7 @@ with warnings.catch_warnings(record=True) as caught:
 assert len(caught) == 1, caught
 assert issubclass(caught[0].category, DeprecationWarning)
 '''
-        completed = subprocess.run(
-            [sys.executable, "-X", "context_aware_warnings=1", "-c", code],
-            cwd=os.path.dirname(os.path.abspath(__file__)),
-            env=os.environ.copy(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            timeout=10,
-        )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
+        run_in_fresh_process(code, python_args=("-X", "context_aware_warnings=1"))
 
     @unittest.skipIf(
         sys.version_info < (3, 14),
@@ -324,16 +301,7 @@ for _ in range(3):
 assert payload_ref() is None, payload_ref()
 runtime.shutdown()
 '''
-        completed = subprocess.run(
-            [sys.executable, "-X", "thread_inherit_context=1", "-c", code],
-            cwd=os.path.dirname(os.path.abspath(__file__)),
-            env=os.environ.copy(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            timeout=10,
-        )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
+        run_in_fresh_process(code, python_args=("-X", "thread_inherit_context=1"))
 
     def test_python_callback_is_reentrant_on_owner(self):
         closure = self.pari(lambda value: value + 1)
@@ -537,19 +505,7 @@ pari.default("nbthreads", 2)
 pari("parapply(value -> print(value), [1, 2, 3, 4])")
 print("owner still usable", pari(1))
 '''
-        environment = os.environ.copy()
-        with tempfile.TemporaryDirectory() as directory:
-            completed = subprocess.run(
-                [sys.executable, "-c", code],
-                cwd=directory,
-                env=environment,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                timeout=10,
-            )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertIn("owner still usable 1", completed.stdout)
+        self.assertIn("owner still usable 1", run_in_fresh_process(code))
 
     @unittest.skipUnless(hasattr(signal, "SIGALRM"), "requires SIGALRM")
     def test_alarm_is_routed_to_owner(self):
@@ -588,42 +544,7 @@ from cypari2.convert import integer_to_gen
 from cypari2.gen import objtogen
 print(integer_to_gen(5), objtogen(6), objtoclosure(lambda: 7)())
 '''
-        with tempfile.TemporaryDirectory() as directory:
-            completed = subprocess.run(
-                [sys.executable, "-c", code],
-                cwd=directory,
-                env=os.environ.copy(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                timeout=10,
-            )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertEqual(completed.stdout.strip(), "5 6 7")
-
-    @unittest.skipUnless(hasattr(os, "fork"), "requires os.fork")
-    def test_fork_after_initialization_fails_safely(self):
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                message=r"This process .* is multi-threaded",
-                category=DeprecationWarning,
-            )
-            child = os.fork()
-        if child == 0:
-            try:
-                try:
-                    self.pari(1)
-                except RuntimeError as exc:
-                    os._exit(0 if "spawn" in str(exc) else 2)
-                os._exit(3)
-            except BaseException:
-                os._exit(4)
-
-        _, status = os.waitpid(child, 0)
-        self.assertTrue(os.WIFEXITED(status))
-        self.assertEqual(os.WEXITSTATUS(status), 0)
-        self.assertEqual(self.pari(1), 1)
+        self.assertEqual(run_in_fresh_process(code).strip(), "5 6 7")
 
     def test_concurrent_pari_construction(self):
         with ThreadPoolExecutor(max_workers=8) as executor:

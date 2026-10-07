@@ -22,12 +22,13 @@ pari = Pari()
 value = pari(41)
 
 def assert_rejected():
-    try:
-        value + 1
-    except RuntimeError as exc:
-        assert "spawn" in str(exc), str(exc)
-    else:
-        raise AssertionError("forked process accepted inherited PARI state")
+    for operation in (lambda: pari(1), lambda: value + 1):
+        try:
+            operation()
+        except RuntimeError as exc:
+            assert "spawn" in str(exc), str(exc)
+        else:
+            raise AssertionError("forked process accepted inherited PARI state")
 
 def fork_and_wait(operation):
     with warnings.catch_warnings():
@@ -50,6 +51,7 @@ def first_child():
     fork_and_wait(assert_rejected)
 
 fork_and_wait(first_child)
+assert pari(1) == 1
 assert value + 1 == 42
 '''
         with tempfile.TemporaryDirectory() as directory:
