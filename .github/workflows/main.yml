@@ -22,29 +22,30 @@ jobs:
             matrix:
                 os: [ubuntu-latest]
                 python-version: ['3.13', '3.14', '3.15']
-                pari-version: ['2.17.4', '2.19.0']
+                pari-version: ['2.17.4', '2.19.1']
                 include:
-                  - os: macos-latest
+                  - os: macos-15
                     python-version: '3.13'
-                    pari-version: 'homebrew'
-                  - os: macos-latest
+                    pari-version: '2.19.1'
+                  - os: macos-15
                     python-version: '3.14'
-                    pari-version: 'homebrew'
-                  - os: macos-latest
+                    pari-version: '2.19.1'
+                  - os: macos-15
                     python-version: '3.15'
-                    pari-version: 'homebrew'
+                    pari-version: '2.19.1'
                   - os: darwin-27
                     python-version: '3.13'
-                    pari-version: 'homebrew'
+                    pari-version: '2.19.1'
                   - os: darwin-27
                     python-version: '3.14'
-                    pari-version: 'homebrew'
+                    pari-version: '2.19.1'
                   - os: darwin-27
                     python-version: '3.15'
-                    pari-version: 'homebrew'
+                    pari-version: '2.19.1'
         env:
           LC_ALL: C
           PARI_VERSION: ${{ matrix.pari-version }}
+          PARI_INSTALL_DEPENDENCIES: ${{ matrix.os == 'darwin-27' && '0' || '1' }}
         defaults:
           run:
             shell: ${{ matrix.os == 'windows-latest' && 'msys2 {0}' || 'bash' }}
@@ -83,18 +84,25 @@ jobs:
           if: runner.os != 'macOS'
           run: |         
             bash -x .install-pari.sh
-        - name: Install PARI
+        - name: Set up an isolated PARI prefix and SDK
           if: runner.os == 'macOS'
           run: |
-            brew install pari
-            brew list --versions pari
+            private_root=$(mktemp -d "$RUNNER_TEMP/cypari2-pari.XXXXXX")
+            echo "PARI_PREFIX=$private_root/install" >> "$GITHUB_ENV"
+            echo "LDFLAGS=-Wl,-rpath,$private_root/install/lib" >> "$GITHUB_ENV"
+            echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> "$GITHUB_ENV"
+            echo "$private_root/install/bin" >> "$GITHUB_PATH"
+        - name: Build private PARI without replacing Homebrew packages
+          if: runner.os == 'macOS'
+          run: bash -x .install-pari.sh
         - name: Smoke test PARI
           run: |
-            if [ ${{ runner.os }} = macOS ]; then
-              HOMEBREW=`brew --prefix`
-              clang -v tests/test.c -o test -I$HOMEBREW/include -L$HOMEBREW/lib -lpari -lgmp
+            if [ "$RUNNER_OS" = macOS ]; then
+              gmp_prefix=$(brew --prefix gmp)
+              clang -v tests/test.c -o test -I"$PARI_PREFIX/include" -L"$PARI_PREFIX/lib" \
+                -I"$gmp_prefix/include" -L"$gmp_prefix/lib" -Wl,-rpath,"$PARI_PREFIX/lib" -lpari -lgmp
             else
-              gcc -v tests/test.c -o test -I/usr/local/include -L/usr/local/bin -lpari -lgmp
+              gcc -v tests/test.c -o test -I/usr/include -L/usr/lib -lpari -lgmp
             fi
             expected="zeta(2) = 1.6449340668482264364
             p = x^3 + x^2 + x - 1
@@ -123,12 +131,23 @@ jobs:
             echo $PATH
             echo $C_INCLUDE_PATH
             echo $LIBRARY_PATH
+            config_args=(--config-settings=builddir=builddir)
+            if [ -n "${PARI_PREFIX:-}" ]; then
+              config_args+=(--config-setting "setup-args=-Dpari_prefix=$PARI_PREFIX")
+            fi
             uv sync --frozen --inexact -v --no-install-project
-            uv sync --frozen --inexact -v --no-build-isolation --no-editable --reinstall-package cypari2 --config-settings=builddir=builddir
+            uv sync --frozen --inexact -v --no-build-isolation --no-editable --reinstall-package cypari2 "${config_args[@]}"
         - name: Test
           run: |
+            if [ -n "${PARI_PREFIX:-}" ]; then
+              uv run --no-sync python -I .github/check-installed.py
+            fi
             uv run --no-sync make check
         - name: Build docs
           run: |
-            uv sync --frozen --inexact -v --no-build-isolation-package cypari2 --no-editable --config-settings=builddir=builddir --group doc
+            config_args=(--config-settings=builddir=builddir)
+            if [ -n "${PARI_PREFIX:-}" ]; then
+              config_args+=(--config-setting "setup-args=-Dpari_prefix=$PARI_PREFIX")
+            fi
+            uv sync --frozen --inexact -v --no-build-isolation-package cypari2 --no-editable "${config_args[@]}" --group doc
             (cd docs && uv run --no-sync make html)

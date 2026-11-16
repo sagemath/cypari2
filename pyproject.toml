@@ -4,7 +4,7 @@ build-backend = "mesonpy"
 
 [project]
 name = "cypari2"
-version = "2.2.6"
+version = "2.2.7"
 description = "A Python interface to the number theory library PARI/GP"
 authors = [
     { name = "Luca De Feo, Vincent Delecroix, Jeroen Demeyer, Vincent Klein" },
@@ -39,13 +39,20 @@ dev = [
 doc = ["sphinx"]
 
 [tool.cibuildwheel]
+build = ["cp313-*", "cp314-*", "cp315-*"]
+archs = ["auto64"]
 skip = ["*-win32", "cp312-*"]
 test-groups = ["dev"]
-test-sources = ["tests", "pyproject.toml"]
-test-command = "python tests/rundoctest.py"
+test-sources = ["tests", "autogen", "Makefile", "pyproject.toml"]
+test-command = "python -c \"import autogen.doc, autogen.generator, autogen.parser; from cypari2 import Pari; assert tuple(map(int, Pari().version()))[:3] == (2, 19, 1)\" && make check"
 build-frontend = "build[uv]"
 build-verbosity = 1
 before-all = "bash -x {package}/.install-pari.sh"
 environment-pass = ["CI", "GITHUB_ACTIONS"]
+environment = { PARI_VERSION = "2.19.1" }
+[tool.cibuildwheel.linux]
+environment = { PARI_PREFIX = "/tmp/cypari2-pari", PARI_VERSION = "2.19.1", PARI_INSTALL_DEPENDENCIES = "1", PATH = "/tmp/cypari2-pari/bin:$PATH", LDFLAGS = "-Wl,-rpath,/tmp/cypari2-pari/lib" }
+config-settings = { setup-args = "-Dpari_prefix=/tmp/cypari2-pari" }
 [tool.cibuildwheel.macos]
-before-all = "brew install pari"
+environment = { PARI_PREFIX = "/tmp/cypari2-pari", PARI_VERSION = "2.19.1", PARI_INSTALL_DEPENDENCIES = "1", PATH = "/tmp/cypari2-pari/bin:$PATH", LDFLAGS = "-Wl,-rpath,/tmp/cypari2-pari/lib", SDKROOT = "$(xcrun --sdk macosx --show-sdk-path)" }
+config-settings = { setup-args = "-Dpari_prefix=/tmp/cypari2-pari" }
