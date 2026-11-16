@@ -7,6 +7,8 @@ v2.2.7
 
 - Build and test with PARI 2.19.1. Use GNU C17 so PARI's POSIX
   exception-buffer types are available in the build configuration checks.
+- Retain the macOS Clang ``-O1`` workaround for PARI's GP startup bug
+  and check expression output and history after a startup-file stack resize.
 - Fix ``idealfrobenius`` results for heap-cloned Galois data (PR #214,
   contributed by @cxzhong).
 - Add numerical precision regression tests from PR #234, without its

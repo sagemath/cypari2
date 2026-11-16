@@ -77,6 +77,10 @@ if [ -n "${PARI_PREFIX:-}" ]; then
         gmp_args=("--with-gmp=$(brew --prefix gmp)")
         SDKROOT=${SDKROOT:-$(xcrun --sdk macosx --show-sdk-path)}
         export SDKROOT
+        # Retain Homebrew's workaround for the macOS Clang miscompilation.
+        # https://pari.math.u-bordeaux.fr/cgi-bin/bugreport.cgi?bug=2608
+        CFLAGS="${CFLAGS:+$CFLAGS }-O1"
+        export CFLAGS
         jobs=$(sysctl -n hw.logicalcpu)
     else
         # manylinux/musllinux containers and hosted Ubuntu use different tools.
@@ -115,6 +119,16 @@ if [ -n "${PARI_PREFIX:-}" ]; then
     make -j"$jobs" gp
     make install
     "$PARI_PREFIX/bin/gp" --version
+    # A stack resize in a startup file must not corrupt later input/history.
+    printf 'default(parisize,16000000);\n' > "$build_root/startup-check.gp"
+    gp_output=$(printf '1+2\n%%\nquit\n' | "$PARI_PREFIX/bin/gp" -f -q -s 8000000 \
+        "$build_root/startup-check.gp" 2> "$build_root/startup-check.stderr")
+    if [ "$gp_output" != $'3\n3' ]; then
+        printf 'PARI startup/history regression: expected 3 twice; got:\n%s\n' "$gp_output" >&2
+        cat "$build_root/startup-check.stderr" >&2
+        exit 1
+    fi
+    echo "PARI startup/history regression passed"
     exit 0
 fi
 
