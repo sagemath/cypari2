@@ -102,9 +102,9 @@ jobs:
       - name: Install the sdist into a fresh noneditable environment
         run: |
           export LDFLAGS="-Wl,-rpath,$PARI_PREFIX/lib"
-          config_args=(--config-setting "setup-args=-Dpari_prefix=$PARI_PREFIX")
+          config_args=(--config-settings-package "cypari2:setup-args=-Dpari_prefix=$PARI_PREFIX")
           if [ -n "$C_STANDARD" ]; then
-            config_args+=(--config-setting "setup-args=-Dc_std=$C_STANDARD")
+            config_args+=(--config-settings-package "cypari2:setup-args=-Dc_std=$C_STANDARD")
           fi
           uv venv --python python .venv
           uv pip install --python .venv/bin/python "${config_args[@]}" dist/*.tar.gz

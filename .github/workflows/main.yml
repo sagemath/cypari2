@@ -131,9 +131,9 @@ jobs:
             echo $PATH
             echo $C_INCLUDE_PATH
             echo $LIBRARY_PATH
-            config_args=(--config-settings=builddir=builddir)
+            config_args=(--config-settings-package cypari2:builddir=builddir)
             if [ -n "${PARI_PREFIX:-}" ]; then
-              config_args+=(--config-setting "setup-args=-Dpari_prefix=$PARI_PREFIX")
+              config_args+=(--config-settings-package "cypari2:setup-args=-Dpari_prefix=$PARI_PREFIX")
             fi
             uv sync --frozen --inexact -v --no-install-project
             uv sync --frozen --inexact -v --no-build-isolation --no-editable --reinstall-package cypari2 "${config_args[@]}"
@@ -145,9 +145,9 @@ jobs:
             uv run --no-sync make check
         - name: Build docs
           run: |
-            config_args=(--config-settings=builddir=builddir)
+            config_args=(--config-settings-package cypari2:builddir=builddir)
             if [ -n "${PARI_PREFIX:-}" ]; then
-              config_args+=(--config-setting "setup-args=-Dpari_prefix=$PARI_PREFIX")
+              config_args+=(--config-settings-package "cypari2:setup-args=-Dpari_prefix=$PARI_PREFIX")
             fi
             uv sync --frozen --inexact -v --no-build-isolation-package cypari2 --no-editable "${config_args[@]}" --group doc
             (cd docs && uv run --no-sync make html)
