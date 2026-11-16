@@ -9,6 +9,11 @@ on:
         description: Optional source ref to validate (manual runs never publish)
         required: false
         type: string
+      c-standard:
+        description: Optional GNU17 override for historical sources (empty uses the source default)
+        required: false
+        default: ''
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,6 +22,7 @@ concurrency:
 env:
   PARI_VERSION: '2.19.1'
   PARI_INSTALL_DEPENDENCIES: '1'
+  C_STANDARD: ${{ inputs.c-standard || '' }}
 
 jobs:
   make_sdist:
@@ -44,9 +50,18 @@ jobs:
       - name: Build sdist once
         id: sdist
         run: |
+          case "$C_STANDARD" in
+            ''|gnu17) ;;
+            *) echo "Unsupported historical C standard override: $C_STANDARD" >&2; exit 1 ;;
+          esac
           git -C source rev-parse HEAD
           export LDFLAGS="-Wl,-rpath,$PARI_PREFIX/lib"
-          uv build --sdist source --out-dir dist --config-setting "setup-args=-Dpari_prefix=$PARI_PREFIX"
+          config_args=(--config-setting "setup-args=-Dpari_prefix=$PARI_PREFIX")
+          if [ -n "$C_STANDARD" ]; then
+            echo "Historical C standard override: $C_STANDARD"
+            config_args+=(--config-setting "setup-args=-Dc_std=$C_STANDARD")
+          fi
+          uv build --sdist source --out-dir dist "${config_args[@]}"
           python .github/verify-sdist.py dist >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with:
@@ -87,12 +102,16 @@ jobs:
       - name: Install the sdist into a fresh noneditable environment
         run: |
           export LDFLAGS="-Wl,-rpath,$PARI_PREFIX/lib"
+          config_args=(--config-setting "setup-args=-Dpari_prefix=$PARI_PREFIX")
+          if [ -n "$C_STANDARD" ]; then
+            config_args+=(--config-setting "setup-args=-Dc_std=$C_STANDARD")
+          fi
           uv venv --python python .venv
-          uv pip install --python .venv/bin/python --config-setting "setup-args=-Dpari_prefix=$PARI_PREFIX" dist/*.tar.gz
+          uv pip install --python .venv/bin/python "${config_args[@]}" dist/*.tar.gz
           uv pip check --python .venv/bin/python
           .venv/bin/python -I .github/check-installed.py
           .venv/bin/python -I -c "import sys; from pathlib import Path; sys.path.append(str(next(Path('sdist-tests').iterdir()).resolve())); import autogen.doc, autogen.generator, autogen.parser"
-      - name: Run all three installed-package test suites
+      - name: Run the complete installed-package test suite
         run: make -C sdist-tests/* check PYTHON="$PWD/.venv/bin/python -I"
 
   build_wheels:
@@ -119,6 +138,12 @@ jobs:
         env:
           SDIST_SHA256: ${{ needs.make_sdist.outputs.sha256 }}
         run: python .github/verify-sdist.py dist --sha256 "$SDIST_SHA256" --extract wheel-source >> "$GITHUB_OUTPUT"
+      - name: Set the historical C standard override
+        if: inputs.c-standard
+        run: |
+          # This replaces config-settings, so preserve the private PARI prefix.
+          config_args=("setup-args=-Dpari_prefix=/tmp/cypari2-pari" "setup-args=-Dc_std=$C_STANDARD")
+          printf 'CIBW_CONFIG_SETTINGS=%s\n' "${config_args[*]}" >> "$GITHUB_ENV"
       - name: Build and test wheels from that sdist
         uses: pypa/cibuildwheel@v4.3.5
         with:

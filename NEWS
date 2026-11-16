@@ -2,6 +2,22 @@
 cypari2 change log
 ==================
 
+v2.2.7
+------
+
+- Build and test with PARI 2.19.1. Use GNU C17 so PARI's POSIX
+  exception-buffer types are available in the build configuration checks.
+- Fix ``idealfrobenius`` results for heap-cloned Galois data (PR #214,
+  contributed by @cxzhong).
+- Add numerical precision regression tests from PR #234, without its
+  temporary ``mateigen`` precision-rounding workaround.
+- Build CPython 3.13, 3.14 and 3.15 wheels for Linux x86_64/aarch64 and
+  macOS x86_64/arm64, with macOS 15 as the minimum macOS version.
+- Test source installations on macOS and Linux ARM and run the complete
+  test suite for wheels. Verify all release files before publishing.
+- Include a source distribution; the incomplete 2.2.6 PyPI release
+  remains yanked.
+
 v2.2.6
 ------
 
