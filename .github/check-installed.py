@@ -1,5 +1,6 @@
-"""Check that source tests use the new wheel and the intended private PARI."""
+"""Check the installed package and the actual private or bundled PARI owner."""
 
+import argparse
 import ctypes
 import json
 import os
@@ -10,7 +11,10 @@ import sys
 import cypari2
 
 
-prefix = Path(os.environ["PARI_PREFIX"]).resolve()
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--bundled", action="store_true", help="require PARI from the installed wheel")
+args = parser.parse_args()
+prefix = Path(sys.prefix).resolve() if args.bundled else Path(os.environ["PARI_PREFIX"]).resolve()
 module = Path(cypari2.__file__).resolve()
 if sys.prefix == sys.base_prefix or not module.is_relative_to(Path(sys.prefix).resolve()):
     raise SystemExit(f"cypari2 is not installed in the fresh venv: {module}")
@@ -36,5 +40,6 @@ else:
     }
 if not libraries or any(not path.is_relative_to(prefix) for path in libraries):
     raise SystemExit(f"Unexpected loaded PARI libraries: {libraries}")
-print(json.dumps({"python": sys.version, "module": str(module),
+print(json.dumps({"mode": "bundled" if args.bundled else "private",
+                  "python": sys.version, "module": str(module),
                   "pari_version": version, "pari_libraries": sorted(map(str, libraries))}, indent=2))

@@ -107,7 +107,7 @@ if [ -n "${PARI_PREFIX:-}" ]; then
     if [ "$PLATFORM" = macos ]; then
         printf '%s  pari.tar.gz\n' "$PARI_SHA256" | shasum -a 256 --check
     else
-        printf '%s  pari.tar.gz\n' "$PARI_SHA256" | sha256sum --check
+        printf '%s  pari.tar.gz\n' "$PARI_SHA256" | sha256sum -c
     fi
     tar xzf pari.tar.gz
     cd "pari-$PARI_VERSION"

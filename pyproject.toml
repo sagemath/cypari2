@@ -44,7 +44,7 @@ archs = ["auto64"]
 skip = ["*-win32", "cp312-*"]
 test-groups = ["dev"]
 test-sources = ["tests", "autogen", "Makefile", "pyproject.toml"]
-test-command = "python -c \"import autogen.doc, autogen.generator, autogen.parser; from cypari2 import Pari; assert tuple(map(int, Pari().version()))[:3] == (2, 19, 1)\" && make check"
+test-command = "python {project}/.github/check-installed.py --bundled && python -c \"import autogen.doc, autogen.generator, autogen.parser\" && make check"
 build-frontend = "build[uv]"
 build-verbosity = 1
 before-all = "bash -x {package}/.install-pari.sh"

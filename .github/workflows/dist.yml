@@ -158,6 +158,7 @@ jobs:
             ${{ steps.verified.outputs.source }}/Makefile
             ${{ steps.verified.outputs.source }}/pyproject.toml
           CIBW_TEST_COMMAND: >-
+            python {project}/.github/check-installed.py --bundled &&
             cd ${{ steps.verified.outputs.source }} &&
             python -c "import autogen.doc, autogen.generator, autogen.parser; from cypari2 import Pari; assert tuple(map(int, Pari().version()))[:3] == (2, 19, 1)" && make check
           MACOSX_DEPLOYMENT_TARGET: '15.0'
