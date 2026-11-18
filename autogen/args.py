@@ -308,7 +308,7 @@ class PariArgumentPrec(PariArgumentClass):
     def get_argument_name(self, namesiter):
         return "precision"
     def c_convert_code(self):
-        s = "        {name} = nbits2prec({name})\n"
+        s = "        {name} = prec_bits_to_pari({name})\n"
         return s.format(name=self.name)
 
 class PariArgumentBitprec(PariArgumentClass):

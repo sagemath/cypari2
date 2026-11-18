@@ -1,6 +1,11 @@
 project('cypari2', 
   ['c', 'cython'],
-  version: files('VERSION'),
+  version: run_command(
+    'python3', '-c',
+    'import pathlib, sys, tomllib; print(tomllib.loads(pathlib.Path(sys.argv[1]).read_text())["project"]["version"])',
+    'pyproject.toml',
+    check: true,
+  ).stdout().strip(),
   license: 'GPL v2+',
   default_options: ['c_std=c17', 'python.install_env=auto'],
   meson_version: '>=1.5.0',
@@ -45,6 +50,18 @@ gmp = dependency('gmp', required: false)
 # Also require shared library, since otherwise every Cython extension would include it's own copy of pari leading to hard-to-debug segmentation faults at runtime
 pari_header_include_dirs = [] # additional dirs to search for PARI headers
 pari_lib_dirs = [] # additional dirs to search for the PARI library
+
+# An explicitly configured prefix takes precedence over any system location.
+# cypari2 is frequently built inside an environment that ships its own PARI
+# (for example a SageMath tree). Picking up a different copy there links the
+# two halves of the same process against two distinct libpari, each with its
+# own PARI stack, which is exactly the situation the note above warns about.
+pari_prefix = get_option('pari_prefix')
+if pari_prefix != ''
+  message('PARI prefix: ' + pari_prefix)
+  pari_header_include_dirs += include_directories(pari_prefix + '/include')
+  pari_lib_dirs += [pari_prefix + '/lib']
+endif
 if host_machine.system() == 'darwin'
   brew = find_program('brew', required: false)
   if brew.found()
@@ -127,6 +144,7 @@ endif
 message('PARI Datadir: ' + pari_datadir)
 
 # Run code generation step
+message('Generating PARI functions ...')
 code_gen_result = run_command(
   py.full_path(), '-c',
   '''
@@ -138,6 +156,7 @@ print("Code generation successful")
   ''',
   check: true
 )
+message('                          ... DONE')
 py.install_sources(
   meson.current_build_dir() + '/cypari2/auto_paridecl.pxd',
   meson.current_build_dir() + '/cypari2/auto_gen.pxi',

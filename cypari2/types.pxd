@@ -143,4 +143,4 @@ cdef extern from "pari/pari.h":
 
 # It is important that this gets included *after* all PARI includes
 cdef extern from "cypari.h":
-    pass
+    long prec_bits_to_pari "cypari2_prec_bits_to_pari"(long bits) noexcept

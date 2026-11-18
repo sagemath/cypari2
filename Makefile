@@ -1,7 +1,5 @@
 # Optional Makefile for easier development
 
-VERSION = $(shell cat VERSION)
-
 PYTHON = python
 PIP = $(PYTHON) -m pip -v
 
