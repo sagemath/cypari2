@@ -48,4 +48,4 @@ build-verbosity = 1
 before-all = "bash -x {package}/.install-pari.sh"
 environment-pass = ["CI", "GITHUB_ACTIONS"]
 [tool.cibuildwheel.macos]
-before-all = "brew install pari"
+before-all = 'PARI_VERSION=homebrew bash "{project}/.install-pari.sh"'

@@ -33,6 +33,16 @@ case "$(uname -s)" in
         ;;
 esac
 
+# Shared macOS runners may already have a linked PARI from another tap.
+if [[ "$PLATFORM" == macos && "$PARI_VERSION" == homebrew ]]; then
+    prefix=$(brew --prefix)
+    if [[ ! -f "$prefix/include/pari/pari.h" || ! -f "$prefix/lib/libpari.dylib" || ! -x "$prefix/bin/gp" ]]; then
+        brew install pari
+    fi
+    "$prefix/bin/gp" --version
+    exit 0
+fi
+
 # Run the script again in UCRT64 system for msys
 if [ "$ucrt" != "0" ] && [ "$PLATFORM" = "msys" ]; then
     MSYSTEM=UCRT64 MSYS2_PATH_TYPE=inherit bash --login -c "cd $pwd ; $self"
