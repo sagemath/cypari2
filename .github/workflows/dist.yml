@@ -112,7 +112,8 @@ jobs:
           .venv/bin/python -I .github/check-installed.py
           .venv/bin/python -I -c "import sys; from pathlib import Path; sys.path.append(str(next(Path('sdist-tests').iterdir()).resolve())); import autogen.doc, autogen.generator, autogen.parser"
       - name: Run the complete installed-package test suite
-        run: make -C sdist-tests/* check PYTHON="$PWD/.venv/bin/python -I"
+        # Test scripts import subprocess_helpers from the extracted tests directory.
+        run: make -C sdist-tests/* check PYTHON="$PWD/.venv/bin/python -E -s"
 
   build_wheels:
     name: Build wheels on ${{ matrix.os }}

@@ -33,6 +33,17 @@ case "$(uname -s)" in
         ;;
 esac
 
+check_pthread_engine() {
+  local PARI_CONFIG_HEADER
+  PARI_CONFIG_HEADER="$(./config/objdir)/paricfg.h"
+  if ! grep -q '^#define PARI_MT_ENGINE "pthread"$' \
+      "$PARI_CONFIG_HEADER"; then
+    echo "PARI Configure did not select the requested pthread engine"
+    grep 'PARI_MT_ENGINE' "$PARI_CONFIG_HEADER" || true
+    exit 1
+  fi
+}
+
 # CI builds can use an isolated PARI, independent of Homebrew's PARI
 # version and of any libraries already installed on the runner.
 if [ -n "${PARI_PREFIX:-}" ]; then
@@ -116,6 +127,7 @@ if [ -n "${PARI_PREFIX:-}" ]; then
     tar xzf pari.tar.gz
     cd "pari-$PARI_VERSION"
     ./Configure "--prefix=$PARI_PREFIX" --mt=pthread --without-readline "${gmp_args[@]}"
+    check_pthread_engine
     make -j"$jobs" gp
     make install
     "$PARI_PREFIX/bin/gp" --version
@@ -129,6 +141,16 @@ if [ -n "${PARI_PREFIX:-}" ]; then
         exit 1
     fi
     echo "PARI startup/history regression passed"
+    exit 0
+fi
+
+# Shared macOS runners may already have a linked PARI from another tap.
+if [[ "$PLATFORM" == macos && "$PARI_VERSION" == homebrew ]]; then
+    prefix=$(brew --prefix)
+    if [[ ! -f "$prefix/include/pari/pari.h" || ! -f "$prefix/lib/libpari.dylib" || ! -x "$prefix/bin/gp" ]]; then
+        brew install pari
+    fi
+    "$prefix/bin/gp" --version
     exit 0
 fi
 
@@ -216,10 +238,13 @@ if [[ "$PLATFORM" = "msys" ]]; then
   # in Python to find the DLLs.
   CONFIG_ARGS="--without-readline --prefix=$MSYSTEM_PREFIX"
 else
-  CONFIG_ARGS="--prefix=/usr"
+  CONFIG_ARGS="--mt=pthread --prefix=/usr"
 fi
 chmod -R +x ./Configure ./config
 ./Configure $CONFIG_ARGS
+if [[ "$PLATFORM" != "msys" ]]; then
+  check_pthread_engine
+fi
 
 # On Windows, disable UNIX-specific code in language files
 # (not sure why UNIX is defined)

@@ -19,14 +19,15 @@ cimport cython
 from cpython.ref cimport PyObject, _Py_REFCNT
 from cpython.exc cimport PyErr_SetString
 
-from cysignals.signals cimport (sig_on, sig_off, sig_block, sig_unblock,
-                                sig_error)
+from cysignals.signals cimport sig_on, sig_off, sig_block, sig_unblock
 
 from .gen cimport Gen, Gen_new
 from .paridecl cimport (avma, pari_mainstack, gnil, gcopy,
                         is_universal_constant, is_on_stack,
                         isclone, gclone, gclone_refc,
                         paristack_setsize)
+from ._thread_runtime import runtime as _pari_thread_runtime
+from .thread_support cimport sig_error_local
 
 from warnings import warn
 
@@ -49,13 +50,29 @@ cdef PyObject* stackbottom = <PyObject*>top_of_stack
 
 cdef void remove_from_pari_stack(Gen self) noexcept:
     global avma, stackbottom
+    if not _pari_thread_runtime.is_owner():
+        # A Python callback can hand a newly-created stack Gen to another
+        # Python thread before the enclosing owner request has returned.  If
+        # that thread drops the last reference, only unlink the Python object
+        # here: ``avma`` is PARI TLS and must be restored by the owner.  The
+        # linked-list invariant means that an object whose reference count
+        # reached zero is necessarily the current stack bottom.  Holding ``n``
+        # across clearing ``self.next`` also makes recursive deallocation of
+        # now-unreferenced predecessors follow the same safe path.
+        if <PyObject*>self is not stackbottom:
+            print("ERROR: removing non-current PARI stack Gen on a foreign thread")
+            return
+        n = self.next
+        stackbottom = <PyObject*>n
+        self.next = None
+        return
     if <PyObject*>self is not stackbottom:
         print("ERROR: removing wrong instance of Gen")
         print(f"Expected: {<object>stackbottom}")
         print(f"Actual:   {self}")
     if sig_on_count and not block_sigint:
         PyErr_SetString(SystemError, "calling remove_from_pari_stack() inside sig_on()")
-        sig_error()
+        sig_error_local()
     if self.sp() != avma:
         if avma > self.sp():
             print("ERROR: inconsistent avma when removing Gen from PARI stack")
@@ -111,6 +128,21 @@ cdef void clear_stack() noexcept:
     reset_avma()
 
 
+cdef inline int _move_stack_bottom_to_heap() except -1:
+    # Keep the wrapper alive while removing its stack-list reference.
+    cdef Gen current = <Gen>stackbottom
+    sig_on()
+    current.g = gclone(current.g)
+    sig_block()
+    remove_from_pari_stack(current)
+    sig_unblock()
+    sig_off()
+    # Removal needs the old stack address.  The updated .g remains usable
+    # throughout the move; replace .address only after unlinking the wrapper.
+    current.address = current.g
+    return 0
+
+
 cdef int move_gens_to_heap(pari_sp lim) except -1:
     """
     Move some/all Gens from the PARI stack to the heap.
@@ -119,22 +151,17 @@ cdef int move_gens_to_heap(pari_sp lim) except -1:
     avma <= lim.
     """
     while avma <= lim and stackbottom is not <PyObject*>top_of_stack:
-        current = <Gen>stackbottom
-        sig_on()
-        current.g = gclone(current.g)
-        sig_block()
-        remove_from_pari_stack(current)
-        sig_unblock()
-        sig_off()
-        # The .address attribute can only be updated now because it is
-        # needed in remove_from_pari_stack(). This means that the object
-        # is temporarily in an inconsistent state but this does not
-        # matter since .address is normally not used.
-        #
-        # The more important .g attribute is updated correctly before
-        # remove_from_pari_stack(). Therefore, the object can be used
-        # normally regardless of what happens to the PARI stack.
-        current.address = current.g
+        _move_stack_bottom_to_heap()
+
+
+cdef int move_gens_above_to_heap(Gen boundary) except -1:
+    """Move stack Gens above ``boundary`` (or all if it was cloned)."""
+    # fixGEN() or an automatic heap move can already have unlinked the
+    # boundary.  In that case, stabilize the remaining stack too: the
+    # callback may have created more Gens after that move.
+    while (stackbottom is not <PyObject*>boundary and
+           stackbottom is not <PyObject*>top_of_stack):
+        _move_stack_bottom_to_heap()
 
 
 cdef int before_resize() except -1:

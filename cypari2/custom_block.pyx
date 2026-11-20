@@ -7,19 +7,26 @@
 
 from cysignals.signals cimport add_custom_signals
 from .stack cimport reset_avma
+from .thread_support cimport is_signal_owner
 
 cdef extern from "pari/pari.h":
     int     PARI_SIGINT_block, PARI_SIGINT_pending
 
 cdef int custom_signal_is_blocked() noexcept:
+    if not is_signal_owner():
+        return 0
     return PARI_SIGINT_block
 
 cdef void custom_signal_unblock() noexcept:
+    if not is_signal_owner():
+        return
     global PARI_SIGINT_block
     PARI_SIGINT_block = 0
     reset_avma()
 
 cdef void custom_set_pending_signal(int sig) noexcept:
+    if not is_signal_owner():
+        return
     global PARI_SIGINT_pending
     PARI_SIGINT_pending = sig
 
