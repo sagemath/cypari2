@@ -41,6 +41,7 @@ from .paridecl cimport *
 from .stack cimport (new_gen, new_gen_noclear, clone_gen_noclear, DetachGen,
                      move_gens_above_to_heap)
 from .gen cimport objtogen
+from .types cimport gp_context
 from ._thread_runtime import runtime as _pari_thread_runtime
 from .thread_support cimport (sig_error_local, callback_signal_push,
                               callback_signal_pop, is_signal_owner)
@@ -51,7 +52,15 @@ except ImportError:
     from inspect import getargspec
 
 
-cdef inline GEN call_python_func_impl "call_python_func"(GEN* args, object py_func) except NULL:
+# Only the PARI owner enters Python callbacks. While a callback executes,
+# retain its evaluator context so it can catch an exception from a nested
+# callback and continue using the enclosing GP evaluation.
+cdef gp_context *enclosing_callback = NULL
+
+cdef extern from "pari/pari.h":
+    void *iferr_env
+
+cdef inline GEN call_python_func_impl(GEN* args, object py_func) except NULL:
     """
     Call ``py_func(*args)`` where ``py_func`` is a Python function
     and ``args`` is an array of ``GEN``s terminated by ``NULL``.
@@ -136,6 +145,36 @@ cdef inline GEN call_python_func_impl "call_python_func"(GEN* args, object py_fu
     return res
 
 
+cdef GEN call_python_with_context "call_python_func"(GEN* args, object py_func) except NULL:
+    global enclosing_callback, iferr_env
+    cdef gp_context context
+    cdef gp_context *parent = enclosing_callback
+    gp_context_save(&context)
+    enclosing_callback = &context
+    # A nested PARI error must return through the Python callback before
+    # control can go back to an enclosing GP iferr handler.
+    iferr_env = NULL
+    try:
+        result = call_python_func_impl(args, py_func)
+    except BaseException:
+        if parent != NULL and not _pari_thread_runtime.callback_pari_error_seen():
+            # Unwind the abandoned GP frames, preserving user variables and
+            # live Gen objects created by the enclosing Python callback.
+            gp_context_save(&context)
+            context.eval = parent.eval
+            context.eval.avma = avma
+            context.parse = parent.parse
+            context.err_data = parent.err_data
+            context.iferr_env = NULL
+            gp_context_restore(&context)
+        raise
+    else:
+        iferr_env = context.iferr_env
+        return result
+    finally:
+        enclosing_callback = parent
+
+
 # We rename this function to be able to call it with a different
 # signature. In particular, we want manual exception handling and we
 # implicitly convert py_func from a PyObject* to an object.
@@ -158,6 +197,7 @@ cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5,
     # channel without touching the Python C API.  Users can still use a
     # Python callback with parallel APIs after setting ``nbthreads`` to 1;
     # native PARI closures remain fully parallel.
+    global iferr_env
     if not is_signal_owner():
         pari_err(e_MISC, "Python callbacks cannot run in PARI worker threads; set nbthreads to 1")
         return NULL
@@ -182,6 +222,12 @@ cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5,
     cdef GEN r = call_python_func(args, <PyObject*>py_func)
     sig_unblock()
     if not r:  # An exception was raised
+        if enclosing_callback == NULL:
+            # A direct jump out of PARI would leave its evaluator pointing at
+            # the abandoned closure. Use normal PARI recovery, bypassing GP
+            # iferr handlers because the pending exception belongs to Python.
+            iferr_env = NULL
+            pari_err(e_MISC, "Python callback failed")
         sig_error_local()
     return r
 
@@ -258,7 +304,7 @@ cpdef Gen objtoclosure(f):
     >>> mul(*range(100))
     Traceback (most recent call last):
     ...
-    PariError: call_python: too many parameters in user-defined function call
+    PariError: too many parameters in user-defined function call
     >>> mul([1], [2])
     Traceback (most recent call last):
     ...

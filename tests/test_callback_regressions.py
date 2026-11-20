@@ -2,7 +2,7 @@
 
 import unittest
 
-from cypari2 import Pari
+from cypari2 import Pari, PariError
 
 
 class TestCallbackStackLifetime(unittest.TestCase):
@@ -16,6 +16,41 @@ class TestCallbackStackLifetime(unittest.TestCase):
             return self.pari(lambda: value[0])()
 
         self.assertEqual(self.pari(outer)(), 0)
+
+    def test_python_exception_leaves_evaluator_usable(self):
+        failure = ValueError("callback failed")
+
+        def fail():
+            raise failure
+
+        callback = self.pari(fail)
+        invoke = self.pari("f -> iferr(f(), E, 99)")
+        with self.assertRaises(ValueError) as caught:
+            invoke(callback)
+        self.assertIs(caught.exception, failure)
+        # A callback returning normally must reinstate GP's error handler.
+        recover = self.pari("f -> iferr(f(); 1/0, E, 99)")
+        self.assertEqual(recover(self.pari(lambda: 7)), 99)
+        with self.assertRaises(PariError):
+            self.pari(1) / self.pari(0)
+
+    def test_outer_callback_can_handle_inner_python_exception(self):
+        def fail():
+            raise ValueError("inner callback failed")
+
+        inner = self.pari(fail)
+
+        def outer():
+            symbol = self.pari("callback_variable")
+            with self.assertRaisesRegex(ValueError, "inner callback failed"):
+                inner()
+            self.assertEqual(str(symbol), "callback_variable")
+            return self.pari(40) + 2
+
+        invoke = self.pari("f -> 1 + f()")
+        self.assertEqual(invoke(self.pari(outer)), 43)
+        with self.assertRaises(PariError):
+            self.pari(1) / self.pari(0)
 
     def test_callback_result_exceeds_half_stack(self):
         size = self.pari.stacksize()
