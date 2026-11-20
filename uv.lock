@@ -104,7 +104,7 @@ wheels = [
 
 [[package]]
 name = "cibuildwheel"
-version = "3.2.1"
+version = "4.3.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bashlex" },
@@ -115,14 +115,11 @@ dependencies = [
     { name = "filelock" },
     { name = "humanize" },
     { name = "packaging" },
-    { name = "patchelf", marker = "(platform_machine == 'aarch64' and sys_platform == 'darwin') or (platform_machine == 'arm64' and sys_platform == 'darwin') or (platform_machine == 'x86_64' and sys_platform == 'darwin') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'arm64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
     { name = "platformdirs" },
-    { name = "pyelftools" },
-    { name = "wheel" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d1/1f/8b586e4c901f855f24c6beaa27577a7ce96546e87866844abae63e1bad6c/cibuildwheel-3.2.1.tar.gz", hash = "sha256:98beb9700e2447172b0855fc0e5cf6b5145ac058c35e8e1256d2db86daf02722", size = 349013, upload-time = "2025-10-12T08:24:58.95Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/97/08/284f916363482d28ba98cf4517283f89ec5c3bd8acfa43b1049b9a5ed486/cibuildwheel-4.3.5.tar.gz", hash = "sha256:43c30292b9ec8d08a8eb3873436e64d4d1434c5dcbc855fb0afbfc69732048f1", size = 464371, upload-time = "2026-10-27T19:01:55.682Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4f/68/e0ea77a88f3cbc8c00d0a2983c0a2d8aba9187dd5aae9b6096670aee9281/cibuildwheel-3.2.1-py3-none-any.whl", hash = "sha256:48fc815b4768c394c2041de21a0664b84a8090788887c729bcc858a6adc10455", size = 126355, upload-time = "2025-10-12T08:24:57.301Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/ad/ebdaf81b0f29b86906a6c4ad0253796204853111fdd3a1d041d7b1bf92d0/cibuildwheel-4.3.5-py3-none-any.whl", hash = "sha256:2297362cb7a0a12cd681788197811e1f3d700bd31f6decaab051837c90d4e3ba", size = 170368, upload-time = "2026-10-27T19:01:53.729Z" },
 ]
 
 [[package]]
@@ -136,7 +133,7 @@ wheels = [
 
 [[package]]
 name = "cypari2"
-version = "2.2.6"
+version = "2.2.7"
 source = { editable = "." }
 dependencies = [
     { name = "cysignals" },
@@ -163,7 +160,7 @@ requires-dist = [{ name = "cysignals", specifier = ">=1.13.0" }]
 [package.metadata.requires-dev]
 dev = [
     { name = "build", specifier = ">=1.3.0" },
-    { name = "cibuildwheel", specifier = ">=2.23.3" },
+    { name = "cibuildwheel", specifier = ">=4.3.5" },
     { name = "cython", specifier = ">=3.1.4" },
     { name = "meson", specifier = ">=1.9.0" },
     { name = "meson-python", specifier = ">=0.18.0" },
@@ -423,17 +420,6 @@ wheels = [
 ]
 
 [[package]]
-name = "patchelf"
-version = "0.17.2.4"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2c/a3/fdd3fa938c864aa2f11dd0b7f08befeda983d2dcdee44da493c6977a653f/patchelf-0.17.2.4.tar.gz", hash = "sha256:970ee5cd8af33e5ea2099510b2f9013fa1b8d5cd763bf3fd3961281c18101a09", size = 149629, upload-time = "2025-07-23T21:16:32.071Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b1/a7/8c4f86c78ec03db954d05fd9c57a114cc3a172a2d3e4a8b949cd5ff89471/patchelf-0.17.2.4-py3-none-macosx_10_9_universal2.whl", hash = "sha256:343bb1b94e959f9070ca9607453b04390e36bbaa33c88640b989cefad0aa049e", size = 184436, upload-time = "2025-07-23T21:16:20.578Z" },
-    { url = "https://files.pythonhosted.org/packages/7e/19/f7821ef31aab01fa7dc8ebe697ece88ec4f7a0fdd3155dab2dfee4b00e5c/patchelf-0.17.2.4-py3-none-manylinux1_x86_64.manylinux_2_5_x86_64.musllinux_1_1_x86_64.whl", hash = "sha256:d9b35ebfada70c02679ad036407d9724ffe1255122ba4ac5e4be5868618a5689", size = 482846, upload-time = "2025-07-23T21:16:23.73Z" },
-    { url = "https://files.pythonhosted.org/packages/d1/50/107fea848ecfd851d473b079cab79107487d72c4c3cdb25b9d2603a24ca2/patchelf-0.17.2.4-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.musllinux_1_1_aarch64.whl", hash = "sha256:2931a1b5b85f3549661898af7bf746afbda7903c7c9a967cfc998a3563f84fad", size = 477811, upload-time = "2025-07-23T21:16:25.145Z" },
-]
-
-[[package]]
 name = "pkgconf"
 version = "2.5.1.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -477,15 +463,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f9/e2/3e91f31a7d2b083fe6ef3fa267035b518369d9511ffab804f839851d2779/pluggy-1.6.0.tar.gz", hash = "sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3", size = 69412, upload-time = "2025-05-15T12:30:07.975Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/54/20/4d324d65cc6d9205fabedc306948156824eb9f0ee1633355a8f7ec5c66bf/pluggy-1.6.0-py3-none-any.whl", hash = "sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746", size = 20538, upload-time = "2025-05-15T12:30:06.134Z" },
-]
-
-[[package]]
-name = "pyelftools"
-version = "0.32"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b9/ab/33968940b2deb3d92f5b146bc6d4009a5f95d1d06c148ea2f9ee965071af/pyelftools-0.32.tar.gz", hash = "sha256:6de90ee7b8263e740c8715a925382d4099b354f29ac48ea40d840cf7aa14ace5", size = 15047199, upload-time = "2025-02-19T14:20:05.549Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/af/43/700932c4f0638c3421177144a2e86448c0d75dbaee2c7936bda3f9fd0878/pyelftools-0.32-py3-none-any.whl", hash = "sha256:013df952a006db5e138b1edf6d8a68ecc50630adbd0d83a2d41e7f846163d738", size = 188525, upload-time = "2025-02-19T14:19:59.919Z" },
 ]
 
 [[package]]
@@ -656,16 +633,4 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e3/05/b17359e1cefb4f909b5e40b1b90a496d987258916dbbf88e842c729f510e/urllib3-2.8.0.tar.gz", hash = "sha256:63bf2ead4c879426ebf22ef2a781eeb4aa3b4ae798a0435506f8687fd5bb9b63", size = 458972, upload-time = "2026-09-15T19:29:36.253Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/92/9d/c4e665119135114480843e7ab388fa94d8480650450e6f8e26b70d323a4c/urllib3-2.8.0-py3-none-any.whl", hash = "sha256:0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3", size = 135717, upload-time = "2026-09-15T19:29:34.577Z" },
-]
-
-[[package]]
-name = "wheel"
-version = "0.46.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "packaging" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/9b/92/3a64fa9639b8e290fe8630d8067a66f7c5510845c6d73686ad880c9b04d9/wheel-0.46.2.tar.gz", hash = "sha256:3d79e48fde9847618a5a181f3cc35764c349c752e2fe911e65fa17faab9809b0", size = 60274, upload-time = "2026-01-21T23:55:25.838Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/13/2c/5e079cefe955ae58e5a052fe037c850ce493eb7269dedeb960237e78fb0f/wheel-0.46.2-py3-none-any.whl", hash = "sha256:33ae60725d69eaa249bc1982e739943c23b34b58d51f1cb6253453773aca6e65", size = 29971, upload-time = "2026-01-21T23:55:24.447Z" },
 ]

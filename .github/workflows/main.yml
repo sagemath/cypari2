@@ -22,26 +22,26 @@ jobs:
             matrix:
                 os: [ubuntu-latest]
                 python-version: ['3.13', '3.14', '3.15']
-                pari-version: ['2.17.4', '2.19.0']
+                pari-version: ['2.17.4', '2.19.1']
                 include:
-                  - os: macos-latest
+                  - os: macos-15
                     python-version: '3.13'
-                    pari-version: 'homebrew'
-                  - os: macos-latest
+                    pari-version: '2.19.1'
+                  - os: macos-15
                     python-version: '3.14'
-                    pari-version: 'homebrew'
-                  - os: macos-latest
+                    pari-version: '2.19.1'
+                  - os: macos-15
                     python-version: '3.15'
-                    pari-version: 'homebrew'
+                    pari-version: '2.19.1'
                   - os: darwin-27
                     python-version: '3.13'
-                    pari-version: 'homebrew'
+                    pari-version: '2.19.1'
                   - os: darwin-27
                     python-version: '3.14'
-                    pari-version: 'homebrew'
+                    pari-version: '2.19.1'
                   - os: darwin-27
                     python-version: '3.15'
-                    pari-version: 'homebrew'
+                    pari-version: '2.19.1'
         env:
           LC_ALL: C
           PARI_VERSION: ${{ matrix.pari-version }}
@@ -50,7 +50,7 @@ jobs:
             shell: ${{ matrix.os == 'windows-latest' && 'msys2 {0}' || 'bash' }}
         steps:
         - name: Set up the repository
-          uses: actions/checkout@v4
+          uses: actions/checkout@v7
         - name: Setup MSYS2
           if: runner.os == 'Windows'
           id: msys2
@@ -75,19 +75,23 @@ jobs:
               path-type: inherit
         - name: Set up Python ${{ matrix.python-version }}
           if: runner.os != 'Windows'
-          uses: actions/setup-python@v6
+          uses: actions/setup-python@v7
           with:
             python-version: ${{ matrix.python-version }}
             allow-prereleases: true
-        - name: Install PARI
+        - name: Set up Homebrew core PARI
+          if: runner.os != 'Windows' && matrix.pari-version == '2.19.1'
+          run: bash .github/setup-brew-pari.sh
+        - name: Install PARI from source
+          if: runner.os == 'Windows' || matrix.pari-version != '2.19.1'
           run: bash -x .install-pari.sh
         - name: Smoke test PARI
           run: |
-            if [ ${{ runner.os }} = macOS ]; then
-              HOMEBREW=`brew --prefix`
-              clang -v tests/test.c -o test -I$HOMEBREW/include -L$HOMEBREW/lib -lpari -lgmp
+            if [ -n "${PARI_PREFIX:-}" ]; then
+              cc -v tests/test.c -o test -I"$PARI_PREFIX/include" -L"$PARI_PREFIX/lib" \
+                -I"$GMP_PREFIX/include" -L"$GMP_PREFIX/lib" -Wl,-rpath,"$PARI_PREFIX/lib" -lpari -lgmp
             else
-              gcc -v tests/test.c -o test -I/usr/local/include -L/usr/local/bin -lpari -lgmp
+              gcc -v tests/test.c -o test -I/usr/include -L/usr/lib -lpari -lgmp
             fi
             expected="zeta(2) = 1.6449340668482264364
             p = x^3 + x^2 + x - 1
@@ -105,7 +109,7 @@ jobs:
             fi
 
         - name: Setup uv
-          uses: astral-sh/setup-uv@v6
+          uses: astral-sh/setup-uv@v10.4.0
 
         - name: Build
           run: |
@@ -116,12 +120,23 @@ jobs:
             echo $PATH
             echo $C_INCLUDE_PATH
             echo $LIBRARY_PATH
+            config_args=(--config-settings-package cypari2:builddir=builddir)
+            if [ -n "${PARI_PREFIX:-}" ]; then
+              config_args+=(--config-settings-package "cypari2:setup-args=-Dpari_prefix=$PARI_PREFIX")
+            fi
             uv sync --frozen --inexact -v --no-install-project
-            uv sync --frozen --inexact -v --no-build-isolation --no-editable --reinstall-package cypari2 --config-settings=builddir=builddir
+            uv sync --frozen --inexact -v --no-build-isolation --no-editable --reinstall-package cypari2 "${config_args[@]}"
         - name: Test
           run: |
+            if [ -n "${PARI_PREFIX:-}" ]; then
+              uv run --no-sync python -I .github/check-installed.py
+            fi
             uv run --no-sync make check
         - name: Build docs
           run: |
-            uv sync --frozen --inexact -v --no-build-isolation-package cypari2 --no-editable --config-settings=builddir=builddir --group doc
+            config_args=(--config-settings-package cypari2:builddir=builddir)
+            if [ -n "${PARI_PREFIX:-}" ]; then
+              config_args+=(--config-settings-package "cypari2:setup-args=-Dpari_prefix=$PARI_PREFIX")
+            fi
+            uv sync --frozen --inexact -v --no-build-isolation-package cypari2 --no-editable "${config_args[@]}" --group doc
             (cd docs && uv run --no-sync make html)

@@ -7,7 +7,8 @@ project('cypari2',
     check: true,
   ).stdout().strip(),
   license: 'GPL v2+',
-  default_options: ['c_std=c17', 'python.install_env=auto'],
+  # PARI headers require POSIX types hidden by strict ISO C modes.
+  default_options: ['c_std=gnu17', 'python.install_env=auto'],
   meson_version: '>=1.5.0',
 )
 

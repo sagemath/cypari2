@@ -4,80 +4,207 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      source-ref:
+        description: Optional source ref to validate (manual runs never publish)
+        required: false
+        type: string
+      c-standard:
+        description: Optional GNU17 override for historical sources (empty uses the source default)
+        required: false
+        default: ''
+        type: string
 
 concurrency:
-  # Cancel previous runs of this workflow for the same branch
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PARI_VERSION: '2.19.1'
+  PARI_INSTALL_DEPENDENCIES: '1'
+  C_STANDARD: ${{ inputs.c-standard || '' }}
+
 jobs:
   make_sdist:
-    name: Build sdist
+    name: Build the source distribution
     runs-on: ubuntu-latest
+    outputs:
+      sha256: ${{ steps.sdist.outputs.sha256 }}
+      filename: ${{ steps.sdist.outputs.filename }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-      - name: Install PARI
-        run: ./.install-pari.sh
-      - name: Build sdist
-        run: uv build --sdist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
-          path: "dist/*.tar.*"
+          ref: ${{ inputs.source-ref || github.sha }}
+          path: source
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - uses: astral-sh/setup-uv@v10.4.0
+      - name: Set up Homebrew core PARI
+        run: bash .github/setup-brew-pari.sh
+      - name: Build sdist once
+        id: sdist
+        run: |
+          case "$C_STANDARD" in
+            ''|gnu17) ;;
+            *) echo "Unsupported historical C standard override: $C_STANDARD" >&2; exit 1 ;;
+          esac
+          git -C source rev-parse HEAD
+          config_args=(--config-setting "setup-args=-Dpari_prefix=$PARI_PREFIX")
+          if [ -n "$C_STANDARD" ]; then
+            echo "Historical C standard override: $C_STANDARD"
+            config_args+=(--config-setting "setup-args=-Dc_std=$C_STANDARD")
+          fi
+          uv build --sdist source --out-dir dist "${config_args[@]}"
+          python .github/verify-sdist.py dist >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v7
+        with:
+          path: dist/*.tar.gz
           name: release-sdist
+          if-no-files-found: error
 
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+  test_sdist_arm:
+    name: Test sdist (${{ matrix.os }}, Python ${{ matrix.python }})
+    needs: make_sdist
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - ubuntu-24.04-arm
-          - macos-15-intel
-          - macos-latest
-          - darwin-27
+        os: [ubuntu-24.04-arm, macos-15]
+        python: ['3.13', '3.14', '3.15']
+    env:
+      SDIST_SHA256: ${{ needs.make_sdist.outputs.sha256 }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v3.2.1
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: astral-sh/setup-uv@v10.4.0
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-sdist
+          path: dist
+      - name: Verify the shared sdist
+        run: python .github/verify-sdist.py dist --sha256 "$SDIST_SHA256" --extract sdist-tests
+      - name: Set up Homebrew core PARI
+        run: bash .github/setup-brew-pari.sh
+      - name: Install the sdist into a fresh noneditable environment
+        run: |
+          config_args=(--config-settings-package "cypari2:setup-args=-Dpari_prefix=$PARI_PREFIX")
+          if [ -n "$C_STANDARD" ]; then
+            config_args+=(--config-settings-package "cypari2:setup-args=-Dc_std=$C_STANDARD")
+          fi
+          uv venv --python python .venv
+          uv pip install --python .venv/bin/python "${config_args[@]}" dist/*.tar.gz
+          uv pip check --python .venv/bin/python
+          .venv/bin/python -I .github/check-installed.py
+          .venv/bin/python -I -c "import sys; from pathlib import Path; sys.path.append(str(next(Path('sdist-tests').iterdir()).resolve())); import autogen.doc, autogen.generator, autogen.parser"
+      - name: Run the complete installed-package test suite
+        # Test scripts import subprocess_helpers from the extracted tests directory.
+        run: make -C sdist-tests/* check PYTHON="$PWD/.venv/bin/python -E -s"
+
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    needs: make_sdist
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # macOS 15 keeps GMP and the repaired wheels compatible with macOS 15.
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-15-intel, macos-15]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - uses: astral-sh/setup-uv@v10.4.0
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-sdist
+          path: dist
+      - name: Verify the shared sdist
+        id: verified
         env:
-          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.os == 'darwin-27' && '27.0' || matrix.os == 'macos-latest' && '26.0' || '15.0' }}
-      - uses: actions/upload-artifact@v4
+          SDIST_SHA256: ${{ needs.make_sdist.outputs.sha256 }}
+        run: python .github/verify-sdist.py dist --sha256 "$SDIST_SHA256" --extract wheel-source >> "$GITHUB_OUTPUT"
+      - name: Select the PARI prefix and optional C standard for wheel builds
+        if: runner.os == 'macOS' || inputs.c-standard
+        run: |
+          pari_prefix=/tmp/cypari2-pari
+          if [ "$RUNNER_OS" = macOS ]; then
+            pari_prefix=$(brew --prefix homebrew/core/pari)
+          fi
+          config_args=("setup-args=-Dpari_prefix=$pari_prefix")
+          if [ -n "$C_STANDARD" ]; then
+            config_args+=("setup-args=-Dc_std=$C_STANDARD")
+          fi
+          printf 'CIBW_CONFIG_SETTINGS=%s\n' "${config_args[*]}" >> "$GITHUB_ENV"
+      - name: Build and test wheels from that sdist
+        uses: pypa/cibuildwheel@v4.3.5
+        with:
+          package-dir: ${{ steps.verified.outputs.source }}
+          config-file: pyproject.toml
+        env:
+          # Keep the extracted sdist unchanged, even for an older source ref.
+          CIBW_TEST_SOURCES: >-
+            ${{ steps.verified.outputs.source }}/tests
+            ${{ steps.verified.outputs.source }}/autogen
+            ${{ steps.verified.outputs.source }}/Makefile
+            ${{ steps.verified.outputs.source }}/pyproject.toml
+          CIBW_TEST_COMMAND: >-
+            python {project}/.github/check-installed.py --bundled &&
+            cd ${{ steps.verified.outputs.source }} &&
+            python -c "import autogen.doc, autogen.generator, autogen.parser; from cypari2 import Pari; assert tuple(map(int, Pari().version()))[:3] == (2, 19, 1)" && make check
+          MACOSX_DEPLOYMENT_TARGET: '15.0'
+      - uses: actions/upload-artifact@v7
         with:
           name: release-wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
+          if-no-files-found: error
+
+  check_distributions:
+    name: Check every release file before any upload
+    needs: [make_sdist, test_sdist_arm, build_wheels]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - uses: astral-sh/setup-uv@v10.4.0
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+      - name: Check metadata, source hash and supported wheel platforms
+        env:
+          SDIST_SHA256: ${{ needs.make_sdist.outputs.sha256 }}
+        run: |
+          python .github/test_distribution_checks.py
+          python .github/verify-sdist.py dist --sha256 "$SDIST_SHA256"
+          python .github/check-distributions.py dist
+          uvx twine check --strict dist/*
 
   pypi-publish:
-    # This needs to be a separate job because pypa/gh-action-pypi-publish cannot run on macOS
-    # https://github.com/pypa/gh-action-pypi-publish
-    name: Upload wheels to PyPI
-    needs: [build_wheels, make_sdist]
+    name: Publish the tested distributions
+    needs: check_distributions
+    if: github.repository == 'sagemath/cypari2' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       attestations: write
       contents: read
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: release-*
           path: dist
           merge-multiple: true
-      
-      - name: List files
-        run: ls -l -R dist
-
-      - name: Generate artifact attestations
-        uses: actions/attest-build-provenance@v2
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+      - uses: actions/attest@v4
         with:
-          subject-path: "dist/*"
-
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+          subject-path: dist/*
+      - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')

@@ -33,6 +33,117 @@ case "$(uname -s)" in
         ;;
 esac
 
+check_pthread_engine() {
+  local PARI_CONFIG_HEADER
+  PARI_CONFIG_HEADER="$(./config/objdir)/paricfg.h"
+  if ! grep -q '^#define PARI_MT_ENGINE "pthread"$' \
+      "$PARI_CONFIG_HEADER"; then
+    echo "PARI Configure did not select the requested pthread engine"
+    grep 'PARI_MT_ENGINE' "$PARI_CONFIG_HEADER" || true
+    exit 1
+  fi
+}
+
+# CI builds can use an isolated PARI, independent of Homebrew's PARI
+# version and of any libraries already installed on the runner.
+if [ -n "${PARI_PREFIX:-}" ]; then
+    if [ "$PLATFORM" != linux ] && [ "$PLATFORM" != macos ]; then
+        echo "PARI_PREFIX is supported only on Linux and macOS" >&2
+        exit 1
+    fi
+    PARI_VERSION=${PARI_VERSION:-2.19.1}
+    if [ "$PARI_VERSION" != 2.19.1 ]; then
+        echo "No verified source checksum for PARI $PARI_VERSION" >&2
+        exit 1
+    fi
+    PARI_SHA256=419553b11ff8c3ecb8e9031b7d91d7cee003a5d721e685fcb499565c96fe2943
+    case "$PARI_PREFIX" in
+        /*) ;;
+        *) echo "PARI_PREFIX must be an absolute path" >&2; exit 1 ;;
+    esac
+    if [ -e "$PARI_PREFIX" ]; then
+        echo "PARI_PREFIX must be a new directory: $PARI_PREFIX" >&2
+        exit 1
+    fi
+    prefix_parent=$(dirname "$PARI_PREFIX")
+    available_kib=$(df -Pk "$prefix_parent" | awk 'END {print $4}')
+    if [ "$available_kib" -lt 8388608 ]; then
+        echo "PARI build requires at least 8 GiB free in $prefix_parent; available: $available_kib KiB" >&2
+        exit 1
+    fi
+
+    elevate=()
+    if [ "$(id -u)" != 0 ]; then
+        elevate=(sudo)
+    fi
+    gmp_args=()
+    if [ "$PLATFORM" = macos ]; then
+        if ! brew list --versions gmp >/dev/null; then
+            if [ "${PARI_INSTALL_DEPENDENCIES:-0}" != 1 ]; then
+                echo "GMP must already be installed; dependency installation is disabled" >&2
+                exit 1
+            fi
+            brew install gmp
+        fi
+        gmp_args=("--with-gmp=$(brew --prefix gmp)")
+        SDKROOT=${SDKROOT:-$(xcrun --sdk macosx --show-sdk-path)}
+        export SDKROOT
+        # Retain Homebrew's workaround for the macOS Clang miscompilation.
+        # https://pari.math.u-bordeaux.fr/cgi-bin/bugreport.cgi?bug=2608
+        CFLAGS="${CFLAGS:+$CFLAGS }-O1"
+        export CFLAGS
+        jobs=$(sysctl -n hw.logicalcpu)
+    else
+        # manylinux/musllinux containers and hosted Ubuntu use different tools.
+        if ! printf '#include <gmp.h>\n' | "${CC:-cc}" -E - >/dev/null 2>&1; then
+            if [ "${PARI_INSTALL_DEPENDENCIES:-0}" != 1 ]; then
+                echo "GMP headers must already be installed; dependency installation is disabled" >&2
+                exit 1
+            fi
+            if command -v dnf >/dev/null; then
+                "${elevate[@]}" dnf install -y gmp-devel
+            elif command -v yum >/dev/null; then
+                "${elevate[@]}" yum install -y gmp-devel
+            elif command -v apk >/dev/null; then
+                "${elevate[@]}" apk add gmp-dev
+            else
+                "${elevate[@]}" apt-get update
+                "${elevate[@]}" apt-get install -y libgmp-dev
+            fi
+        fi
+        jobs=$(getconf _NPROCESSORS_ONLN)
+    fi
+    build_root=$(mktemp -d "$prefix_parent/pari-build.XXXXXX")
+    echo "Building verified PARI $PARI_VERSION in $build_root for $PARI_PREFIX"
+    cd "$build_root"
+    curl --fail --location --retry 3 \
+        "https://pari.math.u-bordeaux.fr/pub/pari/unix/pari-$PARI_VERSION.tar.gz" \
+        --output pari.tar.gz
+    if [ "$PLATFORM" = macos ]; then
+        printf '%s  pari.tar.gz\n' "$PARI_SHA256" | shasum -a 256 --check
+    else
+        printf '%s  pari.tar.gz\n' "$PARI_SHA256" | sha256sum -c
+    fi
+    tar xzf pari.tar.gz
+    cd "pari-$PARI_VERSION"
+    ./Configure "--prefix=$PARI_PREFIX" --mt=pthread --without-readline "${gmp_args[@]}"
+    check_pthread_engine
+    make -j"$jobs" gp
+    make install
+    "$PARI_PREFIX/bin/gp" --version
+    # A stack resize in a startup file must not corrupt later input/history.
+    printf 'default(parisize,16000000);\n' > "$build_root/startup-check.gp"
+    gp_output=$(printf '1+2\n%%\nquit\n' | "$PARI_PREFIX/bin/gp" -f -q -s 8000000 \
+        "$build_root/startup-check.gp" 2> "$build_root/startup-check.stderr")
+    if [ "$gp_output" != $'3\n3' ]; then
+        printf 'PARI startup/history regression: expected 3 twice; got:\n%s\n' "$gp_output" >&2
+        cat "$build_root/startup-check.stderr" >&2
+        exit 1
+    fi
+    echo "PARI startup/history regression passed"
+    exit 0
+fi
+
 # Shared macOS runners may already have a linked PARI from another tap.
 if [[ "$PLATFORM" == macos && "$PARI_VERSION" == homebrew ]]; then
     prefix=$(brew --prefix)
@@ -132,13 +243,7 @@ fi
 chmod -R +x ./Configure ./config
 ./Configure $CONFIG_ARGS
 if [[ "$PLATFORM" != "msys" ]]; then
-  PARI_CONFIG_HEADER="$(./config/objdir)/paricfg.h"
-  if ! grep -q '^#define PARI_MT_ENGINE "pthread"$' \
-      "$PARI_CONFIG_HEADER"; then
-    echo "PARI Configure did not select the requested pthread engine"
-    grep 'PARI_MT_ENGINE' "$PARI_CONFIG_HEADER" || true
-    exit 1
-  fi
+  check_pthread_engine
 fi
 
 # On Windows, disable UNIX-specific code in language files

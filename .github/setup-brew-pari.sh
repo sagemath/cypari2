@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Select the core PARI keg without changing which Python the matrix uses.
+set -euo pipefail
+
+if ! command -v brew >/dev/null && [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+    export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+fi
+expected_version=${PARI_VERSION:-2.19.1}
+# Update brew itself and every configured tap, including on persistent runners.
+brew update
+pari_prefix=$(brew --prefix homebrew/core/pari)
+receipt="$pari_prefix/INSTALL_RECEIPT.json"
+if [[ -f $receipt ]] && ! jq -e '.source.tap == "homebrew/core"' "$receipt" >/dev/null; then
+    # Homebrew uses reinstall when switching an existing formula between taps.
+    brew reinstall homebrew/core/pari
+elif [[ -x $pari_prefix/bin/gp && $("$pari_prefix/bin/gp" --version-short) != "$expected_version" ]]; then
+    brew upgrade homebrew/core/pari
+else
+    brew install homebrew/core/pari
+fi
+gmp_prefix=$(brew --prefix --installed homebrew/core/gmp)
+# A tap can install a keg with the same name and version on a shared runner.
+if ! jq -e '.source.tap == "homebrew/core"' "$pari_prefix/INSTALL_RECEIPT.json" >/dev/null; then
+    echo "Expected a homebrew/core/pari keg at $pari_prefix" >&2
+    exit 1
+fi
+version=$("$pari_prefix/bin/gp" --version-short)
+if [[ $version != "$expected_version" ]]; then
+    echo "Expected PARI $expected_version from Homebrew core, found $version in $pari_prefix" >&2
+    exit 1
+fi
+# cibuildwheel also runs this hook outside GitHub Actions.
+if [[ -z ${GITHUB_ENV:-} || -z ${GITHUB_PATH:-} ]]; then
+    exit 0
+fi
+echo "$pari_prefix/bin" >> "$GITHUB_PATH"
+{
+    echo "PARI_PREFIX=$pari_prefix"
+    echo "GMP_PREFIX=$gmp_prefix"
+    echo "LDFLAGS=-Wl,-rpath,$pari_prefix/lib"
+    echo "PKG_CONFIG_PATH=$gmp_prefix/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+    if [[ $(uname -s) == Darwin ]]; then
+        echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)"
+    fi
+} >> "$GITHUB_ENV"
