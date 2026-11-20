@@ -1,9 +1,18 @@
+"""
+Check that other projects can compile against the PARI library bundled in a
+cypari2 wheel, using the pkg-config file ``pari.pc`` shipped with cypari2.
+
+Run by cibuildwheel on the repaired wheels.
+"""
+
 from __future__ import annotations
 
+import ctypes
 import os
 import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -27,54 +36,11 @@ def compiler_from_env(var_name: str, fallback: str) -> list[str]:
     return [compiler]
 
 
-def compile_and_run(
-    compiler: list[str], source_path: Path, output_path: Path, flags: list[str]
-) -> None:
-    subprocess.run(
-        [*compiler, os.fspath(source_path), "-o", os.fspath(output_path), *flags],
-        check=True,
-    )
-    subprocess.run([os.fspath(output_path)], check=True)
-    print(f"Successfully compiled and ran {source_path.name} with {compiler[0]}")
+def compile(compiler: list[str], source: Path, output: Path, flags: list[str]) -> None:
+    subprocess.run([*compiler, os.fspath(source), "-o", os.fspath(output), *flags], check=True)
 
 
-def main() -> None:
-    package_dir = Path(cypari2.__file__).resolve().parent
-    pari_pc = package_dir / "pari.pc"
-    if not pari_pc.is_file():
-        raise AssertionError(f"Missing bundled pkg-config file: {pari_pc}")
-
-    pkg_config_paths = [Path(path).resolve() for path in pkgconf.get_pkg_config_path()]
-    if package_dir.resolve() not in pkg_config_paths:
-        raise AssertionError(f"{package_dir} is not exported via pkgconf entry points")
-
-    flags = shlex.split(run_pkgconf("--cflags", "--libs", "pari"))
-    include_dirs = [Path(flag[2:]).resolve() for flag in flags if flag.startswith("-I")]
-    lib_dirs = [Path(flag[2:]).resolve() for flag in flags if flag.startswith("-L")]
-
-    if package_dir.resolve() not in include_dirs:
-        raise AssertionError(
-            f"pkg-config did not resolve wheel-local headers: {include_dirs}"
-        )
-
-    expected_lib_dirs = [
-        (package_dir.parent / "cypari2.libs").resolve(),
-        (package_dir / ".dylibs").resolve(),
-    ]
-    if not any(path in lib_dirs for path in expected_lib_dirs):
-        raise AssertionError(
-            f"pkg-config did not resolve wheel-local libraries: {lib_dirs}"
-        )
-
-    print(
-        "pkg-config correctly resolves bundled headers and libraries to the following paths:"
-    )
-    for path in include_dirs:
-        print(f"  - {path}")
-    for path in lib_dirs:
-        print(f"  - {path}")
-
-    c_source = """\
+C_PROGRAM = """\
 #include <pari/pari.h>
 
 int main(void) {
@@ -85,7 +51,8 @@ int main(void) {
     return ok ? 0 : 1;
 }
 """
-    cxx_source = """\
+
+CXX_PROGRAM = """\
 extern "C" {
 #include <pari/pari.h>
 }
@@ -99,22 +66,79 @@ int main() {
 }
 """
 
+# Does not initialize PARI, but relies on cypari2 having done so. This only
+# works if it uses the same libpari as cypari2: another copy of libpari has
+# its own uninitialized PARI stack.
+C_LIBRARY = """\
+#include <pari/pari.h>
+
+long probe_add(long a, long b) {
+    pari_sp av = avma;
+    long result = itos(addii(stoi(a), stoi(b)));
+    set_avma(av);
+    return result;
+}
+"""
+
+
+def main() -> None:
+    package_dir = Path(cypari2.__file__).resolve().parent
+    pari_pc = package_dir / "pari.pc"
+    if not pari_pc.is_file():
+        raise AssertionError(f"Missing pkg-config file: {pari_pc}")
+
+    pkg_config_paths = [Path(path).resolve() for path in pkgconf.get_pkg_config_path()]
+    if package_dir not in pkg_config_paths:
+        raise AssertionError(f"{package_dir} is not exported via pkgconf entry points")
+
+    cflags = shlex.split(run_pkgconf("--cflags", "pari"))
+    libs = shlex.split(run_pkgconf("--libs", "pari"))
+    print(f"pari.pc: Cflags: {shlex.join(cflags)}")
+    print(f"pari.pc: Libs: {shlex.join(libs)}")
+
+    include_dirs = [Path(flag[2:]).resolve() for flag in cflags if flag.startswith("-I")]
+    if package_dir not in include_dirs or not (package_dir / "pari" / "pari.h").is_file():
+        raise AssertionError(f"pari.pc does not point to the bundled headers: {cflags}")
+
+    bundled_lib_dirs = [package_dir.parent / "cypari2.libs", package_dir / ".dylibs"]
+    library = [Path(flag).resolve() for flag in libs if not flag.startswith("-")]
+    if not (
+        len(library) == 1
+        and library[0].is_file()
+        and library[0].parent in bundled_lib_dirs
+    ):
+        raise AssertionError(f"pari.pc does not point to the bundled library: {libs}")
+
+    flags = [*cflags, *libs]
     with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir_path = Path(tmpdir)
-        c_path = tmpdir_path / "probe.c"
-        cxx_path = tmpdir_path / "probe.cc"
-        c_path.write_text(c_source)
-        cxx_path.write_text(cxx_source)
+        tmp = Path(tmpdir)
+        for compiler, program, suffix in [
+            (compiler_from_env("CC", "cc"), C_PROGRAM, "c"),
+            (compiler_from_env("CXX", "c++"), CXX_PROGRAM, "cc"),
+        ]:
+            source = tmp / f"probe.{suffix}"
+            source.write_text(program)
+            executable = tmp / f"probe-{suffix}"
+            compile(compiler, source, executable, flags)
+            subprocess.run([os.fspath(executable)], check=True)
+            print(f"Compiled and ran {source.name} with {compiler[0]}")
 
-        # Ignore system-installed PARI, we want to test the bundled one
-        # flags += ["-nostdinc", "-nostdinc++"]
+        source = tmp / "probe_lib.c"
+        source.write_text(C_LIBRARY)
+        shared_lib = tmp / "probe_lib.so"
+        compile(compiler_from_env("CC", "cc"), source, shared_lib, ["-shared", "-fPIC", *flags])
+        probe = ctypes.CDLL(os.fspath(shared_lib))
+        probe.probe_add.argtypes = [ctypes.c_long, ctypes.c_long]
+        probe.probe_add.restype = ctypes.c_long
+        if cypari2.Pari()(2) + 3 != 5 or probe.probe_add(2, 3) != 5:
+            raise AssertionError("Library compiled against pari.pc does not work")
+        print("Library compiled against pari.pc shares the PARI library with cypari2")
 
-        compile_and_run(
-            compiler_from_env("CC", "cc"), c_path, tmpdir_path / "probe-c", flags
-        )
-        compile_and_run(
-            compiler_from_env("CXX", "c++"), cxx_path, tmpdir_path / "probe-cxx", flags
-        )
+    if sys.platform == "linux":
+        maps = Path("/proc/self/maps").read_text().splitlines()
+        loaded = {line.split()[-1] for line in maps if "libpari" in line}
+        if loaded != {os.fspath(library[0])}:
+            raise AssertionError(f"Expected only {library[0]} to be loaded, found {loaded}")
 
 
 if __name__ == "__main__":

@@ -16,49 +16,6 @@ py.install_sources(
   subdir: 'cypari2'
 )
 
-pari_header_search_roots = []
-if host_machine.system() == 'darwin'
-  pari_header_search_roots += ['/opt/homebrew/include', '/usr/local/include']
-elif host_machine.system() == 'windows'
-  pari_header_search_roots += ['/ucrt64/include']
-else
-  multiarch_include_root = run_command(cc, '-print-multiarch', check: false).stdout().strip()
-  if multiarch_include_root != ''
-    pari_header_search_roots += ['/usr/include/' + multiarch_include_root]
-  endif
-  pari_header_search_roots += ['/usr/include', '/usr/local/include']
-endif
-
-pari_header_root = run_command(
-  py,
-  [
-    '-c',
-    '''
-import os
-import sys
-
-seen = set()
-for root in sys.argv[1:]:
-    if root in seen:
-        continue
-    seen.add(root)
-    if os.path.exists(os.path.join(root, "pari", "pari.h")):
-        print(root)
-        break
-    '''.strip(),
-  ] + pari_header_search_roots,
-  check: true,
-).stdout().strip()
-
-if pari_header_root != ''
-  install_subdir(
-    pari_header_root + '/pari',
-    install_dir: py.get_install_dir() / 'cypari2',
-  )
-else
-  warning('Could not locate PARI headers to install alongside pari.pc')
-endif
-
 
 extension_data = {
   'closure': files('closure.pyx'),
@@ -98,18 +55,33 @@ configure_file(
   install: true,
   install_dir: py.get_install_dir() / 'cypari2'
 )
+configure_file(
+  input: '__init__.py',
+  output: '__init__.py',
+  copy: true,
+)
 
+# pkg-config file describing the PARI library that cypari2 is linked against,
+# so that other projects (e.g. Sage) can use the same PARI library.
+# When building binary wheels, tools/bundle_pari_devel.py replaces it by a file
+# pointing to the PARI library and headers bundled in the wheel.
+pari_pc_cflags = []
+foreach dir : pari_header_dirs
+  pari_pc_cflags += '-I' + dir
+endforeach
+pari_pc_libs = []
+foreach dir : pari_lib_dirs
+  pari_pc_libs += '-L' + dir
+endforeach
+pari_pc_libs += '-lpari'
 config_data_pari = configuration_data()
 config_data_pari.set('pari_version', pari_version_str)
+config_data_pari.set('pari_cflags', ' '.join(pari_pc_cflags))
+config_data_pari.set('pari_libs', ' '.join(pari_pc_libs))
 configure_file(
   input: 'pari.pc.in',
   output: 'pari.pc',
   configuration: config_data_pari,
   install: true,
   install_dir: py.get_install_dir() / 'cypari2'
-)
-configure_file(
-  input: '__init__.py',
-  output: '__init__.py',
-  copy: true,
 )
