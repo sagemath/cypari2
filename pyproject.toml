@@ -64,9 +64,17 @@ repair-wheel-command = [
 ]
 [tool.cibuildwheel.macos]
 before-all = "bash {project}/.github/setup-brew-pari.sh"
-environment = { SDKROOT = "$(xcrun --sdk macosx --show-sdk-path)" }
+# macOS 15 keeps GMP and the repaired wheels compatible with macOS 15.
+environment = { SDKROOT = "$(xcrun --sdk macosx --show-sdk-path)", MACOSX_DEPLOYMENT_TARGET = "15.0" }
 # Ship the headers and a pkg-config file for the bundled PARI library
 repair-wheel-command = [
     "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}",
     "python {project}/tools/bundle_pari_devel.py --include-dir \"$(brew --prefix homebrew/core/pari)/include\" {dest_dir}",
 ]
+# Build against the Homebrew core PARI installed by setup-brew-pari.sh
+[[tool.cibuildwheel.overrides]]
+select = "*-macosx_arm64"
+config-settings = { setup-args = "-Dpari_prefix=/opt/homebrew/opt/pari" }
+[[tool.cibuildwheel.overrides]]
+select = "*-macosx_x86_64"
+config-settings = { setup-args = "-Dpari_prefix=/usr/local/opt/pari" }

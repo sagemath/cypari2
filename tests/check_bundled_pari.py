@@ -66,9 +66,9 @@ int main() {
 }
 """
 
-# Does not initialize PARI, but relies on cypari2 having done so. This only
-# works if it uses the same libpari as cypari2: another copy of libpari has
-# its own uninitialized PARI stack.
+# Does not initialize PARI, but relies on cypari2 having done so (it has to run
+# on cypari2's PARI owner thread). This only works if it uses the same libpari
+# as cypari2: another copy of libpari has its own uninitialized PARI stack.
 C_LIBRARY = """\
 #include <pari/pari.h>
 
@@ -130,7 +130,8 @@ def main() -> None:
         probe = ctypes.CDLL(os.fspath(shared_lib))
         probe.probe_add.argtypes = [ctypes.c_long, ctypes.c_long]
         probe.probe_add.restype = ctypes.c_long
-        if cypari2.Pari()(2) + 3 != 5 or probe.probe_add(2, 3) != 5:
+        pari = cypari2.Pari()
+        if pari(2) + 3 != 5 or pari.run_on_owner(probe.probe_add, 2, 3) != 5:
             raise AssertionError("Library compiled against pari.pc does not work")
         print("Library compiled against pari.pc shares the PARI library with cypari2")
 
