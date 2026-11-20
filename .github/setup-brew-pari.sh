@@ -5,7 +5,13 @@ set -euo pipefail
 if ! command -v brew >/dev/null && [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
     export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
 fi
+expected_version=${PARI_VERSION:-2.19.1}
 if [[ ${PARI_INSTALL_DEPENDENCIES:-1} == 1 ]]; then
+    # Hosted images can disable automatic updates and ship an older core index.
+    available=$(brew info --json=v2 homebrew/core/pari | jq -r '.formulae[0].versions.stable')
+    if [[ $available != "$expected_version" ]]; then
+        brew update
+    fi
     brew install homebrew/core/pari
 fi
 pari_prefix=$(brew --prefix --installed homebrew/core/pari)
@@ -16,9 +22,13 @@ if ! jq -e '.source.tap == "homebrew/core"' "$pari_prefix/INSTALL_RECEIPT.json" 
     exit 1
 fi
 version=$("$pari_prefix/bin/gp" --version-short)
-if [[ $version != "$PARI_VERSION" ]]; then
-    echo "Expected PARI $PARI_VERSION from Homebrew core, found $version in $pari_prefix" >&2
+if [[ $version != "$expected_version" ]]; then
+    echo "Expected PARI $expected_version from Homebrew core, found $version in $pari_prefix" >&2
     exit 1
+fi
+# cibuildwheel also runs this hook outside GitHub Actions.
+if [[ -z ${GITHUB_ENV:-} || -z ${GITHUB_PATH:-} ]]; then
+    exit 0
 fi
 echo "$pari_prefix/bin" >> "$GITHUB_PATH"
 {

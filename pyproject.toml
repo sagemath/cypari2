@@ -56,5 +56,5 @@ before-all = "bash -x {project}/.install-pari.sh"
 environment = { PARI_PREFIX = "/tmp/cypari2-pari", PARI_VERSION = "2.19.1", PARI_INSTALL_DEPENDENCIES = "1", PATH = "/tmp/cypari2-pari/bin:$PATH", LDFLAGS = "-Wl,-rpath,/tmp/cypari2-pari/lib" }
 config-settings = { setup-args = "-Dpari_prefix=/tmp/cypari2-pari" }
 [tool.cibuildwheel.macos]
-before-all = "brew install homebrew/core/pari"
+before-all = "bash {project}/.github/setup-brew-pari.sh"
 environment = { SDKROOT = "$(xcrun --sdk macosx --show-sdk-path)" }
