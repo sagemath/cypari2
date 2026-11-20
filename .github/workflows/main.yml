@@ -45,7 +45,6 @@ jobs:
         env:
           LC_ALL: C
           PARI_VERSION: ${{ matrix.pari-version }}
-          PARI_INSTALL_DEPENDENCIES: ${{ matrix.os == 'darwin-27' && '0' || '1' }}
         defaults:
           run:
             shell: ${{ matrix.os == 'windows-latest' && 'msys2 {0}' || 'bash' }}
