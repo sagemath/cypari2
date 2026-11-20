@@ -9,7 +9,7 @@ install:
 
 check:
 	ulimit -s 8192; $(PYTHON) -u tests/rundoctest.py
-	ulimit -s 8192; $(PYTHON) -P -m unittest discover -s tests
+	ulimit -s 8192; $(PYTHON) -P -m pytest -q tests
 
 dist:
 	chmod go+rX-w -R .
