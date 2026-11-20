@@ -122,7 +122,17 @@ cdef extern from "pari/pari.h":
     struct forpart_t
     struct forprime_t
     struct forvec_t
-    struct gp_context
+    struct pari_evalstate:
+        pari_sp avma
+
+    struct pari_parsestate:
+        pass
+
+    struct gp_context:
+        pari_evalstate eval
+        pari_parsestate parse
+        GEN err_data
+        void *iferr_env
     struct nfbasic_t
     struct pariFILE
     struct pari_mt

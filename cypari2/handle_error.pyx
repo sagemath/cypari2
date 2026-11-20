@@ -188,6 +188,11 @@ cdef int _pari_err_handle(GEN E) except 0:
         [2, 0; 0, 2]
         [2, 0; 0, 2]
     """
+    # PARI is unwinding a Python callback. Leave its exception and traceback
+    # in place for cysignals to propagate after PARI resets the evaluator.
+    if PyErr_Occurred():
+        return 0
+
     cdef long errnum = E[1]
     cdef char* errstr
     cdef const char* s
