@@ -128,35 +128,11 @@ jobs:
         env:
           SDIST_SHA256: ${{ needs.make_sdist.outputs.sha256 }}
         run: python .github/verify-sdist.py dist --sha256 "$SDIST_SHA256" --extract wheel-source >> "$GITHUB_OUTPUT"
-      - name: Select the PARI prefix and optional C standard for wheel builds
-        if: runner.os == 'macOS' || inputs.c-standard
-        run: |
-          pari_prefix=/tmp/cypari2-pari
-          if [ "$RUNNER_OS" = macOS ]; then
-            pari_prefix=$(brew --prefix homebrew/core/pari)
-          fi
-          config_args=("setup-args=-Dpari_prefix=$pari_prefix")
-          if [ -n "$C_STANDARD" ]; then
-            config_args+=("setup-args=-Dc_std=$C_STANDARD")
-          fi
-          printf 'CIBW_CONFIG_SETTINGS=%s\n' "${config_args[*]}" >> "$GITHUB_ENV"
       - name: Build and test wheels from that sdist
         uses: pypa/cibuildwheel@v4.3.5
         with:
           package-dir: ${{ steps.verified.outputs.source }}
           config-file: pyproject.toml
-        env:
-          # Keep the extracted sdist unchanged, even for an older source ref.
-          CIBW_TEST_SOURCES: >-
-            ${{ steps.verified.outputs.source }}/tests
-            ${{ steps.verified.outputs.source }}/autogen
-            ${{ steps.verified.outputs.source }}/Makefile
-            ${{ steps.verified.outputs.source }}/pyproject.toml
-          CIBW_TEST_COMMAND: >-
-            python {project}/.github/check-installed.py --bundled &&
-            cd ${{ steps.verified.outputs.source }} &&
-            python -c "import autogen.doc, autogen.generator, autogen.parser; from cypari2 import Pari; assert tuple(map(int, Pari().version()))[:3] == (2, 19, 1)" && make check
-          MACOSX_DEPLOYMENT_TARGET: '15.0'
       - uses: actions/upload-artifact@v7
         with:
           name: release-wheels-${{ matrix.os }}

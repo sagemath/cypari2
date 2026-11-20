@@ -51,6 +51,7 @@ gmp = dependency('gmp', required: false)
 # Cannot be found via pkg-config
 # Also require shared library, since otherwise every Cython extension would include it's own copy of pari leading to hard-to-debug segmentation faults at runtime
 pari_header_include_dirs = [] # additional dirs to search for PARI headers
+pari_header_dirs = [] # same as pari_header_include_dirs, but as strings (for pari.pc)
 pari_lib_dirs = [] # additional dirs to search for the PARI library
 
 # An explicitly configured prefix takes precedence over any system location.
@@ -62,6 +63,7 @@ pari_prefix = get_option('pari_prefix')
 if pari_prefix != ''
   message('PARI prefix: ' + pari_prefix)
   pari_header_include_dirs += include_directories(pari_prefix + '/include')
+  pari_header_dirs += [pari_prefix + '/include']
   pari_lib_dirs += [pari_prefix + '/lib']
 endif
 if host_machine.system() == 'darwin'
@@ -70,6 +72,7 @@ if host_machine.system() == 'darwin'
     brew_prefix = run_command(brew, '--prefix', check: true).stdout().strip()
     message('Homebrew prefix: ' + brew_prefix)
     pari_header_include_dirs += include_directories(brew_prefix + '/include')
+    pari_header_dirs += [brew_prefix + '/include']
     pari_lib_dirs += [brew_prefix + '/lib']
   endif
 endif
@@ -90,6 +93,18 @@ pari = cc.find_library(
 )
 pari = declare_dependency(include_directories: pari_header_include_dirs,
   dependencies: [pari, gmp])
+
+# PARI_VERSION_CODE is (major << 16) + (minor << 8) + patch
+pari_version_int = cc.compute_int(
+  'PARI_VERSION_CODE',
+  prefix: '#include <pari/pari.h>',
+  dependencies: [pari],
+)
+pari_version_str = '@0@.@1@.@2@'.format(
+  pari_version_int / 65536,
+  pari_version_int / 256 % 256,
+  pari_version_int % 256,
+)
 
 if meson.can_run_host_binaries()
   # Get PARI version (mostly as smoke test)

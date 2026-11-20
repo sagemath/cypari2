@@ -1,0 +1,7 @@
+# PARI library that cypari2 is linked against.
+# In binary wheels, this file describes the PARI library bundled in the wheel instead.
+Name: pari
+Description: PARI/GP library used by cypari2
+Version: @pari_version@
+Cflags: @pari_cflags@
+Libs: @pari_libs@

@@ -44,7 +44,7 @@ foreach name, pyx : extension_data
     sources: pyx,
     subdir: 'cypari2',
     install: true,
-    dependencies: [cysignals, pari, threads],
+    dependencies: [py.dependency(), cysignals, pari, threads],
     include_directories: [inc_root, inc_src],
   )
 endforeach
@@ -67,4 +67,29 @@ configure_file(
   input: '_thread_runtime.py',
   output: '_thread_runtime.py',
   copy: true,
+)
+
+# pkg-config file describing the PARI library that cypari2 is linked against,
+# so that other projects (e.g. Sage) can use the same PARI library.
+# When building binary wheels, tools/bundle_pari_devel.py replaces it by a file
+# pointing to the PARI library and headers bundled in the wheel.
+pari_pc_cflags = []
+foreach dir : pari_header_dirs
+  pari_pc_cflags += '-I' + dir
+endforeach
+pari_pc_libs = []
+foreach dir : pari_lib_dirs
+  pari_pc_libs += '-L' + dir
+endforeach
+pari_pc_libs += '-lpari'
+config_data_pari = configuration_data()
+config_data_pari.set('pari_version', pari_version_str)
+config_data_pari.set('pari_cflags', ' '.join(pari_pc_cflags))
+config_data_pari.set('pari_libs', ' '.join(pari_pc_libs))
+configure_file(
+  input: 'pari.pc.in',
+  output: 'pari.pc',
+  configuration: config_data_pari,
+  install: true,
+  install_dir: py.get_install_dir() / 'cypari2'
 )
