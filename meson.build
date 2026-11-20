@@ -7,7 +7,8 @@ project('cypari2',
     check: true,
   ).stdout().strip(),
   license: 'GPL v2+',
-  default_options: ['c_std=c17', 'python.install_env=auto'],
+  # PARI headers require POSIX types hidden by strict ISO C modes.
+  default_options: ['c_std=gnu17', 'python.install_env=auto'],
   meson_version: '>=1.5.0',
 )
 
@@ -18,6 +19,7 @@ py = import('python').find_installation(pure: false)
 # Compilers
 cc = meson.get_compiler('c')
 cython = meson.get_compiler('cython')
+threads = dependency('threads')
 # Workaround as described in https://cython.readthedocs.io/en/latest/src/userguide/special_methods.html#arithmetic-methods
 add_project_arguments('-X c_api_binop_methods=True', language: 'cython')
 # Compiler debug output

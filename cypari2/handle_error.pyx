@@ -23,11 +23,13 @@ AUTHORS:
 
 from cpython cimport PyErr_Occurred
 
-from cysignals.signals cimport sig_block, sig_unblock, sig_error
+from cysignals.signals cimport sig_block, sig_unblock
 
 from .paridecl cimport *
 from .paripriv cimport *
 from .stack cimport clone_gen_noclear, reset_avma, after_resize
+from .thread_support cimport sig_error_local
+from ._thread_runtime import runtime as _pari_thread_runtime
 
 
 # We derive PariError from RuntimeError, for backward compatibility with
@@ -208,6 +210,7 @@ cdef int _pari_err_handle(GEN E) except 0:
     if s is not NULL:
         pari_error_string = s.decode('ascii') + ": " + pari_error_string
 
+    _pari_thread_runtime.note_callback_pari_error()
     raise PariError(errnum, pari_error_string, clone_gen_noclear(E))
 
 
@@ -228,4 +231,4 @@ cdef void _pari_err_recover(long errnum) noexcept:
 
     # An exception was raised.  Jump to the signal-handling code
     # which will cause sig_on() to see the exception.
-    sig_error()
+    sig_error_local()

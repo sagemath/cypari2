@@ -2,11 +2,43 @@
 # to compute zeta(2) and factor a polynomial over a finite field, as in the README.
 
 from cypari2.paridecl cimport pari_printf, pari_init, pari_close, DEFAULTPREC, szeta, stoi, pol_x, gpow, gadd, factorff, lift, centerlift, setvarn, gen_2, gen_m1, gen_0, INIT_DFTm, pari_init_opts, pari_mainstack
+from cypari2.paridecl cimport paricfg_mt_engine
 from cypari2.types cimport GEN
 from cypari2.closure cimport _pari_init_closure
 from cypari2.stack cimport (new_gen, new_gen_noclear, clear_stack,
                      set_pari_stack_size, before_resize, after_resize)
+from cypari2.convert cimport new_gen_from_double, new_t_COMPLEX_from_double
+from cysignals.signals cimport sig_on, sig_off
 from libc.stdio cimport printf
+
+
+def call_with_sig_on(function):
+    """Call the Python API from an external Cython signal-protected frame."""
+    sig_on()
+    try:
+        return function()
+    finally:
+        sig_off()
+
+
+def gen_from_double(double value):
+    return new_gen_from_double(value)
+
+
+def gen_from_complex(double real, double imag):
+    return new_t_COMPLEX_from_double(real, imag)
+
+
+def cython_power(long base, long exponent=2):
+    """An example raw PARI computation, to be invoked with run_on_owner()."""
+    sig_on()
+    return new_gen(gpow(stoi(base), stoi(exponent), DEFAULTPREC))
+
+
+def pari_mt_engine():
+    """Return the threading engine selected when PARI was built."""
+    return paricfg_mt_engine.decode("ascii")
+
 
 def main():
 

@@ -29,5 +29,18 @@ class TestBackward(unittest.TestCase):
         self.assertEqual(pari('x*y^2 + 1').poldegree(pari('x')), 1)
         self.assertEqual(pari('x*y^2 + 1').poldegree(pari('y')), 2)
 
+    def test_idealfrobenius_after_getitem(self):
+        pari = cypari2.Pari()
+        nf = pari('nfinit(x^2 + 1)')
+        prime = nf.idealfactor(7)[0, 0]
+        gal = nf.galoisinit()
+
+        # Accessing an entry moves gal to the heap. For residue degree 2,
+        # idealfrobenius() returns a reference to an entry of gal.group.
+        _ = gal[5]
+        expected = pari('Vecsmall([2, 1])')
+        self.assertEqual(nf.idealfrobenius(gal, prime), expected)
+        self.assertEqual(pari.idealfrobenius(nf, gal, prime), expected)
+
 if __name__ == '__main__':
     unittest.main()
