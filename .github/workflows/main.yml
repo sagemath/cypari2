@@ -80,14 +80,7 @@ jobs:
             python-version: ${{ matrix.python-version }}
             allow-prereleases: true
         - name: Install PARI
-          if: runner.os != 'macOS'
-          run: |         
-            bash -x .install-pari.sh
-        - name: Install PARI
-          if: runner.os == 'macOS'
-          run: |
-            brew install pari
-            brew list --versions pari
+          run: bash -x .install-pari.sh
         - name: Smoke test PARI
           run: |
             if [ ${{ runner.os }} = macOS ]; then
