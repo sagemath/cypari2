@@ -31,8 +31,6 @@ jobs:
     outputs:
       sha256: ${{ steps.sdist.outputs.sha256 }}
       filename: ${{ steps.sdist.outputs.filename }}
-    env:
-      PARI_PREFIX: /tmp/cypari2-pari
     steps:
       - uses: actions/checkout@v7
       - uses: actions/checkout@v7
@@ -43,10 +41,8 @@ jobs:
         with:
           python-version: '3.14'
       - uses: astral-sh/setup-uv@v10.4.0
-      - name: Install checksum-verified PARI
-        run: |
-          ./.install-pari.sh
-          echo "$PARI_PREFIX/bin" >> "$GITHUB_PATH"
+      - name: Set up Homebrew core PARI
+        run: bash .github/setup-brew-pari.sh
       - name: Build sdist once
         id: sdist
         run: |
@@ -55,7 +51,6 @@ jobs:
             *) echo "Unsupported historical C standard override: $C_STANDARD" >&2; exit 1 ;;
           esac
           git -C source rev-parse HEAD
-          export LDFLAGS="-Wl,-rpath,$PARI_PREFIX/lib"
           config_args=(--config-setting "setup-args=-Dpari_prefix=$PARI_PREFIX")
           if [ -n "$C_STANDARD" ]; then
             echo "Historical C standard override: $C_STANDARD"
@@ -79,7 +74,6 @@ jobs:
         os: [ubuntu-24.04-arm, macos-15]
         python: ['3.13', '3.14', '3.15']
     env:
-      PARI_PREFIX: /tmp/cypari2-pari
       SDIST_SHA256: ${{ needs.make_sdist.outputs.sha256 }}
     steps:
       - uses: actions/checkout@v7
@@ -91,17 +85,12 @@ jobs:
         with:
           name: release-sdist
           path: dist
-      - name: Verify the shared sdist and install PARI
-        run: |
-          python .github/verify-sdist.py dist --sha256 "$SDIST_SHA256" --extract sdist-tests
-          ./.install-pari.sh
-          echo "$PARI_PREFIX/bin" >> "$GITHUB_PATH"
-          if [ "$RUNNER_OS" = macOS ]; then
-            echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> "$GITHUB_ENV"
-          fi
+      - name: Verify the shared sdist
+        run: python .github/verify-sdist.py dist --sha256 "$SDIST_SHA256" --extract sdist-tests
+      - name: Set up Homebrew core PARI
+        run: bash .github/setup-brew-pari.sh
       - name: Install the sdist into a fresh noneditable environment
         run: |
-          export LDFLAGS="-Wl,-rpath,$PARI_PREFIX/lib"
           config_args=(--config-settings-package "cypari2:setup-args=-Dpari_prefix=$PARI_PREFIX")
           if [ -n "$C_STANDARD" ]; then
             config_args+=(--config-settings-package "cypari2:setup-args=-Dc_std=$C_STANDARD")
@@ -139,11 +128,17 @@ jobs:
         env:
           SDIST_SHA256: ${{ needs.make_sdist.outputs.sha256 }}
         run: python .github/verify-sdist.py dist --sha256 "$SDIST_SHA256" --extract wheel-source >> "$GITHUB_OUTPUT"
-      - name: Set the historical C standard override
-        if: inputs.c-standard
+      - name: Select the PARI prefix and optional C standard for wheel builds
+        if: runner.os == 'macOS' || inputs.c-standard
         run: |
-          # This replaces config-settings, so preserve the private PARI prefix.
-          config_args=("setup-args=-Dpari_prefix=/tmp/cypari2-pari" "setup-args=-Dc_std=$C_STANDARD")
+          pari_prefix=/tmp/cypari2-pari
+          if [ "$RUNNER_OS" = macOS ]; then
+            pari_prefix=$(brew --prefix homebrew/core/pari)
+          fi
+          config_args=("setup-args=-Dpari_prefix=$pari_prefix")
+          if [ -n "$C_STANDARD" ]; then
+            config_args+=("setup-args=-Dc_std=$C_STANDARD")
+          fi
           printf 'CIBW_CONFIG_SETTINGS=%s\n' "${config_args[*]}" >> "$GITHUB_ENV"
       - name: Build and test wheels from that sdist
         uses: pypa/cibuildwheel@v4.3.5
@@ -152,7 +147,6 @@ jobs:
           config-file: pyproject.toml
         env:
           # Keep the extracted sdist unchanged, even for an older source ref.
-          CIBW_BEFORE_ALL: bash -x {project}/.install-pari.sh
           CIBW_TEST_SOURCES: >-
             ${{ steps.verified.outputs.source }}/tests
             ${{ steps.verified.outputs.source }}/autogen

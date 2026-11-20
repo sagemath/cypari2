@@ -80,22 +80,17 @@ jobs:
           with:
             python-version: ${{ matrix.python-version }}
             allow-prereleases: true
-        - name: Set up an isolated PARI prefix and SDK
-          if: runner.os == 'macOS'
-          run: |
-            private_root=$(mktemp -d "$RUNNER_TEMP/cypari2-pari.XXXXXX")
-            echo "PARI_PREFIX=$private_root/install" >> "$GITHUB_ENV"
-            echo "LDFLAGS=-Wl,-rpath,$private_root/install/lib" >> "$GITHUB_ENV"
-            echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> "$GITHUB_ENV"
-            echo "$private_root/install/bin" >> "$GITHUB_PATH"
-        - name: Install PARI
+        - name: Set up Homebrew core PARI
+          if: runner.os != 'Windows' && matrix.pari-version == '2.19.1'
+          run: bash .github/setup-brew-pari.sh
+        - name: Install PARI from source
+          if: runner.os == 'Windows' || matrix.pari-version != '2.19.1'
           run: bash -x .install-pari.sh
         - name: Smoke test PARI
           run: |
-            if [ "$RUNNER_OS" = macOS ]; then
-              gmp_prefix=$(brew --prefix gmp)
-              clang -v tests/test.c -o test -I"$PARI_PREFIX/include" -L"$PARI_PREFIX/lib" \
-                -I"$gmp_prefix/include" -L"$gmp_prefix/lib" -Wl,-rpath,"$PARI_PREFIX/lib" -lpari -lgmp
+            if [ -n "${PARI_PREFIX:-}" ]; then
+              cc -v tests/test.c -o test -I"$PARI_PREFIX/include" -L"$PARI_PREFIX/lib" \
+                -I"$GMP_PREFIX/include" -L"$GMP_PREFIX/lib" -Wl,-rpath,"$PARI_PREFIX/lib" -lpari -lgmp
             else
               gcc -v tests/test.c -o test -I/usr/include -L/usr/lib -lpari -lgmp
             fi

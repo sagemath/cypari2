@@ -1,4 +1,4 @@
-"""Check the installed package and the actual private or bundled PARI owner."""
+"""Check the installed package and the origin of the loaded PARI library."""
 
 import argparse
 import ctypes
@@ -40,6 +40,6 @@ else:
     }
 if not libraries or any(not path.is_relative_to(prefix) for path in libraries):
     raise SystemExit(f"Unexpected loaded PARI libraries: {libraries}")
-print(json.dumps({"mode": "bundled" if args.bundled else "private",
+print(json.dumps({"mode": "bundled" if args.bundled else "prefix",
                   "python": sys.version, "module": str(module),
                   "pari_version": version, "pari_libraries": sorted(map(str, libraries))}, indent=2))
