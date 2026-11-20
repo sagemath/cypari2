@@ -9,7 +9,9 @@ from ._thread_runtime import runtime as _pari_thread_runtime
 
 def _initialize_thread_owner():
     _set_signal_owner()
-    Pari()
+    # Run __cinit__ on the owner. The first actual constructor call supplies
+    # the stack size and prime-table limit to Pari.__init__.
+    Pari.__new__(Pari)
 
 
 init_custom_block()

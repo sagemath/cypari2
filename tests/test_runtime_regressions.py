@@ -1,5 +1,6 @@
-"""Regression tests for the PARI owner runtime's process lifecycle."""
+"""Regression tests for the PARI owner runtime."""
 
+import inspect
 import os
 import signal
 import subprocess
@@ -7,8 +8,52 @@ import sys
 import tempfile
 import unittest
 
+from cypari2 import Pari
+from subprocess_helpers import run_in_fresh_process
+
 
 class TestRuntimeRegressions(unittest.TestCase):
+    def test_introspection_keeps_owner_dispatch(self):
+        pari = Pari()
+        for method in (Pari.primes, Pari.issquarefree, type(pari(1)).factor):
+            with self.subTest(method=method):
+                self.assertIs(inspect.unwrap(method), method)
+        self.assertEqual(str(inspect.signature(pari.primes)), "(n=None, end=None)")
+        self.assertEqual(inspect.unwrap(Pari.primes)(pari, 3), [2, 3, 5])
+
+    def test_owner_can_retry_after_start_failure(self):
+        run_in_fresh_process("""
+from threading import Thread
+from unittest.mock import patch
+from cypari2 import Pari
+
+with patch.object(Thread, "start", side_effect=RuntimeError("cannot start thread")):
+    try:
+        Pari()
+    except RuntimeError as exc:
+        assert str(exc) == "cannot start thread", exc
+    else:
+        raise AssertionError("expected thread startup to fail")
+assert Pari()(2) == 2
+""")
+
+    def test_first_constructor_supplies_prime_table_limit(self):
+        run_in_fresh_process("""
+import cypari2
+
+# Record the requests to PARI; its minimum prime-table size varies by version.
+limits = []
+class RecordingPari(cypari2.Pari):
+    def init_primes(self, limit):
+        limits.append(limit)
+        return super().init_primes(limit)
+
+cypari2.Pari = RecordingPari
+pari = cypari2.Pari(maxprime=100_000)
+assert limits == [100_000], limits
+assert pari.default("primelimit") == 100_000
+""")
+
     @unittest.skipUnless(hasattr(os, "fork"), "requires os.fork")
     def test_fork_restriction_survives_another_fork(self):
         code = r'''

@@ -15,6 +15,7 @@ from __future__ import annotations
 import atexit
 import contextvars
 import functools
+import inspect
 import os
 import queue
 import sys
@@ -31,6 +32,10 @@ def owner_method(method):
     def owner_call(*args, **kwargs):
         return runtime.call(method, *args, **kwargs)
 
+    # Keep signature introspection useful without handing tools that unwrap
+    # decorators a direct entry point into the owner-only implementation.
+    owner_call.__signature__ = inspect.signature(method)
+    del owner_call.__wrapped__
     return owner_call
 
 
@@ -153,8 +158,8 @@ class _PariThreadRuntime:
                             name="cypari2-pari-owner",
                             daemon=True,
                         )
-                    self._thread = thread
                     thread.start()
+                    self._thread = thread
         self._ready.wait()
         if not thread.is_alive():
             raise RuntimeError("the cypari2 PARI owner thread is no longer available")
