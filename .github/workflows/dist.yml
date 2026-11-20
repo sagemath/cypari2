@@ -34,15 +34,15 @@ jobs:
     env:
       PARI_PREFIX: /tmp/cypari2-pari
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.source-ref || github.sha }}
           path: source
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.14'
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10.4.0
       - name: Install checksum-verified PARI
         run: |
           ./.install-pari.sh
@@ -63,7 +63,7 @@ jobs:
           fi
           uv build --sdist source --out-dir dist "${config_args[@]}"
           python .github/verify-sdist.py dist >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           path: dist/*.tar.gz
           name: release-sdist
@@ -82,12 +82,12 @@ jobs:
       PARI_PREFIX: /tmp/cypari2-pari
       SDIST_SHA256: ${{ needs.make_sdist.outputs.sha256 }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
-      - uses: astral-sh/setup-uv@v6
-      - uses: actions/download-artifact@v4
+      - uses: astral-sh/setup-uv@v10.4.0
+      - uses: actions/download-artifact@v8
         with:
           name: release-sdist
           path: dist
@@ -125,12 +125,12 @@ jobs:
         # macOS 15 keeps GMP and the repaired wheels compatible with macOS 15.
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-15-intel, macos-15]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.14'
-      - uses: astral-sh/setup-uv@v6
-      - uses: actions/download-artifact@v4
+      - uses: astral-sh/setup-uv@v10.4.0
+      - uses: actions/download-artifact@v8
         with:
           name: release-sdist
           path: dist
@@ -163,7 +163,7 @@ jobs:
             cd ${{ steps.verified.outputs.source }} &&
             python -c "import autogen.doc, autogen.generator, autogen.parser; from cypari2 import Pari; assert tuple(map(int, Pari().version()))[:3] == (2, 19, 1)" && make check
           MACOSX_DEPLOYMENT_TARGET: '15.0'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
@@ -174,12 +174,12 @@ jobs:
     needs: [make_sdist, test_sdist_arm, build_wheels]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.14'
-      - uses: astral-sh/setup-uv@v6
-      - uses: actions/download-artifact@v4
+      - uses: astral-sh/setup-uv@v10.4.0
+      - uses: actions/download-artifact@v8
         with:
           pattern: release-*
           path: dist
@@ -203,12 +203,12 @@ jobs:
       attestations: write
       contents: read
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: release-*
           path: dist
           merge-multiple: true
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest@v4
         with:
           subject-path: dist/*
       - uses: pypa/gh-action-pypi-publish@release/v1
