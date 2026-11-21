@@ -238,13 +238,10 @@ if [[ "$PLATFORM" = "msys" ]]; then
   # in Python to find the DLLs.
   CONFIG_ARGS="--without-readline --prefix=$MSYSTEM_PREFIX"
 else
-  CONFIG_ARGS="--mt=pthread --prefix=/usr"
+  CONFIG_ARGS="--prefix=/usr"
 fi
 chmod -R +x ./Configure ./config
 ./Configure $CONFIG_ARGS
-if [[ "$PLATFORM" != "msys" ]]; then
-  check_pthread_engine
-fi
 
 # On Windows, disable UNIX-specific code in language files
 # (not sure why UNIX is defined)

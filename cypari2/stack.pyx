@@ -19,15 +19,14 @@ cimport cython
 from cpython.ref cimport PyObject, _Py_REFCNT
 from cpython.exc cimport PyErr_SetString
 
-from cysignals.signals cimport sig_on, sig_off, sig_block, sig_unblock
+from cysignals.signals cimport (sig_on, sig_off, sig_block, sig_unblock,
+                                sig_error)
 
 from .gen cimport Gen, Gen_new
 from .paridecl cimport (avma, pari_mainstack, gnil, gcopy,
                         is_universal_constant, is_on_stack,
                         isclone, gclone, gclone_refc,
                         paristack_setsize)
-from ._thread_runtime import runtime as _pari_thread_runtime
-from .thread_support cimport sig_error_local
 
 from warnings import warn
 
@@ -48,38 +47,34 @@ cdef Gen top_of_stack = Gen_new(gnil, NULL)
 cdef PyObject* stackbottom = <PyObject*>top_of_stack
 
 
+# A running GP evaluator can hold raw stack values below the last Python Gen.
+# Preserve that part of the stack while it calls back into Python.
+cdef pari_sp callback_stack_limit = 0
+
+cdef inline pari_sp stack_position(Gen value) noexcept:
+    cdef pari_sp pos = value.sp()
+    if callback_stack_limit and pos > callback_stack_limit:
+        return callback_stack_limit
+    return pos
+
+
 cdef void remove_from_pari_stack(Gen self) noexcept:
     global avma, stackbottom
-    if not _pari_thread_runtime.is_owner():
-        # A Python callback can hand a newly-created stack Gen to another
-        # Python thread before the enclosing owner request has returned.  If
-        # that thread drops the last reference, only unlink the Python object
-        # here: ``avma`` is PARI TLS and must be restored by the owner.  The
-        # linked-list invariant means that an object whose reference count
-        # reached zero is necessarily the current stack bottom.  Holding ``n``
-        # across clearing ``self.next`` also makes recursive deallocation of
-        # now-unreferenced predecessors follow the same safe path.
-        if <PyObject*>self is not stackbottom:
-            print("ERROR: removing non-current PARI stack Gen on a foreign thread")
-            return
-        n = self.next
-        stackbottom = <PyObject*>n
-        self.next = None
-        return
     if <PyObject*>self is not stackbottom:
         print("ERROR: removing wrong instance of Gen")
         print(f"Expected: {<object>stackbottom}")
         print(f"Actual:   {self}")
     if sig_on_count and not block_sigint:
         PyErr_SetString(SystemError, "calling remove_from_pari_stack() inside sig_on()")
-        sig_error_local()
-    if self.sp() != avma:
-        if avma > self.sp():
+        sig_error()
+    cdef pari_sp pos = stack_position(self)
+    if pos != avma:
+        if avma > pos:
             print("ERROR: inconsistent avma when removing Gen from PARI stack")
-            print(f"Expected: 0x{self.sp():x}")
+            print(f"Expected: 0x{pos:x}")
             print(f"Actual:   0x{avma:x}")
         else:
-            warn(f"cypari2 leaked {self.sp() - avma} bytes on the PARI stack",
+            warn(f"cypari2 leaked {pos - avma} bytes on the PARI stack",
                  RuntimeWarning, stacklevel=2)
     n = self.next
     stackbottom = <PyObject*>n
@@ -117,7 +112,7 @@ cdef void reset_avma() noexcept:
     # NOTE: this can be called with an exception set (the error handler
     # does that)!
     global avma
-    avma = (<Gen>stackbottom).sp()
+    avma = stack_position(<Gen>stackbottom)
 
 
 cdef void clear_stack() noexcept:
@@ -170,6 +165,8 @@ cdef int before_resize() except -1:
 
     This must be called before reallocating the PARI stack
     """
+    if callback_stack_limit:
+        raise RuntimeError("cannot resize the PARI stack during a Python callback")
     move_gens_to_heap(-1)
     if top_of_stack.sp() != pari_mainstack.top:
         raise RuntimeError("cannot resize PARI stack here")
