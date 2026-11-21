@@ -2,6 +2,16 @@
 cypari2 change log
 ==================
 
+v2.2.9
+------
+
+- Revert the dedicated PARI owner thread introduced by PR #215. Constructing
+  ``Pari()`` once again initializes the calling thread's PARI stack, restoring
+  direct Cython access for Sage. The owner-thread API introduced in 2.2.7
+  is removed. Applications should confine PARI calls to one thread.
+- Retain the Python callback exception recovery from 2.2.8. Versions 2.2.7
+  and 2.2.8 were yanked on PyPI because of the Sage compatibility regression.
+
 v2.2.8
 ------
 
