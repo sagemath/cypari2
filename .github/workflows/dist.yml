@@ -160,6 +160,9 @@ jobs:
           python .github/verify-sdist.py dist --sha256 "$SDIST_SHA256"
           uv pip install --no-deps --no-build-isolation -C "setup-args=-Dpari_prefix=$PARI_DIR" dist/*.tar.gz
           PARI_PREFIX="$PARI_DIR" python -I .github/check-installed.py
+          # Sage's Cython compiler must see the candidate's installed .pxd files.
+          uv pip install --no-deps --reinstall-package cython "cython==$(python -I -c 'import Cython; print(Cython.__version__)')"
+          test "$(command -v cython)" = "$VIRTUAL_ENV/bin/cython"
           uv pip install --no-deps --no-build-isolation ./sage-source \
             -C setup-args=-Dbuild-docs=false -C setup-args=-Ddefer_feature_checks=true \
             -C setup-args=-Dc_std=gnu17 -C setup-args=--wrap-mode=nofallback -C compile-args=-j3
