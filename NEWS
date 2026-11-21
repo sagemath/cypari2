@@ -2,6 +2,16 @@
 cypari2 change log
 ==================
 
+v2.2.8
+------
+
+- Restore PARI's evaluator after a Python callback raises, so later
+  operations report their normal exceptions. Test the installed package
+  with the full pytest suite in a single interpreter (PR #239).
+- Ship PARI headers and a ``pari.pc`` file with the binary wheels so
+  downstream extensions can compile and link against the bundled PARI
+  library (PR #196).
+
 v2.2.7
 ------
 
