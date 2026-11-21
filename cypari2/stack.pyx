@@ -165,6 +165,8 @@ cdef int before_resize() except -1:
 
     This must be called before reallocating the PARI stack
     """
+    if callback_stack_limit:
+        raise RuntimeError("cannot resize the PARI stack during a Python callback")
     move_gens_to_heap(-1)
     if top_of_stack.sp() != pari_mainstack.top:
         raise RuntimeError("cannot resize PARI stack here")

@@ -52,6 +52,13 @@ class TestCallbackStackLifetime(unittest.TestCase):
         with self.assertRaises(PariError):
             self.pari(1) / self.pari(0)
 
+    def test_callback_cannot_replace_active_stack(self):
+        size = self.pari.stacksize()
+        with self.assertRaisesRegex(RuntimeError, "during a Python callback"):
+            self.pari(lambda: self.pari.allocatemem(2 * size, silent=True))()
+        self.assertEqual(self.pari.stacksize(), size)
+        self.assertEqual(self.pari(6) * 7, 42)
+
     def test_callback_result_exceeds_half_stack(self):
         size = self.pari.stacksize()
         sizemax = self.pari.stacksizemax()
