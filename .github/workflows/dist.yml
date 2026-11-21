@@ -167,6 +167,7 @@ jobs:
             -C setup-args=-Dbuild-docs=false -C setup-args=-Ddefer_feature_checks=true \
             -C setup-args=-Dc_std=gnu17 -C setup-args=--wrap-mode=nofallback -C compile-args=-j3
           python -I .github/check-sage.py
+          uv pip install pytest
           python -I -m sage.doctest --force-lib sage-source/src/sage/libs/pari/convert_sage.pyx
 
   build_wheels:
