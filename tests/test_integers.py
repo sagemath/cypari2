@@ -15,6 +15,11 @@ import cypari2
 
 
 class TestPariInteger(unittest.TestCase):
+    def test_cython_caller_has_pari_stack(self):
+        from cypari2.test import caller_has_pari_stack
+        cypari2.Pari()
+        self.assertTrue(caller_has_pari_stack())
+
     def randint(self):
         p = random.random()
         if p < 0.05:

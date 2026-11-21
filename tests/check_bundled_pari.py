@@ -131,7 +131,7 @@ def main() -> None:
         probe.probe_add.argtypes = [ctypes.c_long, ctypes.c_long]
         probe.probe_add.restype = ctypes.c_long
         pari = cypari2.Pari()
-        if pari(2) + 3 != 5 or pari.run_on_owner(probe.probe_add, 2, 3) != 5:
+        if pari(2) + 3 != 5 or probe.probe_add(2, 3) != 5:
             raise AssertionError("Library compiled against pari.pc does not work")
         print("Library compiled against pari.pc shares the PARI library with cypari2")
 

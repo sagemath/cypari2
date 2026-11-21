@@ -31,7 +31,7 @@ Examples:
 #                  https://www.gnu.org/licenses/
 # ****************************************************************************
 
-from cysignals.signals cimport sig_on, sig_off, sig_block, sig_unblock
+from cysignals.signals cimport sig_on, sig_off, sig_block, sig_unblock, sig_error
 
 from cpython.tuple cimport *
 from cpython.object cimport PyObject_Call
@@ -42,9 +42,9 @@ from .stack cimport (new_gen, new_gen_noclear, clone_gen_noclear, DetachGen,
                      move_gens_above_to_heap)
 from .gen cimport objtogen
 from .types cimport gp_context
-from ._thread_runtime import runtime as _pari_thread_runtime
-from .thread_support cimport (sig_error_local, callback_signal_push,
-                              callback_signal_pop, is_signal_owner)
+from .paripriv cimport mt_is_thread
+
+include "callback_signals.pxi"
 
 try:
     from inspect import getfullargspec as getargspec
@@ -52,9 +52,14 @@ except ImportError:
     from inspect import getargspec
 
 
-# Only the PARI owner enters Python callbacks. While a callback executes,
-# retain its evaluator context so it can catch an exception from a nested
-# callback and continue using the enclosing GP evaluation.
+# Nested Python callbacks share the calling thread's PARI evaluator.
+# A PARI error invalidates every enclosing callback's saved context.
+cdef list callback_errors = []
+
+cdef void note_callback_pari_error():
+    for i in range(len(callback_errors)):
+        callback_errors[i] = True
+
 cdef gp_context *enclosing_callback = NULL
 
 cdef extern from "pari/pari.h":
@@ -98,19 +103,19 @@ cdef inline GEN call_python_func_impl(GEN* args, object py_func) except NULL:
     cdef bint callback_had_pari_error = False
     cdef GEN res = gnil
     converted = None
-    _pari_thread_runtime.enter_python_callback()
+    callback_errors.append(False)
     try:
         signal_state = callback_signal_push()
         try:
             r = PyObject_Call(py_func, t, <dict>NULL)
-            if _pari_thread_runtime.callback_pari_error_seen():
+            if callback_errors[-1]:
                 raise RuntimeError(
                     "a PARI error cannot be caught and suppressed inside a "
                     "Python callback; the enclosing PARI evaluation was aborted"
                 )
             if r is not None:
                 converted = objtogen(r)
-                if _pari_thread_runtime.callback_pari_error_seen():
+                if callback_errors[-1]:
                     raise RuntimeError(
                         "a PARI error cannot be caught and suppressed while "
                         "converting a Python callback result; the enclosing "
@@ -134,7 +139,7 @@ cdef inline GEN call_python_func_impl(GEN* args, object py_func) except NULL:
         d.detach()
     finally:
         callback_signal_pop(signal_state)
-        callback_had_pari_error = _pari_thread_runtime.leave_python_callback()
+        callback_had_pari_error = callback_errors.pop()
 
     if callback_had_pari_error:
         raise RuntimeError(
@@ -157,7 +162,7 @@ cdef GEN call_python_with_context "call_python_func"(GEN* args, object py_func) 
     try:
         result = call_python_func_impl(args, py_func)
     except BaseException:
-        if parent != NULL and not _pari_thread_runtime.callback_pari_error_seen():
+        if parent != NULL and not callback_errors[-1]:
             # Unwind the abandoned GP frames, preserving user variables and
             # live Gen objects created by the enclosing Python callback.
             gp_context_save(&context)
@@ -198,12 +203,12 @@ cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5,
     # Python callback with parallel APIs after setting ``nbthreads`` to 1;
     # native PARI closures remain fully parallel.
     global iferr_env
-    if not is_signal_owner():
+    if mt_is_thread():
         pari_err(e_MISC, "Python callbacks cannot run in PARI worker threads; set nbthreads to 1")
         return NULL
 
     if nargs > 5:
-        sig_error_local()
+        sig_error()
 
     # Convert arguments to a NULL-terminated array.
     cdef GEN args[6]
@@ -228,7 +233,7 @@ cdef GEN call_python(GEN arg1, GEN arg2, GEN arg3, GEN arg4, GEN arg5,
             # iferr handlers because the pending exception belongs to Python.
             iferr_env = NULL
             pari_err(e_MISC, "Python callback failed")
-        sig_error_local()
+        sig_error()
     return r
 
 
@@ -310,9 +315,6 @@ cpdef Gen objtoclosure(f):
     ...
     PariError: call_python: ...
     """
-    if not _pari_thread_runtime.is_owner():
-        return _pari_thread_runtime.call(objtoclosure, f)
-
     if not callable(f):
         raise TypeError("argument to objtoclosure() must be callable")
 

@@ -11,6 +11,8 @@ cdef extern from "pari/paripriv.h":
 
     int gpd_QUIET, gpd_TEST, gpd_EMACS, gpd_TEXMACS
 
+    int mt_is_thread() noexcept nogil
+
     struct pariout_t:
         char format  # e,f,g
         long fieldw  # 0 (ignored) or field width

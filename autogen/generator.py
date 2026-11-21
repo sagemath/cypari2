@@ -151,7 +151,6 @@ class PariFunctionGenerator(object):
             ...     help=r"bnfinit(P,{flag=0},{tech=[]}): compute...",
             ...     **{"class":"basic", "section":"number_fields"})
                 GEN bnfinit0(GEN, long, GEN, long)
-                @_owner_method
                 def bnfinit(P, long flag=0, tech=None, long precision=DEFAULT_BITPREC):
                     ...
                     cdef bint _have_tech = (tech is not None)
@@ -172,7 +171,6 @@ class PariFunctionGenerator(object):
             ...     help=r"ellmodulareqn(N,{x},{y}): return...",
             ...     **{"class":"basic", "section":"elliptic_curves"})
                 GEN ellmodulareqn(long, long, long)
-                @_owner_method
                 def ellmodulareqn(self, long N, x=None, y=None):
                     ...
                     cdef long _x = -1
@@ -191,7 +189,6 @@ class PariFunctionGenerator(object):
             ...     doc=r"reseeds the random number generator...",
             ...     **{"class":"basic", "section":"programming/specific"})
                 void setrand(GEN)
-                @_owner_method
                 def setrand(n):
                     r'''
                     Reseeds the random number generator...
@@ -201,7 +198,6 @@ class PariFunctionGenerator(object):
                     setrand(_n)
                     clear_stack()
             <BLANKLINE>
-                @_owner_method
                 def setrand(self, n):
                     r'''
                     Reseeds the random number generator...
@@ -218,7 +214,6 @@ class PariFunctionGenerator(object):
             ...     obsolete="2008-07-20",
             ...     **{"class":"basic", "section":"number_fields"})
                 GEN polredord(GEN)
-                @_owner_method
                 def polredord(x):
                     r'''
                     This function is obsolete, use polredbest.
@@ -230,7 +225,6 @@ class PariFunctionGenerator(object):
                     cdef GEN _ret = polredord(_x)
                     return new_gen(_ret)
             <BLANKLINE>
-                @_owner_method
                 def polredord(self, x):
                     r'''
                     This function is obsolete, use polredbest.
@@ -319,8 +313,8 @@ class PariFunctionGenerator(object):
 
         protoargs = ", ".join(a.prototype_code() for a in args)
         callargs = ", ".join(a.call_code() for a in cargs)
-        s = "    @_owner_method\n"
-        s += "    def {function}({protoargs}):\n"
+
+        s = "    def {function}({protoargs}):\n"
         if doc:
             # Use triple single quotes to make it easier to doctest
             # this within triply double quoted docstrings.

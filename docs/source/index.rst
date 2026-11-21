@@ -11,7 +11,6 @@ Welcome to CyPari2's documentation!
    :caption: Contents:
 
    pari_instance
-   threading
    gen
    stack
    closure
