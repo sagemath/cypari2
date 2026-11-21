@@ -105,6 +105,70 @@ jobs:
           uv pip install --python .venv/bin/python pytest
           make -C sdist-tests/* check PYTHON="$PWD/.venv/bin/python -E -s"
 
+  test_sage:
+    name: Test the sdist with Sage (${{ matrix.os }})
+    needs: make_sdist
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-26, ubuntu-26.04]
+    runs-on: ${{ matrix.os }}
+    env:
+      SDIST_SHA256: ${{ needs.make_sdist.outputs.sha256 }}
+      HOMEBREW_NO_AUTOREMOVE: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: sagemath/sage
+          ref: 8de8dad7bcb38e1baa43508cbe944bf04a2d0401
+          path: sage-source
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-sdist
+          path: dist
+      - name: Install Sage dependencies and remove the bottled cypari2
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+            echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
+          fi
+          brew tap dimpase/tap
+          brew tap dimpase/gap
+          brew tap macaulay2/tap
+          brew update
+          brew trust --tap dimpase/tap dimpase/gap macaulay2/tap
+          if [[ "$RUNNER_OS" == macOS ]]; then
+            for formula in numpy scipy python-matplotlib; do
+              if [[ -L "$(brew --prefix)/var/homebrew/linked/$formula" ]]; then
+                brew unlink "$formula"
+              fi
+            done
+          fi
+          brew install --force-bottle dimpase/tap/sagemath-deps
+          # Keep the rest of sagemath-deps in place on this disposable runner.
+          brew uninstall --ignore-dependencies --force dimpase/tap/cypari2
+      - name: Build Sage against the candidate and test its PARI interface
+        shell: bash
+        run: |
+          uv venv --python "$(brew --prefix python@3.14)/bin/python3.14" --system-site-packages "$RUNNER_TEMP/sage-venv"
+          source "$RUNNER_TEMP/sage-venv/bin/activate"
+          source "$(brew --prefix dimpase/tap/sagemath-deps)/share/sagemath-deps/python3.14-env.sh"
+          python -I -c 'from importlib.util import find_spec; assert find_spec("cypari2") is None, "cypari2 is still visible after brew uninstall"'
+          python .github/verify-sdist.py dist --sha256 "$SDIST_SHA256"
+          uv pip install --no-deps --no-build-isolation -C "setup-args=-Dpari_prefix=$PARI_DIR" dist/*.tar.gz
+          PARI_PREFIX="$PARI_DIR" python -I .github/check-installed.py
+          # Sage's Cython compiler must see the candidate's installed .pxd files.
+          uv pip install --no-deps --reinstall-package cython "cython==$(python -I -c 'import Cython; print(Cython.__version__)')"
+          test "$(command -v cython)" = "$VIRTUAL_ENV/bin/cython"
+          uv pip install --no-deps --no-build-isolation ./sage-source \
+            -C setup-args=-Dbuild-docs=false -C setup-args=-Ddefer_feature_checks=true \
+            -C setup-args=-Dc_std=gnu17 -C setup-args=--wrap-mode=nofallback -C compile-args=-j3
+          python -I .github/check-sage.py
+          sage -t --force-lib sage-source/src/sage/libs/pari/convert_sage.pyx
+
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     needs: make_sdist
@@ -142,7 +206,7 @@ jobs:
 
   check_distributions:
     name: Check every release file before any upload
-    needs: [make_sdist, test_sdist_arm, build_wheels]
+    needs: [make_sdist, test_sdist_arm, test_sage, build_wheels]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
