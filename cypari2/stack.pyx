@@ -47,6 +47,17 @@ cdef Gen top_of_stack = Gen_new(gnil, NULL)
 cdef PyObject* stackbottom = <PyObject*>top_of_stack
 
 
+# A running GP evaluator can hold raw stack values below the last Python Gen.
+# Preserve that part of the stack while it calls back into Python.
+cdef pari_sp callback_stack_limit = 0
+
+cdef inline pari_sp stack_position(Gen value) noexcept:
+    cdef pari_sp pos = value.sp()
+    if callback_stack_limit and pos > callback_stack_limit:
+        return callback_stack_limit
+    return pos
+
+
 cdef void remove_from_pari_stack(Gen self) noexcept:
     global avma, stackbottom
     if <PyObject*>self is not stackbottom:
@@ -56,13 +67,14 @@ cdef void remove_from_pari_stack(Gen self) noexcept:
     if sig_on_count and not block_sigint:
         PyErr_SetString(SystemError, "calling remove_from_pari_stack() inside sig_on()")
         sig_error()
-    if self.sp() != avma:
-        if avma > self.sp():
+    cdef pari_sp pos = stack_position(self)
+    if pos != avma:
+        if avma > pos:
             print("ERROR: inconsistent avma when removing Gen from PARI stack")
-            print(f"Expected: 0x{self.sp():x}")
+            print(f"Expected: 0x{pos:x}")
             print(f"Actual:   0x{avma:x}")
         else:
-            warn(f"cypari2 leaked {self.sp() - avma} bytes on the PARI stack",
+            warn(f"cypari2 leaked {pos - avma} bytes on the PARI stack",
                  RuntimeWarning, stacklevel=2)
     n = self.next
     stackbottom = <PyObject*>n
@@ -100,7 +112,7 @@ cdef void reset_avma() noexcept:
     # NOTE: this can be called with an exception set (the error handler
     # does that)!
     global avma
-    avma = (<Gen>stackbottom).sp()
+    avma = stack_position(<Gen>stackbottom)
 
 
 cdef void clear_stack() noexcept:

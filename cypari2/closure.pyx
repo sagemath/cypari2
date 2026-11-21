@@ -39,7 +39,7 @@ from cpython.ref cimport Py_INCREF
 
 from .paridecl cimport *
 from .stack cimport (new_gen, new_gen_noclear, clone_gen_noclear, DetachGen,
-                     move_gens_above_to_heap)
+                     callback_stack_limit, move_gens_above_to_heap)
 from .gen cimport objtogen
 from .types cimport gp_context
 from .paripriv cimport mt_is_thread
@@ -73,15 +73,8 @@ cdef inline GEN call_python_func_impl(GEN* args, object py_func) except NULL:
     The arguments are converted from ``GEN`` to a cypari ``gen`` before
     calling ``py_func``. The result is converted back to a PARI ``GEN``.
     """
-    # We need to ensure that nothing above avma is touched.  When all
-    # externally visible Gens have already been moved to the heap, avma can
-    # equal pari_mainstack.top.  That address is the first byte *outside* the
-    # stack and cannot be wrapped as a synthetic Gen, so allocate a minimal
-    # real stack object for the guard in that case.
-    cdef GEN guard = <GEN>avma
-    if avma == pari_mainstack.top:
-        guard = cgetg(1, t_VEC)
-    avmaguard = new_gen_noclear(guard)
+    # Use a real stack object as the boundary, since callbacks may clone it.
+    avmaguard = new_gen_noclear(cgetg(1, t_VEC))
 
     # How many arguments are there?
     cdef Py_ssize_t n = 0
@@ -151,7 +144,9 @@ cdef inline GEN call_python_func_impl(GEN* args, object py_func) except NULL:
 
 
 cdef GEN call_python_with_context "call_python_func"(GEN* args, object py_func) except NULL:
-    global enclosing_callback, iferr_env
+    global enclosing_callback, iferr_env, callback_stack_limit
+    cdef pari_sp previous_limit = callback_stack_limit
+    callback_stack_limit = avma
     cdef gp_context context
     cdef gp_context *parent = enclosing_callback
     gp_context_save(&context)
@@ -178,6 +173,7 @@ cdef GEN call_python_with_context "call_python_func"(GEN* args, object py_func) 
         return result
     finally:
         enclosing_callback = parent
+        callback_stack_limit = previous_limit
 
 
 # We rename this function to be able to call it with a different

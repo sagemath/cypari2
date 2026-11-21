@@ -66,9 +66,8 @@ int main() {
 }
 """
 
-# Does not initialize PARI, but relies on cypari2 having done so (it has to run
-# on cypari2's PARI owner thread). This only works if it uses the same libpari
-# as cypari2: another copy of libpari has its own uninitialized PARI stack.
+# Use the PARI stack initialized by cypari2 on the calling thread. A second
+# copy of libpari would have its own uninitialized stack.
 C_LIBRARY = """\
 #include <pari/pari.h>
 
