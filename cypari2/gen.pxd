@@ -65,3 +65,6 @@ cdef inline Gen Gen_new(GEN g, GEN addr):
 
 cdef Gen list_of_Gens_to_Gen(list s)
 cpdef Gen objtogen(s)
+
+# Release a gclone/gcloneref obtained on the main PARI thread.
+cdef void release_clone(GEN address) noexcept

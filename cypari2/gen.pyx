@@ -57,7 +57,8 @@ AUTHORS:
 
 cimport cython
 
-from cpython.object cimport (Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, PyTypeObject)
+from cpython.object cimport (Py_EQ, Py_NE, Py_LE, Py_GE, Py_LT, Py_GT,
+                            PyTypeObject)
 
 from cysignals.memory cimport sig_free, check_malloc
 from cysignals.signals cimport sig_check, sig_on, sig_off, sig_block, sig_unblock
@@ -71,7 +72,10 @@ from .stack cimport (new_gen, new_gens2, new_gen_noclear,
                      clone_gen, clear_stack, reset_avma,
                      remove_from_pari_stack, move_gens_to_heap)
 from .closure cimport objtoclosure
+from ._thread_runtime import (owner_method as _owner_method,
+                              runtime as _pari_thread_runtime)
 
+from .thread_support cimport ensure_pari_initialized, is_owner_thread
 from .paridecl cimport *
 
 include 'auto_gen.pxi'
@@ -146,10 +150,10 @@ cdef class Gen(Gen_base):
     Wrapper for a PARI ``GEN`` with memory management.
 
     This wraps PARI objects which live either on the PARI stack or on
-    the PARI heap. Results from PARI computations appear on the PARI
-    stack and we try to keep them there. However, when the stack fills
-    up, we copy ("clone" in PARI speak) all live objects from the stack
-    to the heap. This happens transparently for the user.
+    the PARI heap. Results may live on the stack while an owner-thread
+    request is running. Before control returns to another Python thread,
+    all live stack objects are copied ("cloned" in PARI speak) to the
+    heap. This happens transparently for the user.
     """
     def __init__(self):
         raise RuntimeError("PARI objects cannot be instantiated directly; use pari(x) to convert x to PARI")
@@ -160,7 +164,7 @@ cdef class Gen(Gen_base):
             remove_from_pari_stack(self)
         elif self.address is not NULL:
             # clone
-            gunclone_deep(self.address)
+            release_clone(self.address)
 
     cdef Gen new_ref(self, GEN g):
         """
@@ -237,6 +241,9 @@ cdef class Gen(Gen_base):
         >>> pari('Str(hello)')
         "hello"
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__repr__", (self,))
+
         cdef char *c
         sig_on()
         # Use sig_block(), which is needed because GENtostr() uses
@@ -270,6 +277,9 @@ cdef class Gen(Gen_base):
         >>> str(pari('Str(hello)'))
         'hello'
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__str__", (self,))
+
         # Use __repr__ except for strings
         if typ(self.g) == t_STR:
             return to_string(GSTR(self.g))
@@ -291,6 +301,9 @@ cdef class Gen(Gen_base):
         >>> hash(pari.isprime(4)) == hash(pari(0))
         True
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__hash__", (self,))
+
         # There is a bug in PARI/GP where the hash value depends on the
         # CLONE bit. So we remove that bit before hashing. See
         # https://pari.math.u-bordeaux.fr/cgi-bin/bugreport.cgi?bug=2091
@@ -325,8 +338,9 @@ cdef class Gen(Gen_base):
         >>> from cypari2 import Pari
         >>> pari = Pari()
         >>> L = pari("vector(10,i,i^2)")
-        >>> L.__iter__()
-        <...generator object at ...>
+        >>> iterator = iter(L)
+        >>> next(iterator)
+        1
         >>> [x for x in L]
         [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
         >>> list(L)
@@ -388,6 +402,10 @@ cdef class Gen(Gen_base):
         >>> list(v)
         ['h', 'e', 'l', 'l', 'o']
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(
+                Gen, "__iter__", (self,))
+
         # We return a generator expression instead of using "yield"
         # because we want to raise an exception for non-iterable
         # objects immediately when calling __iter__() and not while
@@ -406,17 +424,26 @@ cdef class Gen(Gen_base):
             raise TypeError(f"PARI object of type {self.type()} is not iterable")
         elif t == t_VECSMALL:
             # Special case: items of type int
-            return (self.g[i] for i in range(1, lg(self.g)))
+            return _pari_thread_runtime.protect_iterator(
+                (self[i] for i in range(len(self))))
         elif t == t_STR:
             # Special case: convert to str
-            return iter(to_string(GSTR(self.g)))
+            return _pari_thread_runtime.protect_iterator(
+                iter(to_string(GSTR(self.g))))
         else:
             v = self.Vec()
 
-        # Now iterate over the vector v
+        # Keep the iterator itself behind a proxy: a Python callback runs on
+        # the owner and can retain iter(self) as a side effect.  If that
+        # iterator later escapes to another Python thread, advancing the raw
+        # Cython generator there would dereference owner-owned GEN pointers.
+        # fixGEN() makes x stable before the generator is created, while the
+        # proxy confines every subsequent new_ref() call to the owner.
         x = v.fixGEN()
-        return (v.new_ref(gel(x, i)) for i in range(1, lg(x)))
+        return _pari_thread_runtime.protect_iterator(
+            (v.new_ref(gel(x, i)) for i in range(1, lg(x))))
 
+    @_owner_method
     def list(self):
         """
         Convert ``self`` to a Python list with :class:`Gen` components.
@@ -473,6 +500,9 @@ cdef class Gen(Gen_base):
         >>> loads(dumps(f)) == f
         True
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__reduce__", (self,))
+
         s = repr(self)
         return (objtogen, (s,))
 
@@ -494,6 +524,10 @@ cdef class Gen(Gen_base):
         >>> -2 + pari(3)
         1
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__add__", left, right)
+
         cdef Gen t0, t1
         try:
             t0 = objtogen(left)
@@ -521,6 +555,10 @@ cdef class Gen(Gen_base):
         >>> -2 - pari(3)
         -5
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__sub__", left, right)
+
         cdef Gen t0, t1
         try:
             t0 = objtogen(left)
@@ -531,6 +569,10 @@ cdef class Gen(Gen_base):
         return new_gen(gsub(t0.g, t1.g))
 
     def __mul__(left, right):
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__mul__", left, right)
+
         cdef Gen t0, t1
         try:
             t0 = objtogen(left)
@@ -541,6 +583,10 @@ cdef class Gen(Gen_base):
         return new_gen(gmul(t0.g, t1.g))
 
     def __div__(left, right):
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(
+                Gen, "__div__", (left, right))
+
         # Python 2 old-style division: same implementation as __truediv__
         cdef Gen t0, t1
         try:
@@ -561,6 +607,10 @@ cdef class Gen(Gen_base):
         >>> pari("x^2 + 2*x + 3") / pari("x")
         (x^2 + 2*x + 3)/x
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__truediv__", left, right)
+
         cdef Gen t0, t1
         try:
             t0 = objtogen(left)
@@ -580,6 +630,10 @@ cdef class Gen(Gen_base):
         >>> pari("x^2 + 2*x + 3") // pari("x")
         x + 2
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__floordiv__", left, right)
+
         cdef Gen t0, t1
         try:
             t0 = objtogen(left)
@@ -607,6 +661,10 @@ cdef class Gen(Gen_base):
         >>> -2 % pari(3)
         1
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__mod__", left, right)
+
         cdef Gen t0, t1
         try:
             t0 = objtogen(left)
@@ -637,6 +695,10 @@ cdef class Gen(Gen_base):
         >>> pari(2) ** -5
         1/32
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__pow__", left, right, m)
+
         cdef Gen t0, t1
         try:
             t0 = objtogen(left)
@@ -649,10 +711,13 @@ cdef class Gen(Gen_base):
         return new_gen(gpow(t0.g, t1.g, prec_bits_to_pari(DEFAULT_BITPREC)))
 
     def __neg__(self):
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__neg__", (self,))
+
         sig_on()
         return new_gen(gneg(self.g))
 
-    def __rshift__(self, long n):
+    def __rshift__(self, n):
         """
         Divide ``self`` by `2^n` (truncating or not, depending on the
         input type).
@@ -673,11 +738,16 @@ cdef class Gen(Gen_base):
         >>> 33 >> pari(2)
         8
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__rshift__", self, n)
+
+        cdef long shift = n
         cdef Gen t0 = objtogen(self)
         sig_on()
-        return new_gen(gshift(t0.g, -n))
+        return new_gen(gshift(t0.g, -shift))
 
-    def __lshift__(self, long n):
+    def __lshift__(self, n):
         """
         Multiply ``self`` by `2^n`.
 
@@ -697,14 +767,23 @@ cdef class Gen(Gen_base):
         >>> 33 << pari(2)
         132
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_binary_method(
+                Gen, "__lshift__", self, n)
+
+        cdef long shift = n
         cdef Gen t0 = objtogen(self)
         sig_on()
-        return new_gen(gshift(t0.g, n))
+        return new_gen(gshift(t0.g, shift))
 
     def __invert__(self):
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__invert__", (self,))
+
         sig_on()
         return new_gen(ginv(self.g))
 
+    @_owner_method
     def getattr(self, attr):
         """
         Return the PARI attribute with the given name.
@@ -734,6 +813,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(closure_callgen1(strtofunction(t), self.g))
 
+    @_owner_method
     def mod(self):
         """
         Given an INTMOD or POLMOD ``Mod(a,m)``, return the modulus `m`.
@@ -761,6 +841,7 @@ cdef class Gen(Gen_base):
 
     # Special case: SageMath uses polred(), so mark it as not
     # obsolete: https://trac.sagemath.org/ticket/22165
+    @_owner_method
     def polred(self, *args, **kwds):
         r'''
         This function is :emphasis:`deprecated`,
@@ -771,6 +852,7 @@ cdef class Gen(Gen_base):
             warnings.simplefilter("ignore")
             return super(Gen, self).polred(*args, **kwds)
 
+    @_owner_method
     def nf_get_pol(self):
         """
         Returns the defining polynomial of this number field.
@@ -809,6 +891,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(member_pol(self.g))
 
+    @_owner_method
     def nf_get_diff(self):
         """
         Returns the different of this number field as a PARI ideal.
@@ -831,6 +914,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(member_diff(self.g))
 
+    @_owner_method
     def nf_get_sign(self):
         """
         Returns a Python list ``[r1, r2]``, where ``r1`` and ``r2`` are
@@ -867,6 +951,7 @@ cdef class Gen(Gen_base):
         sig_off()
         return [r1, r2]
 
+    @_owner_method
     def nf_get_zk(self):
         r"""
         Returns a vector with a `\ZZ`-basis for the ring of integers of
@@ -890,6 +975,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(member_zk(self.g))
 
+    @_owner_method
     def bnf_get_fu(self):
         """
         Return the fundamental units
@@ -913,6 +999,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(member_fu(self.g))
 
+    @_owner_method
     def bnf_get_tu(self):
         r"""
         Return the torsion unit
@@ -936,6 +1023,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(member_tu(self.g))
 
+    @_owner_method
     def bnfunit(self):
         r"""
         Deprecated in cypari 2.1.2
@@ -962,6 +1050,7 @@ cdef class Gen(Gen_base):
         warn("'bnfunit' in cypari2 is deprecated, use 'bnf_get_fu'", DeprecationWarning)
         return self.bnf_get_fu()
 
+    @_owner_method
     def bnf_get_no(self):
         """
         Returns the class number of ``self``, a "big number field" (``bnf``).
@@ -979,6 +1068,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(bnf_get_no(self.g))
 
+    @_owner_method
     def bnf_get_cyc(self):
         """
         Returns the structure of the class group of this number field as
@@ -999,6 +1089,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(bnf_get_cyc(self.g))
 
+    @_owner_method
     def bnf_get_gen(self):
         """
         Returns a vector of generators of the class group of this
@@ -1019,6 +1110,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(bnf_get_gen(self.g))
 
+    @_owner_method
     def bnf_get_reg(self):
         """
         Returns the regulator of this number field.
@@ -1038,6 +1130,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(bnf_get_reg(self.g))
 
+    @_owner_method
     def idealmoddivisor(self, Gen ideal):
         """
         Return a 'small' ideal equivalent to ``ideal`` in the
@@ -1072,6 +1165,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(idealmoddivisor(self.g, ideal.g))
 
+    @_owner_method
     def pr_get_p(self):
         r"""
         Returns the prime of `\ZZ` lying below this prime ideal.
@@ -1094,6 +1188,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(pr_get_p(self.g))
 
+    @_owner_method
     def pr_get_e(self):
         r"""
         Returns the ramification index (over `\QQ`) of this prime ideal.
@@ -1121,6 +1216,7 @@ cdef class Gen(Gen_base):
         sig_off()
         return e
 
+    @_owner_method
     def pr_get_f(self):
         r"""
         Returns the residue class degree (over `\QQ`) of this prime ideal.
@@ -1148,6 +1244,7 @@ cdef class Gen(Gen_base):
         sig_off()
         return f
 
+    @_owner_method
     def pr_get_gen(self):
         """
         Returns the second generator of this PARI prime ideal, where the
@@ -1173,6 +1270,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(pr_get_gen(self.g))
 
+    @_owner_method
     def bid_get_cyc(self):
         """
         Returns the structure of the group `(O_K/I)^*`, where `I` is the
@@ -1195,6 +1293,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(bid_get_cyc(self.g))
 
+    @_owner_method
     def bid_get_gen(self):
         """
         Returns a vector of generators of the group `(O_K/I)^*`, where
@@ -1322,6 +1421,9 @@ cdef class Gen(Gen_base):
         >>> pari([])[::]
         []
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__getitem__", (self, n))
+
         cdef Py_ssize_t i, j, k
         cdef object ind
         cdef int pari_type
@@ -1514,6 +1616,10 @@ cdef class Gen(Gen_base):
         >>> type(v[0])
         <... 'cypari2.gen.Gen'>
         """
+        if not is_owner_thread():
+            _pari_thread_runtime.call_type_method(Gen, "__setitem__", (self, n, y))
+            return
+
         cdef Py_ssize_t i, j
         cdef Gen x = objtogen(y)
 
@@ -1573,6 +1679,9 @@ cdef class Gen(Gen_base):
             set_gel(self.g, i+1, xt)
 
     def __len__(self):
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__len__", (self,))
+
         return glength(self.g)
 
     def __richcmp__(self, right, int op):
@@ -1638,6 +1747,10 @@ cdef class Gen(Gen_base):
         >>> pari('O(2)') == 0
         True
         """
+        if not is_owner_thread():
+            method = ("__lt__", "__le__", "__eq__", "__ne__", "__gt__", "__ge__")[op]
+            return _pari_thread_runtime.call_type_method(Gen, method, (self, right))
+
         cdef Gen t1
         try:
             t1 = objtogen(right)
@@ -1662,6 +1775,7 @@ cdef class Gen(Gen_base):
         sig_off()
         return r
 
+    @_owner_method
     def cmp(self, right):
         """
         Compare ``self`` and ``right``.
@@ -1714,6 +1828,9 @@ cdef class Gen(Gen_base):
         return r
 
     def __copy__(self):
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__copy__", (self,))
+
         sig_on()
         return clone_gen(self.g)
 
@@ -1721,6 +1838,9 @@ cdef class Gen(Gen_base):
         """
         Return the octal digits of self in lower case.
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__oct__", (self,))
+
         cdef GEN x
         cdef long lx
         cdef long *xp
@@ -1764,6 +1884,9 @@ cdef class Gen(Gen_base):
         """
         Return the hexadecimal digits of self in lower case.
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__hex__", (self,))
+
         cdef GEN x
         cdef long lx
         cdef long *xp
@@ -1841,6 +1964,9 @@ cdef class Gen(Gen_base):
         >>> int(pari(2**63+2)) == 9223372036854775810
         True
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__int__", (self,))
+
         return gen_to_integer(self)
 
     def __index__(self):
@@ -1875,10 +2001,14 @@ cdef class Gen(Gen_base):
         ...     assert hex(pari(i)) == hex(i)
         ...     assert hex(pari(-i)) == hex(-i)
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__index__", (self,))
+
         if typ(self.g) != t_INT:
             raise TypeError(f"cannot coerce {self!r} (type {self.type()}) to integer")
         return gen_to_integer(self)
 
+    @_owner_method
     def python_list_small(self):
         """
         Return a Python list of the PARI gens. This object must be of type
@@ -1901,6 +2031,7 @@ cdef class Gen(Gen_base):
             raise TypeError("Object (=%s) must be of type t_VECSMALL." % self)
         return [self.g[n+1] for n in range(glength(self.g))]
 
+    @_owner_method
     def python_list(self):
         """
         Return a Python list of the PARI gens. This object must be of type
@@ -1938,6 +2069,7 @@ cdef class Gen(Gen_base):
             raise TypeError("Object (=%s) must be of type t_VEC or t_COL." % self)
         return [self[n] for n in range(glength(self.g))]
 
+    @_owner_method
     def python(self):
         """
         Return the closest Python equivalent of the given PARI object.
@@ -1957,6 +2089,7 @@ cdef class Gen(Gen_base):
         from .convert import gen_to_python
         return gen_to_python(self)
 
+    @_owner_method
     def sage(self, locals=None):
         r"""
         Return the closest SageMath equivalent of the given PARI object.
@@ -1975,6 +2108,9 @@ cdef class Gen(Gen_base):
         """
         Return Python float.
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__float__", (self,))
+
         cdef double d
         sig_on()
         d = gtodouble(self.g)
@@ -2016,6 +2152,9 @@ cdef class Gen(Gen_base):
         ...
         PariError: incorrect type in gtofp (t_INTMOD)
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__complex__", (self,))
+
         cdef double re, im
         sig_on()
         # First convert to floating point (t_REAL or t_COMPLEX)
@@ -2050,8 +2189,12 @@ cdef class Gen(Gen_base):
         >>> a.__bool__()
         False
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__bool__", (self,))
+
         return not gequal0(self.g)
 
+    @_owner_method
     def gequal(a, b):
         r"""
         Check whether `a` and `b` are equal using PARI's ``gequal``.
@@ -2089,6 +2232,7 @@ cdef class Gen(Gen_base):
         sig_off()
         return ret != 0
 
+    @_owner_method
     def gequal0(a):
         r"""
         Check whether `a` is equal to zero.
@@ -2114,6 +2258,7 @@ cdef class Gen(Gen_base):
         sig_off()
         return ret != 0
 
+    @_owner_method
     def gequal_long(a, long b):
         r"""
         Check whether `a` is equal to the ``long int`` `b` using PARI's ``gequalsg``.
@@ -2144,6 +2289,7 @@ cdef class Gen(Gen_base):
         sig_off()
         return ret != 0
 
+    @_owner_method
     def isprime(self, long flag=0):
         """
         Return True if x is a PROVEN prime number, and False otherwise.
@@ -2184,6 +2330,7 @@ cdef class Gen(Gen_base):
         clear_stack()
         return ret
 
+    @_owner_method
     def ispseudoprime(self, long flag=0):
         """
         Returns ``True`` if ``x`` is a strong pseudo prime number, and 
@@ -2228,6 +2375,7 @@ cdef class Gen(Gen_base):
         sig_off()
         return t != 0
 
+    @_owner_method
     def ispower(self, k=None):
         r"""
         Determine whether or not self is a perfect k-th power. If k is not
@@ -2284,6 +2432,7 @@ cdef class Gen(Gen_base):
             else:
                 return k, new_gen(x)
 
+    @_owner_method
     def isprimepower(self):
         r"""
         Check whether ``self`` is a prime power (with an exponent >= 1).
@@ -2330,6 +2479,7 @@ cdef class Gen(Gen_base):
         else:
             return n, new_gen(x)
 
+    @_owner_method
     def ispseudoprimepower(self):
         r"""
         Check whether ``self`` is the power (with an exponent >= 1) of
@@ -2370,6 +2520,7 @@ cdef class Gen(Gen_base):
         else:
             return n, new_gen(x)
 
+    @_owner_method
     def vecmax(x):
         """
         Return the maximum of the elements of the vector/matrix `x`.
@@ -2385,6 +2536,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(vecmax(x.g))
 
+    @_owner_method
     def vecmin(x):
         """
         Return the minimum of the elements of the vector/matrix `x`.
@@ -2400,6 +2552,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(vecmin(x.g))
 
+    @_owner_method
     def Ser(f, v=None, long precision=-1):
         """
         Return a power series or Laurent series in the variable `v`
@@ -2474,6 +2627,7 @@ cdef class Gen(Gen_base):
         else:
             return new_gen(gtoser(f.g, vn, precision))
 
+    @_owner_method
     def Str(self):
         """
         Str(self): Return the print representation of self as a PARI
@@ -2520,6 +2674,7 @@ cdef class Gen(Gen_base):
         pari_free(c)
         return v
 
+    @_owner_method
     def Strexpand(x):
         """
         Concatenate the entries of the vector `x` into a single string,
@@ -2556,6 +2711,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(Strexpand(x.g))
 
+    @_owner_method
     def Strtex(x):
         r"""
         Strtex(x): Translates the vector x of PARI gens to TeX format and
@@ -2590,6 +2746,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(Strtex(x.g))
 
+    @_owner_method
     def bittest(x, long n):
         """
         bittest(x, long n): Returns bit number n (coefficient of
@@ -2636,6 +2793,7 @@ cdef class Gen(Gen_base):
 
     lift_centered = Gen_base.centerlift
 
+    @_owner_method
     def padicprime(self):
         """
         The uniformizer of the p-adic ring this element lies in, as a t_INT.
@@ -2661,6 +2819,7 @@ cdef class Gen(Gen_base):
         """
         return self.new_ref(gel(self.fixGEN(), 2))
 
+    @_owner_method
     def round(x, bint estimate=False):
         """
         round(x,estimate=False): If x is a real number, returns x rounded
@@ -2719,6 +2878,7 @@ cdef class Gen(Gen_base):
         y = new_gen(grndtoi(x.g, &e))
         return y, e
 
+    @_owner_method
     def sizeword(x):
         """
         Return the total number of machine words occupied by the
@@ -2757,6 +2917,7 @@ cdef class Gen(Gen_base):
         """
         return gsizeword(x.g)
 
+    @_owner_method
     def sizebyte(x):
         """
         Return the total number of bytes occupied by the complete tree
@@ -2781,6 +2942,7 @@ cdef class Gen(Gen_base):
         """
         return gsizebyte(x.g)
 
+    @_owner_method
     def truncate(x, bint estimate=False):
         """
         truncate(x,estimate=False): Return the truncation of x. If estimate
@@ -2847,6 +3009,7 @@ cdef class Gen(Gen_base):
         y = new_gen(gcvtoi(x.g, &e))
         return y, e
 
+    @_owner_method
     def _valp(x):
         """
         Return the valuation of x where x is a p-adic number (t_PADIC)
@@ -2870,6 +3033,7 @@ cdef class Gen(Gen_base):
         # This is a simple macro, so we don't need sig_on()
         return valp(x.g)
 
+    @_owner_method
     def bernfrac(self):
         r"""
         The Bernoulli number `B_x`, where `B_0 = 1`,
@@ -2890,6 +3054,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(bernfrac(self))
 
+    @_owner_method
     def bernreal(self, unsigned long precision=DEFAULT_BITPREC):
         r"""
         The Bernoulli number `B_x`, as for the function bernfrac,
@@ -2907,6 +3072,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(bernreal(self, prec_bits_to_pari(precision)))
 
+    @_owner_method
     def besselk(nu, x, unsigned long precision=DEFAULT_BITPREC):
         """
         nu.besselk(x): K-Bessel function (modified Bessel function
@@ -2944,6 +3110,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(kbessel(nu.g, t0.g, prec_bits_to_pari(precision)))
 
+    @_owner_method
     def eint1(x, long n=0, unsigned long precision=DEFAULT_BITPREC):
         r"""
         x.eint1(n): exponential integral E1(x):
@@ -2976,6 +3143,7 @@ cdef class Gen(Gen_base):
 
     log_gamma = Gen_base.lngamma
 
+    @_owner_method
     def polylog(x, long m, long flag=0,
                 unsigned long precision=DEFAULT_BITPREC):
         """
@@ -3008,6 +3176,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(polylog0(m, x.g, flag, prec_bits_to_pari(precision)))
 
+    @_owner_method
     def sqrtn(x, n, unsigned long precision=DEFAULT_BITPREC):
         r"""
         x.sqrtn(n): return the principal branch of the n-th root of x,
@@ -3070,6 +3239,7 @@ cdef class Gen(Gen_base):
         ans = gsqrtn(x.g, t0.g, &zetan, prec_bits_to_pari(precision))
         return new_gens2(ans, zetan)
 
+    @_owner_method
     def ffprimroot(self):
         r"""
         Return a primitive root of the multiplicative group of the
@@ -3096,6 +3266,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(ffprimroot(self.g, NULL))
 
+    @_owner_method
     def fibonacci(self):
         r"""
         Return the Fibonacci number of index x.
@@ -3113,6 +3284,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(fibo(self))
 
+    @_owner_method
     def issquare(x, find_root=False):
         """
         issquare(x,n): ``True`` if x is a square, ``False`` if not. If
@@ -3133,6 +3305,7 @@ cdef class Gen(Gen_base):
             clear_stack()
             return t != 0
 
+    @_owner_method
     def issquarefree(self):
         """
         Examples:
@@ -3150,6 +3323,7 @@ cdef class Gen(Gen_base):
         sig_off()
         return t != 0
 
+    @_owner_method
     def sumdiv(n):
         """
         Return the sum of the divisors of `n`.
@@ -3165,6 +3339,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(sumdiv(n.g))
 
+    @_owner_method
     def sumdivk(n, long k):
         """
         Return the sum of the k-th powers of the divisors of n.
@@ -3180,6 +3355,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(sumdivk(n.g, k))
 
+    @_owner_method
     def Zn_issquare(self, n):
         """
         Return ``True`` if ``self`` is a square modulo `n`, ``False``
@@ -3208,6 +3384,7 @@ cdef class Gen(Gen_base):
         clear_stack()
         return t != 0
 
+    @_owner_method
     def Zn_sqrt(self, n):
         """
         Return a square root of ``self`` modulo `n`, if such a square
@@ -3241,6 +3418,7 @@ cdef class Gen(Gen_base):
             raise ValueError("%s is not a square modulo %s" % (self, n))
         return new_gen(s)
 
+    @_owner_method
     def ellan(self, long n, python_ints=False):
         """
         Return the first `n` Fourier coefficients of the modular
@@ -3280,6 +3458,7 @@ cdef class Gen(Gen_base):
             return g
         return [gtolong(gel(g.g, i+1)) for i in range(glength(g.g))]
 
+    @_owner_method
     def ellaplist(self, long n, python_ints=False):
         r"""
         e.ellaplist(n): Returns a PARI list of all the prime-indexed
@@ -3353,6 +3532,7 @@ cdef class Gen(Gen_base):
             set_gel(g, i, ellap(curve, utoi(g[i])))
         return new_gen(g)
 
+    @_owner_method
     def ellisoncurve(self, x):
         """
         e.ellisoncurve(x): return True if the point x is on the elliptic
@@ -3384,6 +3564,7 @@ cdef class Gen(Gen_base):
         sig_off()
         return t != 0
 
+    @_owner_method
     def ellminimalmodel(self):
         """
         ellminimalmodel(e): return the standard minimal integral model of
@@ -3421,6 +3602,7 @@ cdef class Gen(Gen_base):
         x = ellminimalmodel(self.g, &y)
         return new_gens2(x, y)
 
+    @_owner_method
     def elltors(self):
         r"""
         Return information about the torsion subgroup of the given
@@ -3456,6 +3638,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(elltors(self.g))
 
+    @_owner_method
     def omega(self):
         """
         Return the basis for the period lattice of this elliptic curve.
@@ -3484,6 +3667,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(member_omega(self.g))
 
+    @_owner_method
     def disc(self):
         """
         Return the discriminant of this object.
@@ -3502,6 +3686,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(member_disc(self.g))
 
+    @_owner_method
     def j(self):
         """
         Return the j-invariant of this object.
@@ -3520,6 +3705,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(member_j(self.g))
 
+    @_owner_method
     def _eltabstorel(self, x):
         """
         Return the relative number field element corresponding to `x`.
@@ -3551,6 +3737,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(eltabstorel(self.g, t0.g))
 
+    @_owner_method
     def _eltabstorel_lift(self, x):
         """
         Return the relative number field element corresponding to `x`.
@@ -3578,6 +3765,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(eltabstorel_lift(self.g, t0.g))
 
+    @_owner_method
     def _eltreltoabs(self, x):
         """
         Return the absolute number field element corresponding to `x`.
@@ -3607,6 +3795,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(eltreltoabs(self.g, t0.g))
 
+    @_owner_method
     def galoissubfields(self, long flag=0, v=None):
         """
         List all subfields of the Galois group ``self``.
@@ -3647,6 +3836,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(galoissubfields(self.g, flag, get_var(v)))
 
+    @_owner_method
     def nfeltval(self, x, p):
         """
         Return the valuation of the number field element `x` at the prime `p`.
@@ -3668,6 +3858,7 @@ cdef class Gen(Gen_base):
         sig_off()
         return v
 
+    @_owner_method
     def nfbasis(self, long flag=0, fa=None):
         r"""
         Integral basis of the field `\QQ[a]`, where ``a`` is a root of
@@ -3740,6 +3931,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(old_nfbasis(self.g, NULL, g0))
 
+    @_owner_method
     def nfbasis_d(self, long flag=0, fa=None):
         """
         Like :meth:`nfbasis`, but return a tuple ``(B, D)`` where `B`
@@ -3775,6 +3967,7 @@ cdef class Gen(Gen_base):
         ans = old_nfbasis(self.g, &disc, g0)
         return new_gens2(ans, disc)
 
+    @_owner_method
     def nfbasistoalg_lift(nf, x):
         r"""
         Transforms the column vector ``x`` on the integral basis into a
@@ -3809,11 +4002,13 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(gel(basistoalg(nf.g, t0.g), 2))
 
+    @_owner_method
     def nfgenerator(self):
         f = self[0]
         x = f.variable()
         return x.Mod(f)
 
+    @_owner_method
     def _nf_rnfeq(self, relpol):
         """
         Return data for converting number field elements between
@@ -3838,6 +4033,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(nf_rnfeq(self.g, t0.g))
 
+    @_owner_method
     def _nf_nfzk(self, rnfeq):
         """
         Return data for constructing relative number field elements
@@ -3857,6 +4053,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(new_nf_nfzk(self.g, t0.g))
 
+    @_owner_method
     def _nfeltup(self, x, nfzk):
         """
         Construct a relative number field element from an element of
@@ -3891,6 +4088,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return clone_gen(new_nfeltup(self.g, t0.g, t1.g))
 
+    @_owner_method
     def eval(self, *args, **kwds):
         """
         Evaluate ``self`` with the given arguments.
@@ -4068,6 +4266,9 @@ cdef class Gen(Gen_base):
         """
         Evaluate ``self`` with the given arguments. See ``eval``.
         """
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__call__", (self,) + args, kwds)
+
         cdef long t = typ(self.g)
         cdef Gen t0
         cdef GEN result
@@ -4120,6 +4321,7 @@ cdef class Gen(Gen_base):
             set_gel(v, i+1, pol_x(fetch_user_var(varname)))
         return new_gen(gsubstvec(self.g, v, t0.g))
 
+    @_owner_method
     def arity(self):
         """
         Return the number of arguments of this ``t_CLOSURE``.
@@ -4137,6 +4339,7 @@ cdef class Gen(Gen_base):
             raise TypeError("arity() requires a t_CLOSURE")
         return closure_arity(self.g)
 
+    @_owner_method
     def factorpadic(self, p, long r=20):
         """
         p-adic factorization of the polynomial ``pol`` to precision ``r``.
@@ -4156,6 +4359,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(factorpadic(self.g, t0.g, r))
 
+    @_owner_method
     def ncols(self):
         """
         Return the number of columns of self.
@@ -4174,6 +4378,7 @@ cdef class Gen(Gen_base):
         sig_off()
         return n
 
+    @_owner_method
     def nrows(self):
         """
         Return the number of rows of self.
@@ -4197,6 +4402,7 @@ cdef class Gen(Gen_base):
         sig_off()
         return n
 
+    @_owner_method
     def mattranspose(self):
         """
         Transpose of the matrix self.
@@ -4219,12 +4425,15 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(gtrans(self.g)).Mat()
 
+    @_owner_method
     def lllgram(self):
         return self.qflllgram(0)
 
+    @_owner_method
     def lllgramint(self):
         return self.qflllgram(1)
 
+    @_owner_method
     def qfrep(self, B, long flag=0):
         """
         Vector of (half) the number of vectors of norms from 1 to `B`
@@ -4256,6 +4465,7 @@ cdef class Gen(Gen_base):
             r = vecsmall_to_vec(r)
         return new_gen(r)
 
+    @_owner_method
     def matkerint(self, long flag=0):
         """
         Return the integer kernel of a matrix.
@@ -4286,6 +4496,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(matkerint0(self.g, flag))
 
+    @_owner_method
     def factor(self, long limit=-1, proof=None):
         """
         Return the factorization of x.
@@ -4348,8 +4559,12 @@ cdef class Gen(Gen_base):
     multiplicative_order = Gen_base.znorder
 
     def __abs__(self):
+        if not is_owner_thread():
+            return _pari_thread_runtime.call_type_method(Gen, "__abs__", (self,))
+
         return self.abs()
 
+    @_owner_method
     def nextprime(self, bint add_one=False):
         """
         nextprime(x): smallest pseudoprime greater than or equal to `x`.
@@ -4375,6 +4590,7 @@ cdef class Gen(Gen_base):
             return new_gen(nextprime(gaddsg(1, self.g)))
         return new_gen(nextprime(self.g))
 
+    @_owner_method
     def change_variable_name(self, var):
         """
         In ``self``, which must be a ``t_POL`` or ``t_SER``, set the
@@ -4425,6 +4641,7 @@ cdef class Gen(Gen_base):
         setvarn(newg.g, n)
         return newg
 
+    @_owner_method
     def nf_subst(self, z):
         """
         Given a PARI number field ``self``, return the same PARI
@@ -4467,6 +4684,7 @@ cdef class Gen(Gen_base):
         sig_on()
         return new_gen(gsubst(self.g, gvar(self.g), t0.g))
 
+    @_owner_method
     def type(self):
         """
         Return the PARI type of self as a string.
@@ -4493,6 +4711,7 @@ cdef class Gen(Gen_base):
         sig_off()
         return to_string(s)
 
+    @_owner_method
     def polinterpolate(self, ya, x):
         """
         self.polinterpolate(ya,x,e): polynomial interpolation at x
@@ -4507,6 +4726,7 @@ cdef class Gen(Gen_base):
         g = polint(self.g, t0.g, t1.g, &dy)
         return new_gens2(g, dy)
 
+    @_owner_method
     def ellwp(self, z='z', long n=20, long flag=0,
               unsigned long precision=DEFAULT_BITPREC):
         """
@@ -4592,6 +4812,7 @@ cdef class Gen(Gen_base):
             set_gel(r, 2, gmulgs(gel(r, 2), 2))
         return new_gen(r)
 
+    @_owner_method
     def debug(self, long depth=-1):
         r"""
         Show the internal structure of self (like the ``\x`` command in gp).
@@ -4611,10 +4832,14 @@ cdef class Gen(Gen_base):
             imag = [&=...] REAL(lg=...):... (+,expo=0):...
         """
         sig_on()
-        dbgGEN(self.g, depth)
+        # Values crossing the owner boundary are heap clones.  Debug a stack
+        # copy so this diagnostic keeps the same observable format as before
+        # (in particular, it must not grow a ``CLONE`` marker).
+        dbgGEN(gcopy(self.g), depth)
         clear_stack()
         return
 
+    @_owner_method
     def allocatemem(self, *args):
         """
         Do not use this. Use ``pari.allocatemem()`` instead.
@@ -4777,8 +5002,12 @@ cpdef Gen objtogen(s):
     ValueError: Cannot convert None to pari
 
     """
+    if not is_owner_thread():
+        return _pari_thread_runtime.call(objtogen, s)
+
     if isinstance(s, Gen):
         return s
+    ensure_pari_initialized()
 
     try:
         m = s.__pari__
@@ -4818,3 +5047,48 @@ cpdef Gen objtogen(s):
 
     # Simply use the string representation
     return objtogen(str(s))
+
+
+from collections import deque
+
+cdef object _released_clones = deque()
+cdef bint _release_scheduled
+
+cdef extern from "Python.h":
+    int Py_AddPendingCall(int (*)(void *) noexcept, void *) noexcept
+
+cdef int _release_clones(void *unused) noexcept:
+    global _release_scheduled
+    _release_scheduled = False
+    if is_owner_thread():
+        while _released_clones:
+            gunclone_deep(<GEN><size_t>_released_clones.popleft())
+    return 0
+
+cdef void release_clone(GEN address) noexcept:
+    """Drop one owned PARI clone reference, possibly from a Python worker."""
+    global _release_scheduled
+    if is_owner_thread():
+        gunclone_deep(address)
+        return
+    _released_clones.append(<size_t>address)
+    if not _release_scheduled:
+        _release_scheduled = Py_AddPendingCall(_release_clones, NULL) == 0
+
+
+def _stabilize_stack():
+    """Move every live stack ``Gen`` to the heap before a request ends.
+
+    Moving the full tracked stack also covers a Gen retained through a side
+    effect of arbitrary Python conversion code, where it is not reachable
+    from the request's return value.
+    """
+    if not is_owner_thread():
+        raise RuntimeError("only the main thread can stabilize the PARI stack")
+    if _released_clones:
+        _release_clones(NULL)
+    move_gens_to_heap(-1)
+    # A stack Gen may have lost its final reference on a foreign Python
+    # thread during a callback.  That thread unlinks the wrapper but cannot
+    # touch PARI's thread-local ``avma``; reclaim any such gap here.
+    reset_avma()

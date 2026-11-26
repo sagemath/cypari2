@@ -7,6 +7,16 @@ from cypari2.closure cimport _pari_init_closure
 from cypari2.stack cimport (new_gen, new_gen_noclear, clear_stack,
                      set_pari_stack_size, before_resize, after_resize)
 from libc.stdio cimport printf
+from cysignals.signals cimport sig_on, sig_off
+
+def call_with_sig_on(function):
+    """Simulate a downstream Cython caller with an active recovery frame."""
+    sig_on()
+    try:
+        return function()
+    finally:
+        sig_off()
+
 
 def caller_has_pari_stack():
     """Check the PARI stack on the same thread as a downstream Cython caller."""
