@@ -152,6 +152,8 @@ jobs:
           brew uninstall --ignore-dependencies --force dimpase/tap/cypari2
       - name: Build Sage against the candidate and test its PARI interface
         shell: bash
+        env:
+          CYPARI2_TEST_SOURCE_REF: ${{ inputs.source-ref }}
         run: |
           uv venv --python "$(brew --prefix python@3.14)/bin/python3.14" --system-site-packages "$RUNNER_TEMP/sage-venv"
           source "$RUNNER_TEMP/sage-venv/bin/activate"
