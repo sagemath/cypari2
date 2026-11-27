@@ -43,6 +43,8 @@ from .stack cimport (new_gen, new_gen_noclear, clone_gen_noclear, DetachGen,
 from .gen cimport objtogen
 from .types cimport gp_context
 from .paripriv cimport mt_is_thread
+from .thread_support cimport ensure_pari_initialized, is_owner_thread
+from ._thread_runtime import runtime as _pari_thread_runtime
 
 include "callback_signals.pxi"
 
@@ -311,6 +313,9 @@ cpdef Gen objtoclosure(f):
     ...
     PariError: call_python: ...
     """
+    if not is_owner_thread():
+        return _pari_thread_runtime.call(objtoclosure, f)
+    ensure_pari_initialized()
     if not callable(f):
         raise TypeError("argument to objtoclosure() must be callable")
 

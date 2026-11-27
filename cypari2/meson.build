@@ -1,5 +1,6 @@
 py.install_sources(
   '__init__.py',
+  'thread_support.pxd',
   'closure.pxd',
   'convert.pxd',
   'gen.pxd',
@@ -18,6 +19,8 @@ py.install_sources(
 
 
 extension_data = {
+  '_thread_runtime': files('_thread_runtime.pyx'),
+  'thread_support': files('thread_support.pyx'),
   'closure': files('closure.pyx'),
   'stack': files('stack.pyx'),
   'custom_block': files('custom_block.pyx'),

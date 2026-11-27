@@ -20,7 +20,7 @@ import re
 import sys
 from pathlib import Path
 
-from .args import PariArgumentGEN, PariInstanceArgument
+from .args import PariArgumentClass, PariArgumentGEN, PariInstanceArgument
 from .doc import get_rest_doc
 from .parser import parse_prototype, read_pari_desc
 from .ret import PariReturnmGEN
@@ -151,6 +151,7 @@ class PariFunctionGenerator(object):
             ...     help=r"bnfinit(P,{flag=0},{tech=[]}): compute...",
             ...     **{"class":"basic", "section":"number_fields"})
                 GEN bnfinit0(GEN, long, GEN, long)
+                @_owner_method
                 def bnfinit(P, long flag=0, tech=None, long precision=DEFAULT_BITPREC):
                     ...
                     cdef bint _have_tech = (tech is not None)
@@ -171,6 +172,7 @@ class PariFunctionGenerator(object):
             ...     help=r"ellmodulareqn(N,{x},{y}): return...",
             ...     **{"class":"basic", "section":"elliptic_curves"})
                 GEN ellmodulareqn(long, long, long)
+                @_owner_method
                 def ellmodulareqn(self, long N, x=None, y=None):
                     ...
                     cdef long _x = -1
@@ -193,6 +195,8 @@ class PariFunctionGenerator(object):
                     r'''
                     Reseeds the random number generator...
                     '''
+                    if not is_owner_thread():
+                        return _pari_thread_runtime.call(Gen_base.setrand, n)
                     sig_on()
                     cdef GEN _n = (<Gen>n).g
                     setrand(_n)
@@ -202,6 +206,8 @@ class PariFunctionGenerator(object):
                     r'''
                     Reseeds the random number generator...
                     '''
+                    if not is_owner_thread():
+                        return _pari_thread_runtime.call(Pari_auto.setrand, self, n)
                     n = objtogen(n)
                     sig_on()
                     cdef GEN _n = (<Gen>n).g
@@ -218,6 +224,8 @@ class PariFunctionGenerator(object):
                     r'''
                     This function is obsolete, use polredbest.
                     '''
+                    if not is_owner_thread():
+                        return _pari_thread_runtime.call(Gen_base.polredord, x)
                     from warnings import warn
                     warn('the PARI/GP function polredord is obsolete (2008-07-20)', DeprecationWarning)
                     sig_on()
@@ -229,6 +237,8 @@ class PariFunctionGenerator(object):
                     r'''
                     This function is obsolete, use polredbest.
                     '''
+                    if not is_owner_thread():
+                        return _pari_thread_runtime.call(Pari_auto.polredord, self, x)
                     from warnings import warn
                     warn('the PARI/GP function polredord is obsolete (2008-07-20)', DeprecationWarning)
                     x = objtogen(x)
@@ -313,12 +323,20 @@ class PariFunctionGenerator(object):
 
         protoargs = ", ".join(a.prototype_code() for a in args)
         callargs = ", ".join(a.call_code() for a in cargs)
-
-        s = "    def {function}({protoargs}):\n"
+        # A typed signature can call user code (e.g. __int__) before
+        # entering the method body. Dispatch those methods before conversion.
+        typed = any(isinstance(a, PariArgumentClass) for a in args)
+        s = "    @_owner_method\n" if typed else ""
+        s += "    def {function}({protoargs}):\n"
         if doc:
             # Use triple single quotes to make it easier to doctest
             # this within triply double quoted docstrings.
             s += "        r'''\n{doc}\n        '''\n"
+        if not typed:
+            cls = "Pari_auto" if isinstance(args[0], PariInstanceArgument) else "Gen_base"
+            names = ", ".join(a.name for a in args)
+            s += "        if not is_owner_thread():\n"
+            s += f"            return _pari_thread_runtime.call({cls}.{function}, {names})\n"
         # Warning for obsolete functions
         if obsolete:
             s += "        from warnings import warn\n"

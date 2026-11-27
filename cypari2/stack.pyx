@@ -22,6 +22,7 @@ from cpython.exc cimport PyErr_SetString
 from cysignals.signals cimport (sig_on, sig_off, sig_block, sig_unblock,
                                 sig_error)
 
+from .thread_support cimport is_owner_thread
 from .gen cimport Gen, Gen_new
 from .paridecl cimport (avma, pari_mainstack, gnil, gcopy,
                         is_universal_constant, is_on_stack,
@@ -51,6 +52,11 @@ cdef PyObject* stackbottom = <PyObject*>top_of_stack
 # Preserve that part of the stack while it calls back into Python.
 cdef pari_sp callback_stack_limit = 0
 
+def _check_service_frame():
+    if sig_on_count or callback_stack_limit:
+        raise RuntimeError("cannot serve PARI worker calls inside an active signal frame or GP callback")
+
+
 cdef inline pari_sp stack_position(Gen value) noexcept:
     cdef pari_sp pos = value.sp()
     if callback_stack_limit and pos > callback_stack_limit:
@@ -60,6 +66,22 @@ cdef inline pari_sp stack_position(Gen value) noexcept:
 
 cdef void remove_from_pari_stack(Gen self) noexcept:
     global avma, stackbottom
+    if not is_owner_thread():
+        # A Python callback can hand a newly-created stack Gen to another
+        # Python thread before the enclosing owner request has returned.  If
+        # that thread drops the last reference, only unlink the Python object
+        # here: ``avma`` is PARI TLS and must be restored by the owner.  The
+        # linked-list invariant means that an object whose reference count
+        # reached zero is necessarily the current stack bottom.  Holding ``n``
+        # across clearing ``self.next`` also makes recursive deallocation of
+        # now-unreferenced predecessors follow the same safe path.
+        if <PyObject*>self is not stackbottom:
+            print("ERROR: removing non-current PARI stack Gen on a foreign thread")
+            return
+        n = self.next
+        stackbottom = <PyObject*>n
+        self.next = None
+        return
     if <PyObject*>self is not stackbottom:
         print("ERROR: removing wrong instance of Gen")
         print(f"Expected: {<object>stackbottom}")

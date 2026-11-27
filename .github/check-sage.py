@@ -1,5 +1,7 @@
 """Exercise Sage's compiled PARI conversions with the installed candidate."""
 
+from concurrent.futures import ThreadPoolExecutor
+import os
 import sys
 from pathlib import Path
 
@@ -20,3 +22,17 @@ for value in (integer, rational):
     assert convert_sage.gen_to_sage(converted) == value
 
 assert ZZ(360).euler_phi() == 96
+
+
+def threaded_sage():
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        assert pool.submit(pari.issquarefree, ZZ(15)).result() == 1
+        assert pool.submit(pari.run_on_owner, ZZ(360).euler_phi).result() == 96
+        converted = pool.submit(pari, rational).result()
+        assert pari.run_on_owner(convert_sage.gen_to_sage, converted) == rational
+
+
+# A manual run can select a source revision from before the worker API.
+# PR and tag builds must exercise it.
+if not os.environ.get("CYPARI2_TEST_SOURCE_REF") or hasattr(pari, "run_with_threads"):
+    pari.run_with_threads(threaded_sage)
