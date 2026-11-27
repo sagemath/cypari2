@@ -2,6 +2,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import ContextVar
+from inspect import signature
 import os
 import signal
 import subprocess
@@ -53,6 +54,28 @@ class MainThreadServiceTests(unittest.TestCase):
                                    (int, (self.pari(99),))):
                 with self.assertRaisesRegex(RuntimeError, "main thread"):
                     pool.submit(function, *args).result()
+
+    def test_typed_keyword_converted_on_owner(self):
+        calls = []
+        main = get_ident()
+
+        class IntegerArgument:
+            def __int__(self):
+                calls.append(get_ident())
+                return 8
+
+            __index__ = __int__
+
+        fibonacci = self.pari.fibonacci
+        self.assertEqual(tuple(signature(fibonacci).parameters), ("x",))
+        index = IntegerArgument()
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            with self.assertRaisesRegex(RuntimeError, "main thread"):
+                pool.submit(fibonacci, x=index).result()
+        self.assertEqual(calls, [])
+
+        self.assertEqual(self.pari.run_with_threads(fibonacci, x=index), 21)
+        self.assertEqual(calls, [main])
 
     def test_callback_context_and_error_recovery(self):
         pari = self.pari

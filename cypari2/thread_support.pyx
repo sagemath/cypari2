@@ -11,10 +11,6 @@ cdef void initialize_pari() except *:
     Pari()
 
 
-def _is_owner():
-    return is_owner_thread()
-
-
 def _after_fork():
     global owner_ident
     if not is_owner_thread():

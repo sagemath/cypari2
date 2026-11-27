@@ -1,6 +1,5 @@
 py.install_sources(
   '__init__.py',
-  '_thread_runtime.py',
   'thread_support.pxd',
   'closure.pxd',
   'convert.pxd',
@@ -20,6 +19,7 @@ py.install_sources(
 
 
 extension_data = {
+  '_thread_runtime': files('_thread_runtime.pyx'),
   'thread_support': files('thread_support.pyx'),
   'closure': files('closure.pyx'),
   'stack': files('stack.pyx'),
@@ -63,8 +63,6 @@ configure_file(
   output: '__init__.py',
   copy: true,
 )
-
-configure_file(input: '_thread_runtime.py', output: '_thread_runtime.py', copy: true)
 
 # pkg-config file describing the PARI library that cypari2 is linked against,
 # so that other projects (e.g. Sage) can use the same PARI library.

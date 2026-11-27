@@ -24,6 +24,7 @@ def main():
     print(f"Sage {version('sagemath')}, cypari2 {version('cypari2')}, PARI {pari.version()}")
     measure("Gen addition", lambda: x + 1, 10_000)
     measure("issquarefree", lambda: pari.issquarefree(15), 10_000)
+    measure("fibonacci (typed argument)", lambda: pari.fibonacci(8), 100_000)
     measure("GP sum", lambda: pari("sum(k=1,100000,k^2)"), 25)
 
     def on_stack():
@@ -38,7 +39,11 @@ def main():
         on_stack()
 
     if hasattr(pari, "run_with_threads"):
+        def noop():
+            pass
+
         def application():
+            measure("no-op worker request", lambda: pari.run_on_owner(noop), 5000)
             measure("euler_phi per request", lambda: pari.run_on_owner(number.euler_phi), 5000)
             pari.run_on_owner(lambda: measure("batched euler_phi", number.euler_phi, 20_000))
         pari.run_with_threads(application)

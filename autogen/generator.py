@@ -323,7 +323,7 @@ class PariFunctionGenerator(object):
 
         protoargs = ", ".join(a.prototype_code() for a in args)
         callargs = ", ".join(a.call_code() for a in cargs)
-        # A typed signature can call user code (e.g. __index__) before
+        # A typed signature can call user code (e.g. __int__) before
         # entering the method body. Dispatch those methods before conversion.
         typed = any(isinstance(a, PariArgumentClass) for a in args)
         s = "    @_owner_method\n" if typed else ""

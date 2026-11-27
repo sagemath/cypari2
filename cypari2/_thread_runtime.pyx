@@ -8,13 +8,13 @@ import os
 from queue import Empty, SimpleQueue
 import threading
 
-from .thread_support import _is_owner
+from .thread_support cimport is_owner_thread
 
 
 def owner_method(method):
     @wraps(method)
     def wrapped(*args, **kwargs):
-        if _is_owner():
+        if is_owner_thread():
             return method(*args, **kwargs)
         return runtime.call(method, *args, **kwargs)
 
@@ -23,7 +23,9 @@ def owner_method(method):
     return wrapped
 
 
-class _OwnerIterator:
+cdef class _OwnerIterator:
+    cdef object iterator
+
     def __init__(self, iterator):
         self.iterator = iterator
 
@@ -34,7 +36,10 @@ class _OwnerIterator:
         return runtime.call(next, self.iterator)
 
 
-class _Runtime:
+cdef class _Runtime:
+    cdef readonly object requests
+    cdef object lock
+
     def __init__(self):
         self.requests = None
         self.lock = threading.RLock()
@@ -44,7 +49,7 @@ class _Runtime:
         self.lock = threading.RLock()
 
     def call(self, function, /, *args, **kwargs):
-        if _is_owner():
+        if is_owner_thread():
             return function(*args, **kwargs)
 
         result = Future()
@@ -70,7 +75,7 @@ class _Runtime:
         from .gen import _stabilize_stack
         from .stack import _check_service_frame
 
-        if not _is_owner() or self.requests is not None:
+        if not is_owner_thread() or self.requests is not None:
             raise RuntimeError("run_with_threads() requires the idle main thread")
         _check_service_frame()
         _stabilize_stack()
